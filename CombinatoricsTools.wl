@@ -63,7 +63,14 @@ Listable
 (*Public Function Implementations*)
 
 
-SchurS=ResourceFunction["SchurS"];
+SchurS[p_List?VectorQ,vars_List?VectorQ]:=
+Module[
+{n=Length[vars],cp,elist,id},
+cp=ConjugatePartition[p];
+id=Range[Length[cp]];
+elist=Table[SymmetricPolynomial[k,vars],{k,n}];
+Det[Outer[With[{r=Plus[##]},Which[r==0,1,0<r<=n,elist[[r]],True,0]]&,cp-id,id]]
+]
 
 
 StrictCompositions[D_Integer?NonNegative,n_Integer?Positive]:=Join@@Permutations/@IntegerPartitions[D,{n}]

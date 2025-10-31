@@ -11,6 +11,10 @@ BeginPackage["GrowMultiplicitySpaceTree`",{"IsotypicDecompositionTools`","Combin
 (*Public Function Declarations*)
 
 
+(*SchurS -> Det is the only bottleneck. Symbolic determinant of a matrix with polynomial entries*)
+(*We could try an alternative implementation of IsotypicMultiplicitySchurPower: find an explicit expression for the generating function of the number of
+semistandard Young tableaux (SSYT) of shape p with powers being the total sum of entries and use Coefficient. Maybe try this for IsotypicMultiplicityExteriorPower
+as well for consistency, though tbh it may be slower. Low priority though.*)
 GrowMultiplicitySpaceTree::usage="returns the tree"
 
 
@@ -25,7 +29,7 @@ Begin["`Private`"];
 (*Private Function Implementations*)
 
 
-MuTuples[\[Lambda]s_,\[Pi]\[Lambda]s_,\[Nu]_]:=Select[Tuples@MapThread[IsotypicComponentsSchurPower,{\[Lambda]s,\[Pi]\[Lambda]s}],IsotypicComponentTensorProductQ[#,\[Nu]]&]
+MuTuples[\[Lambda]s_List?VectorQ,\[Pi]\[Lambda]s_List,\[Nu]_Integer?NonNegative]:=Select[Tuples@MapThread[IsotypicComponentsSchurPower,{\[Lambda]s,\[Pi]\[Lambda]s}],IsotypicComponentTensorProductQ[#,\[Nu]]&]
 
 
 PruneChildlessNodes[tree_]:=TreeFold[If[#2=={},Nothing,Tree[##]]&,tree]

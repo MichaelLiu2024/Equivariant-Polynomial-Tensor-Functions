@@ -31,6 +31,7 @@ Begin["`Private`"];
 
 SetAttributes[
 {
+PathBasisExteriorPower,
 TensorBasisExteriorPower
 },
 Listable
@@ -44,31 +45,20 @@ Listable
 SSYTTensorBasisSchurPower[p_,m_]:=YoungSymmetrize[SymmetrizedArray[#->1,ConstantArray[m,Total[p]]],p]&/@Flatten[SemiStandardYoungTableaux[p,m],{{1},{2,3}}]
 
 
-TensorBasisTensorProduct[\[Lambda]s_,\[Mu]_]:=
-Module[
-{indexBasis,pathBasis,tensorBasis},
-
-indexBasis=Position[Fold[IsotypicComponentsTensorProduct,\[Lambda]s],\[Mu]];
-pathBasis=FoldList[Abs[#1-First[#2]]+Last[#2]-1&,First[\[Lambda]s],Transpose[{Rest[\[Lambda]s],#}]]&/@indexBasis;
-tensorBasis=ClebschGordanTensor[\[Lambda]s,#]&/@pathBasis
-]
+PathBasisTensorProduct[\[Lambda]s_,\[Mu]_]:=FoldList[Abs[#1-First[#2]]+Last[#2]-1&,First[\[Lambda]s],Transpose[{Rest[\[Lambda]s],#}]]&/@Position[Fold[IsotypicComponentsTensorProduct,\[Lambda]s],\[Mu]]
 
 
-(*Make sure you're only passing valid inputs here with nonzero Hom space! IsotypicMultiplicityExteriorPower>0*)
-(*Currently we have not accounted for the kernel of Subscript[r, Subscript[\[Pi], \[Lambda]]]: we still need to remove those vectors in the kernel of Subscript[r, Subscript[\[Pi], \[Lambda]]]*)
-(*I think we are also assuming that \[Lambda]<=3 for d=3, although this code might work in general. We would need to prove this. It may not be that bad just to stare at the full explicit formula for the CG tensor*)
-TensorBasisExteriorPower[\[Lambda]_,d_,\[Mu]_]:=
-Module[
-{pathBasis,tensorBasis},
+TensorBasisTensorProduct[\[Lambda]s_,\[Mu]_]:=ClebschGordanTensor[\[Lambda]s,#]&/@PathBasisTensorProduct[\[Lambda]s,\[Mu]]
 
-pathBasis=
+
+PathBasisExteriorPower[\[Lambda]_,d_,\[Mu]_]/;IsotypicMultiplicityExteriorPower[\[Lambda],d,\[Mu]]>0:=
 Switch[
 d,
 0,{{0}},
 1,{{\[Lambda]}},
 2,{{\[Lambda],\[Mu]}},
 3,{{\[Lambda],#+1-Mod[#,2]&@Abs[\[Lambda]-\[Mu]],\[Mu]}},
-_,Print["Warning: TensorBasisExteriorPower hit d>3"]
+_,Print["Warning: PathBasisExteriorPower hit d>3"]
 (*
 memoize results;
 dimension=IsotypicMultiplicityExteriorPower[\[Lambda],d,\[Mu]];
@@ -80,11 +70,20 @@ keepaddingguysfromspan
 *)
 ];
 
-tensorBasis=AntisymmetrizedClebschGordanTensor/@pathBasis
+
+TensorBasisExteriorPower[\[Lambda]_,d_,\[Mu]_]:=AntisymmetrizedClebschGordanTensor/@PathBasisExteriorPower[\[Lambda],d,\[Mu]]
+
+
+PathBasisSchurPower[\[Lambda]_,p_,\[Mu]_]:=
+Module[
+{\[Xi]\[Lambda]ps,pathBasisExteriorPower,pathBasisTensorPower},
+\[Xi]\[Lambda]ps=Select[Tuples@IsotypicComponentsExteriorPower[\[Lambda],p],IsotypicComponentTensorProductQ[#,\[Mu]]&];
+pathBasisExteriorPower=PathBasisExteriorPower[\[Lambda],p,\[Xi]\[Lambda]ps];
+pathBasisTensorPower=PathBasisTensorPower[\[Xi]\[Lambda]ps,\[Mu]];(*For d<=3 we only have to subselect these! Figure out how to subselect here, or just memoize. Let's run a numerical
+experiment to see if we can guess which ones we should select like the d=3 alternating power case. Count dimensions too*)
 ]
 
 
-(*We still need to subselect the argument of TensorMultiply to account for kernel of column symmetrizer.*)
 TensorBasisSchurPower[\[Lambda]_,p_,\[Mu]_]:=
 SymmetrizeColumns[#,p]&/@Flatten[
 Map[
@@ -96,10 +95,20 @@ Select[Tuples@IsotypicComponentsExteriorPower[\[Lambda],p],IsotypicComponentTens
 
 
 TensorMultiply[leaf_,root_]:=
-Chop@TensorContract[
-TensorProduct[Sequence@@leaf,root],
-Transpose[{#,Last[#]+Range[Length[leaf]]}]&@Accumulate[TensorRank/@leaf]
+Module[
+{n=Length[leaf],revLeaf,revRank,revAccRank},
+revLeaf=Reverse[leaf];
+revRank=TensorRank/@revLeaf;
+revAccRank=Accumulate[revRank]+Range[n,-n+2,-2];
+Fold[
+TensorMultiplyStep,
+root,
+Transpose[{revLeaf,revRank,revAccRank}]
 ]
+]
+
+
+TensorMultiplyStep[tensor_,{revLeaf_,revRank_,revAccRank_}]:=TensorContract[TensorProduct[revLeaf,tensor],{{revRank,revAccRank}}]
 
 
 OuterTensorMultiply[leaves_,roots_]:=Flatten[Outer[TensorMultiply,Tuples[leaves],roots,1],1]
