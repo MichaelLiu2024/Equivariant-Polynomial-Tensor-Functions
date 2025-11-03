@@ -11,7 +11,9 @@ BeginPackage["HarvestMultiplicitySpaceTree`",{"ClebschGordanTools`","IsotypicDec
 (*Public Function Declarations*)
 
 
-HarvestMultiplicitySpaceTree::usage="computes the tensors from the tree"
+HarvestMultiplicitySpaceTree::usage="computes the tensors from the tree";
+PathBasisSchurPower;
+TensorBasisSchurPower;
 
 
 (* ::Section:: *)
@@ -57,17 +59,7 @@ d,
 0,{{0}},
 1,{{\[Lambda]}},
 2,{{\[Lambda],\[Mu]}},
-3,{{\[Lambda],#+1-Mod[#,2]&@Abs[\[Lambda]-\[Mu]],\[Mu]}},
-_,Print["Warning: PathBasisExteriorPower hit d>3"]
-(*
-memoize results;
-dimension=IsotypicMultiplicityExteriorPower[\[Lambda],d,\[Mu]];
-span=Select[PathBasisTensorProduct[ConstantArray[\[Lambda],d],\[Mu]],OddQ@#[[2]]&];
-While[
-Length[basis]<dimension,
-keepaddingguysfromspan
-]
-*)
+3,{{\[Lambda],#+1-Mod[#,2]&@Abs[\[Lambda]-\[Mu]],\[Mu]}}
 ];
 
 
@@ -76,21 +68,28 @@ TensorBasisExteriorPower[\[Lambda]_,d_,\[Mu]_]:=AntisymmetrizedClebschGordanTens
 
 PathBasisSchurPower[\[Lambda]_,p_,\[Mu]_]:=
 Module[
-{\[Xi]\[Lambda]ps,pathBasisExteriorPower,pathBasisTensorPower},
+{\[Xi]\[Lambda]ps,pathBasisExteriorPower,pathBasisTensorProduct},
 \[Xi]\[Lambda]ps=Select[Tuples@IsotypicComponentsExteriorPower[\[Lambda],p],IsotypicComponentTensorProductQ[#,\[Mu]]&];
-pathBasisExteriorPower=PathBasisExteriorPower[\[Lambda],p,\[Xi]\[Lambda]ps];
-pathBasisTensorPower=PathBasisTensorPower[\[Xi]\[Lambda]ps,\[Mu]];(*For d<=3 we only have to subselect these! Figure out how to subselect here, or just memoize. Let's run a numerical
+pathBasisExteriorPower=PathBasisExteriorPower[\[Lambda],p,#]&/@\[Xi]\[Lambda]ps;
+pathBasisTensorProduct=PathBasisTensorProduct[#,\[Mu]]&/@\[Xi]\[Lambda]ps;(*For d<=3 we only have to subselect these! Figure out how to subselect here, or just memoize. Let's run a numerical
 experiment to see if we can guess which ones we should select like the d=3 alternating power case. Count dimensions too*)
+(*
+memoize results;
+dimension=IsotypicMultiplicitySchurPower[\[Lambda],p,\[Mu]];
+span=Select[PathBasisTensorProduct[ConstantArray[\[Lambda],d],\[Mu]],OddQ@#[[2]]&];
+While[
+Length[basis]<dimension,
+keepaddingguysfromspan
+]
+*)
+{pathBasisExteriorPower,pathBasisTensorProduct}
 ]
 
 
 TensorBasisSchurPower[\[Lambda]_,p_,\[Mu]_]:=
-SymmetrizeColumns[#,p]&/@Flatten[
-Map[
+SymmetrizeColumns[#,p]&/@Join@@Map[
 OuterTensorMultiply[TensorBasisExteriorPower[\[Lambda],p,#],TensorBasisTensorProduct[#,\[Mu]]]&,
 Select[Tuples@IsotypicComponentsExteriorPower[\[Lambda],p],IsotypicComponentTensorProductQ[#,\[Mu]]&]
-],
-1
 ]
 
 
