@@ -11,6 +11,7 @@ BeginPackage["HarvestMultiplicitySpaceTree`",{"ClebschGordanTools`","IsotypicDec
 (*Public Function Declarations*)
 
 
+(*We have to make sure that we are always passing valid inputs to the functions. I don't want to run expensive checks each time the functions are called*)
 HarvestMultiplicitySpaceTree::usage="computes the tensors from the tree";
 PathBasisSchurPower;
 TensorBasisSchurPower;
@@ -66,12 +67,24 @@ d,
 TensorBasisExteriorPower[\[Lambda]_,d_,\[Mu]_]:=AntisymmetrizedClebschGordanTensor/@PathBasisExteriorPower[\[Lambda],d,\[Mu]]
 
 
-PathBasisSchurPower[\[Lambda]_,p_,\[Mu]_]:=
+PathBasisSchurPower[\[Lambda]_,p_,\[Mu]_]:=PathBasisSchurPower[\[Lambda],p,\[Mu]]=
 Module[
-{\[Xi]\[Lambda]ps,pathBasisExteriorPower,pathBasisTensorProduct},
+{\[Xi]\[Lambda]ps,pathBasisExteriorPower,pathBasisTensorProduct,tensorBasisExteriorPower,tensorBasisTensorProduct},
 \[Xi]\[Lambda]ps=Select[Tuples@IsotypicComponentsExteriorPower[\[Lambda],p],IsotypicComponentTensorProductQ[#,\[Mu]]&];
 pathBasisExteriorPower=PathBasisExteriorPower[\[Lambda],p,#]&/@\[Xi]\[Lambda]ps;
-pathBasisTensorProduct=PathBasisTensorProduct[#,\[Mu]]&/@\[Xi]\[Lambda]ps;(*For d<=3 we only have to subselect these! Figure out how to subselect here, or just memoize. Let's run a numerical
+pathBasisTensorProduct=PathBasisTensorProduct[#,\[Mu]]&/@\[Xi]\[Lambda]ps;
+If[Total[p]>1\[And]Length[p]==Total[p],pathBasisTensorProduct=Select[#,EvenQ[#[[2]]]&]&/@pathBasisTensorProduct];
+{pathBasisExteriorPower,pathBasisTensorProduct}
+
+
+
+(*tensorBasisExteriorPower=Map[AntisymmetrizedClebschGordanTensor,pathBasisExteriorPower,{3}];
+tensorBasisTensorProduct=Map[ClebschGordanTensor,pathBasisTensorProduct,{2}];
+
+OuterTensorMultiply[tensorBasisExteriorPower,tensorBasisTensorProduct];*)
+
+
+(*For d<=3 we only have to subselect these! Figure out how to subselect here, or just memoize. Let's run a numerical
 experiment to see if we can guess which ones we should select like the d=3 alternating power case. Count dimensions too*)
 (*
 memoize results;
@@ -79,17 +92,17 @@ dimension=IsotypicMultiplicitySchurPower[\[Lambda],p,\[Mu]];
 span=Select[PathBasisTensorProduct[ConstantArray[\[Lambda],d],\[Mu]],OddQ@#[[2]]&];
 While[
 Length[basis]<dimension,
-keepaddingguysfromspan
+randomly sample dimension-Length[basis] new guys from the remaining set of paths
+compute tensors and add them one by one to basis
 ]
 *)
-{pathBasisExteriorPower,pathBasisTensorProduct}
 ]
 
 
 TensorBasisSchurPower[\[Lambda]_,p_,\[Mu]_]:=
 SymmetrizeColumns[#,p]&/@Join@@Map[
-OuterTensorMultiply[TensorBasisExteriorPower[\[Lambda],p,#],TensorBasisTensorProduct[#,\[Mu]]]&,
-Select[Tuples@IsotypicComponentsExteriorPower[\[Lambda],p],IsotypicComponentTensorProductQ[#,\[Mu]]&]
+OuterTensorMultiply[Echo@Map[AntisymmetrizedClebschGordanTensor,First[#],{2}],Map[Echo@ClebschGordanTensor[ConstantArray[],#]&,Last[#],{1}]]&,
+PathBasisSchurPower[\[Lambda],p,\[Mu]]
 ]
 
 
