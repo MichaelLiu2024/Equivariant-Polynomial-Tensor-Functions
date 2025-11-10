@@ -11,10 +11,6 @@ BeginPackage["CombinatoricsTools`"];
 (*Public Function Declarations*)
 
 
-(*https://resources.wolframcloud.com/FunctionRepository/resources/SchurS*)
-SchurS::usage="gives the Schur polynomial corresponding to the integer partition p in the variables x1,\[Ellipsis],xn."
-
-
 StrictCompositions::usage="returns a List of all strict integer compositions of D with n parts"
 
 
@@ -36,6 +32,10 @@ ConjugatePartition::usage="returns the integer partition conjugate to p"
 
 (*https://github.com/PerAlexandersson/Mathematica-packages*)
 SemiStandardYoungTableaux::usage="returns a List of all semistandard Young tableaux of shape p with boxes filled from Range[n]"
+
+
+(*https://resources.wolframcloud.com/FunctionRepository/resources/SchurS*)
+SchurS::usage="gives the Schur polynomial corresponding to the integer partition p in the variables x1,\[Ellipsis],xn."
 
 
 (* ::Section:: *)

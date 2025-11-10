@@ -15,6 +15,10 @@ IsotypicComponentTensorProductQ::usage=
 "IsotypicComponentTensorProductQ[\[Lambda]s,\[Mu]] returns True if \[Mu] is an isotypic component in the tensor product"
 
 
+IsotypicMultiplicityTensorProduct::usage=
+"IsotypicMultiplicityTensorProduct[\[Lambda]s,\[Mu]] returns the isotypic multiplicity of \[Mu] in the tensor product"
+
+
 IsotypicMultiplicityExteriorPower::usage=
 "IsotypicMultiplicityExteriorPower[\[Lambda],d,\[Mu]] returns the isotypic multiplicity of \[Mu] in the exterior power"
 
@@ -61,6 +65,9 @@ Listable
 
 
 IsotypicComponentTensorProductQ[\[Lambda]s_List?VectorQ,\[Mu]_Integer?NonNegative]:=With[{m=Max[\[Lambda]s],s=Total[\[Lambda]s]},Max[0,2m-s]<=\[Mu]<=s]
+
+
+IsotypicMultiplicityTensorProduct[\[Lambda]s_List?VectorQ,\[Mu]_Integer?NonNegative]:=Count[Fold[IsotypicComponentsTensorProduct,\[Lambda]s],\[Mu],{-1}]
 
 
 IsotypicMultiplicityExteriorPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegative,\[Mu]_Integer?NonNegative]:=Count[#,_?(Total[#]==\[Mu]&)]-Count[#,_?(Total[#]==\[Mu]+1&)]&@Subsets[Range[-\[Lambda],\[Lambda]],{d}]

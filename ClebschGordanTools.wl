@@ -1,22 +1,50 @@
 (* ::Package:: *)
 
+(* ::Title:: *)
+(*ClebschGordanTools*)
+
+
 (* ::Section:: *)
 (*Public Functions*)
 
 
-BeginPackage["ClebschGordanTools`"];
+BeginPackage["ClebschGordanTools`",{"IsotypicDecompositionTools`"}];
 
 
 (* ::Subsection:: *)
 (*Public Function Declarations*)
 
 
+PathBasisTensorProduct::usage=
+"enumerates the path basis for Subscript[Hom, G](Subscript[H, \[Mu]],\!\(\*UnderscriptBox[\(\[CircleTimes]\), \(\[Lambda]\)]\)Subscript[H, \[Lambda]])"
+
+
+PathBasisExteriorPower::usage=
+"enumerates the path basis for Subscript[Hom, G](Subscript[H, \[Mu]],\[CapitalLambda]^d Subscript[H, \[Lambda]])"
+
+
+PathBasisSymmetricPower::usage=
+"enumerates the path basis for Subscript[Hom, G](Subscript[H, \[Mu]],\[ScriptCapitalS]^d Subscript[H, \[Lambda]])"
+
+
+PathBasisSchurPower::usage=
+"enumerates the path basis for Subscript[Hom, G](Subscript[H, \[Mu]],Subscript[e, \[Pi]] \!\(\*SubsuperscriptBox[\(H\), \(\[Lambda]\), \(\[CircleTimes]d\)]\))"
+
+
 ClebschGordanTensor::usage=
-"ClebschGordanTensor[\[Lambda]s,\[Gamma]s] returns the Clebsch-Gordan tensor traveling along \[Lambda]s via the path \[Gamma]s"
+"returns the Clebsch-Gordan tensor CG(\[Lambda]s,\[Gamma]s)"
 
 
 AntisymmetrizedClebschGordanTensor::usage=
-"AntisymmetrizedClebschGordanTensor[\[Gamma]s] returns the antisymmetrized Clebsch-Gordan tensor traveling along ConstantArray[First[\[Gamma]s],Length[\[Gamma]s]] via the path \[Gamma]s"
+"returns the antisymmetrized Clebsch-Gordan tensor CG((\[Lambda],...,\[Lambda]),\[Gamma]s)"
+
+
+EvaluateClebschGordanTensor::usage=
+"evaluates the Clebsch-Gordan tensor CG(\[Lambda]s,\[Gamma]s) at the inputs xs"
+
+
+EvaluateSymmetrizedClebschGordanTensor::usage=
+"evaluates the symmetrized Clebsch-Gordan tensor CG((\[Lambda],...,\[Lambda]),\[Gamma]s) at the inputs (x,...,x)"
 
 
 (* ::Section:: *)
@@ -31,15 +59,15 @@ Begin["`Private`"];
 
 
 MemoizedClebschGordanCoefficient::usage=
-"MemoizedClebschGordanCoefficient[\[Lambda]1,m1,\[Lambda]2,m2,\[Lambda]3,m3] is a memoized numerical version of the built-in function ClebschGordan"
+"is a memoized numerical version of the built-in function ClebschGordan"
 
 
 MemoizedClebschGordanTensor::usage=
-"MemoizedClebschGordanTensor[\[Lambda]1,\[Lambda]2,\[Lambda]3] returns the Clebsch-Gordan tensor"
+"returns the elementary Clebsch-Gordan tensor"
 
 
 ClebschGordanCoefficient::usage=
-"ClebschGordanCoefficient[\[Gamma]s,ms] returns the Clebsch-Gordan coefficient"
+"returns the iterated Clebsch-Gordan coefficient"
 
 
 (* ::Subsection:: *)
@@ -69,24 +97,66 @@ Times@@MapThread[MemoizedClebschGordanCoefficient,{Most[\[Gamma]s],Most[ss],Cons
 ]
 
 
-AntisymmetrizeRows[tensor_List,p_List?VectorQ]:=Symmetrize[tensor,Antisymmetric/@YoungTableau@p]
+ClebschGordanTensorTrain[\[Lambda]s_List?VectorQ][\[Gamma]s_List?VectorQ]:=ClebschGordanTensorTrain[\[Lambda]s,\[Gamma]s]
+ClebschGordanTensorTrain[\[Lambda]s_List?VectorQ,\[Gamma]s_List?VectorQ]:=MapThread[MemoizedClebschGordanTensor,{Most[\[Gamma]s],Rest[\[Lambda]s],Rest[\[Gamma]s]}]
 
 
-SymmetrizeColumns[tensor_List,p_List?VectorQ]:=Symmetrize[tensor,Symmetric/@ConjugateTableau@YoungTableau@p]
+temp[y_,{x_,tt_}]:=Dot[x,Dot[y,tt]]
 
 
-YoungSymmetrize[tensor_List,p_List?VectorQ]:=SymmetrizeColumns[AntisymmetrizeRows[tensor,p],p]
+(* ::Subsection:: *)
+(*Public Function Attributes*)
+
+
+SetAttributes[
+{
+PathBasisExteriorPower,
+PathBasisSymmetricPower,
+TensorBasisExteriorPower,
+TensorBasisSymmetricPower
+},
+Listable
+]
 
 
 (* ::Subsection:: *)
 (*Public Function Implementations*)
 
 
+(*make a helper function so its clearer whats going on here*)
+PathBasisTensorProduct[\[Lambda]s_List?VectorQ,\[Mu]_Integer?NonNegative]:=FoldList[Abs[#1-First[#2]]+Last[#2]-1&,First[\[Lambda]s],Transpose[{Rest[\[Lambda]s],#}]]&/@Position[Fold[IsotypicComponentsTensorProduct,\[Lambda]s],\[Mu]]
+
+
+PathBasisExteriorPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegative,\[Mu]_Integer?NonNegative]/;d<=3:=
+Switch[
+d,
+1,{{\[Lambda]}},
+2,{{\[Lambda],\[Mu]}},
+3,{{\[Lambda],#+1-Mod[#,2]&@Abs[\[Lambda]-\[Mu]],\[Mu]}}
+];
+
+
+PathBasisSymmetricPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegative,\[Mu]_Integer?NonNegative]/;d<=3:=
+Switch[
+d,
+1,{{\[Lambda]}},
+2,{{\[Lambda],\[Mu]}},
+3,{{\[Lambda],#+Mod[#,2]&@Abs[\[Lambda]-\[Mu]],\[Mu]}}
+];
+
+
+TensorBasisTensorProduct[\[Lambda]s_List?VectorQ,\[Mu]_Integer?NonNegative]:=ClebschGordanTensor[\[Lambda]s]/@PathBasisTensorProduct[\[Lambda]s,\[Mu]]
+
+
+TensorBasisExteriorPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegative,\[Mu]_Integer?NonNegative]:=AntisymmetrizedClebschGordanTensor/@PathBasisExteriorPower[\[Lambda],d,\[Mu]]
+
+
+ClebschGordanTensor[\[Lambda]s_List?VectorQ][\[Gamma]s_List?VectorQ]:=ClebschGordanTensor[\[Lambda]s,\[Gamma]s]
 ClebschGordanTensor[\[Lambda]s_List?VectorQ,\[Gamma]s_List?VectorQ]:=
 If[
 Length[\[Lambda]s]==1,
 IdentityMatrix[2First[\[Gamma]s]+1,SparseArray],
-Chop@Dot@@MapThread[MemoizedClebschGordanTensor,{Most[\[Gamma]s],Rest[\[Lambda]s],Rest[\[Gamma]s]}]
+Chop@Dot@@ClebschGordanTensorTrain[\[Lambda]s,\[Gamma]s]
 ]
 
 
@@ -110,6 +180,12 @@ Antisymmetric[Range[d]]
 ]
 ]
 ]
+
+
+EvaluateClebschGordanTensor[\[Lambda]s_List?VectorQ,\[Gamma]s_List?VectorQ,xs_List?MatrixQ]:=Fold[temp,First[xs],Transpose[{Rest[xs],ClebschGordanTensorTrain[\[Lambda]s,\[Gamma]s]}]]
+
+
+EvaluateSymmetrizedClebschGordanTensor[\[Lambda]_Integer?NonNegative,\[Gamma]s_List?VectorQ,x_List?VectorQ]:=EvaluateClebschGordanTensor[ConstantArray[\[Lambda],Length[\[Gamma]s]],\[Gamma]s,ConstantArray[x,Length[\[Gamma]s]]]
 
 
 End[];

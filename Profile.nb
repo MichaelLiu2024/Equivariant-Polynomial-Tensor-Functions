@@ -1,0 +1,247 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Wolfram 14.2' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       154,          7]
+NotebookDataLength[      9725,        239]
+NotebookOptionsPosition[      8099,        208]
+NotebookOutlinePosition[      8491,        224]
+CellTagsIndexPosition[      8448,        221]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData["Quit"], "Input",
+ CellChangeTimes->{{3.9709150634202223`*^9, 3.970915063642131*^9}},
+ CellLabel->"In[14]:=",ExpressionUUID->"719cd5bb-b97c-4af9-ba67-8cc78d7d91b5"],
+
+Cell[CellGroupData[{
+
+Cell["Profile", "Section",
+ CellChangeTimes->{{3.970915072858857*^9, 
+  3.9709150733058443`*^9}},ExpressionUUID->"ec57b404-aeb2-4707-b6c8-\
+4d335d0268a7"],
+
+Cell[BoxData[
+ RowBox[{"Needs", "[", "\"\<Instrumentation`\>\"", "]"}]], "Input",
+ CellChangeTimes->{{3.970912918630423*^9, 3.970912918630452*^9}},
+ CellLabel->"In[1]:=",ExpressionUUID->"afbb255d-e971-4f19-bf76-ff489616810f"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"Quiet", "[", 
+   RowBox[{
+    RowBox[{"DeleteDirectory", "[", 
+     RowBox[{
+      RowBox[{"FileNameJoin", "[", 
+       RowBox[{"{", 
+        RowBox[{"$TemporaryDirectory", ",", "\"\<Collatz-example\>\""}], 
+        "}"}], "]"}], ",", 
+      RowBox[{"DeleteContents", "->", "True"}]}], "]"}], ",", 
+    RowBox[{"{", 
+     RowBox[{"DeleteDirectory", "::", "nodir"}], "}"}]}], "]"}], 
+  ";"}], "\n", 
+ RowBox[{
+  RowBox[{"tmp", "=", 
+   RowBox[{"CreateDirectory", "[", 
+    RowBox[{"FileNameJoin", "[", 
+     RowBox[{"{", 
+      RowBox[{"$TemporaryDirectory", ",", "\"\<Collatz-example\>\""}], "}"}], 
+     "]"}], "]"}]}], ";"}]}], "Input",
+ CellChangeTimes->{{3.9709129316292477`*^9, 3.970912931629264*^9}, 
+   3.970913166873321*^9, 3.970922679621541*^9},
+ CellLabel->"In[2]:=",ExpressionUUID->"d3235e5f-af0f-43e6-92db-a73c6723da9c"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"file", "=", 
+   RowBox[{
+   "File", "[", "\"\</oden/mliu/HarvestMultiplicitySpaceTree.wl\>\"", "]"}]}],
+   ";"}]], "Input",
+ CellChangeTimes->{{3.970912936699606*^9, 3.970912936699624*^9}, {
+  3.970912984442542*^9, 3.9709129891383343`*^9}, {3.970913911699669*^9, 
+  3.9709139148031397`*^9}, {3.970914240385325*^9, 3.970914242672573*^9}, {
+  3.97091429840027*^9, 3.970914317280808*^9}, {3.970915045328861*^9, 
+  3.970915047468643*^9}},
+ CellLabel->"In[4]:=",ExpressionUUID->"0805fcb3-645d-4004-a51e-430584f9ab88"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"CreateDirectory", "[", 
+   RowBox[{
+    RowBox[{"FileNameJoin", "[", 
+     RowBox[{"{", 
+      RowBox[{"tmp", ",", "\"\<Collatz-orig\>\"", ",", "\"\<Collatz\>\""}], 
+      "}"}], "]"}], ",", 
+    RowBox[{"CreateIntermediateDirectories", "->", "True"}]}], "]"}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"CopyFile", "[", 
+   RowBox[{"file", ",", 
+    RowBox[{"FileNameJoin", "[", 
+     RowBox[{"{", 
+      RowBox[{
+      "tmp", ",", "\"\<Collatz-orig\>\"", ",", "\"\<Collatz\>\"", 
+       ",", "\"\<Profile.wl\>\""}], "}"}], "]"}]}], "]"}], ";"}]}], "Input",
+ CellChangeTimes->{{3.970912939452338*^9, 3.970912939452352*^9}, 
+   3.9709131355287323`*^9, {3.970913213064797*^9, 3.970913215047948*^9}, {
+   3.970913887860589*^9, 3.970913888531259*^9}, 3.970922681285707*^9},
+ CellLabel->"In[5]:=",ExpressionUUID->"4757cd08-e601-4dae-aff9-16d12969e9c2"],
+
+Cell[BoxData[
+ RowBox[{"ProfileInstrument", "[", 
+  RowBox[{
+   RowBox[{"FileNameJoin", "[", 
+    RowBox[{"{", 
+     RowBox[{"tmp", ",", "\"\<Collatz-orig\>\"", ",", "\"\<Collatz\>\""}], 
+     "}"}], "]"}], ",", 
+   RowBox[{"FileNameJoin", "[", 
+    RowBox[{"{", 
+     RowBox[{"FileNameJoin", "[", 
+      RowBox[{"{", 
+       RowBox[{
+       "tmp", ",", "\"\<Collatz-profile\>\"", ",", "\"\<Collatz\>\""}], "}"}],
+       "]"}], "}"}], "]"}]}], "]"}]], "Input",
+ CellChangeTimes->{{3.970912941932242*^9, 3.9709129419322577`*^9}},
+ CellLabel->"In[7]:=",ExpressionUUID->"493ff6af-bdb4-4eba-a6c6-ca648f45a578"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"PrependTo", "[", 
+   RowBox[{"$Path", ",", 
+    RowBox[{"FileNameJoin", "[", 
+     RowBox[{"{", 
+      RowBox[{"tmp", ",", "\"\<Collatz-profile\>\"", ",", "\"\<Collatz\>\""}],
+       "}"}], "]"}]}], "]"}], ";"}]], "Input",
+ CellChangeTimes->{{3.9709129454211893`*^9, 3.970912945421207*^9}, 
+   3.970913157752843*^9, 3.9709133139124947`*^9},
+ CellLabel->"In[8]:=",ExpressionUUID->"35dd5b17-f61f-4bae-9804-cc760897a523"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"Needs", "[", "\"\<Profile`\>\"", "]"}]], "Input",
+ CellChangeTimes->{{3.970912950122785*^9, 3.970912950122799*^9}, 
+   3.970913036138295*^9, 3.9709132343121843`*^9, 3.970913326808119*^9, {
+   3.970913409542239*^9, 3.9709134100534163`*^9}, 3.970913893220579*^9},
+ CellLabel->"In[9]:=",ExpressionUUID->"76440c81-3895-4a14-a37f-0dc6d391717a"],
+
+Cell[BoxData[
+ TemplateBox[{
+  "Needs", "nocont", 
+   "\"Context \\!\\(\\*RowBox[{\\\"\\\\\\\"Profile`\\\\\\\"\\\"}]\\) was not \
+created when Needs was evaluated.\"", 2, 9, 1, 34179031702403818972, "Local"},
+  
+  "MessageTemplate",
+  BaseStyle->"MSG"]], "Message",
+ CellChangeTimes->{
+  3.970913410409667*^9, 3.9709134520182667`*^9, 3.9709134848815737`*^9, 
+   3.970913600937592*^9, 3.970913782945599*^9, {3.970913846655251*^9, 
+   3.970913857998055*^9}, 3.9709139010109653`*^9, {3.97091393744074*^9, 
+   3.97091395890311*^9}, {3.970914265237678*^9, 3.970914301176691*^9}, 
+   3.97091433380107*^9, 3.970914389346279*^9, 3.970914597394318*^9, {
+   3.970914639089411*^9, 3.9709146556782*^9}, {3.970914690836512*^9, 
+   3.970914707542781*^9}, 3.970915027665275*^9, 3.970915081531481*^9, 
+   3.970915300607863*^9, 3.970915478915021*^9, 3.97091662592813*^9, 
+   3.9709168298598948`*^9, 3.970916937390077*^9, 3.970917277863604*^9, 
+   3.9709223398716097`*^9, 3.970922516908052*^9, 3.9709226419034224`*^9, 
+   3.970922677108427*^9, 3.970924694298411*^9, {3.970924734057262*^9, 
+   3.970924753604154*^9}},
+ CellLabel->
+  "During evaluation of \
+In[9]:=",ExpressionUUID->"f23ca324-d84e-4a97-948e-d0076ae9bf66"]
+}, Open  ]],
+
+Cell[BoxData[
+ RowBox[{"Needs", "[", "\"\<GrowMultiplicitySpaceTree`\>\"", "]"}]], "Input",
+ CellChangeTimes->{{3.970915002908619*^9, 3.970915012186952*^9}},
+ CellLabel->"In[10]:=",ExpressionUUID->"2cf8dee1-f20d-4e7e-8443-bafc085460d9"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"tree", "=", 
+   RowBox[{"GrowMultiplicitySpaceTree", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{"2", ",", "3"}], "}"}], ",", 
+     RowBox[{"{", 
+      RowBox[{"2", ",", "1"}], "}"}], ",", "0", ",", 
+     RowBox[{"Range", "[", "5", "]"}]}], "]"}]}], ";"}]], "Input",
+ CellChangeTimes->{{3.970915037276276*^9, 3.9709150408279257`*^9}, {
+  3.970915285498508*^9, 3.9709152856918573`*^9}, {3.970915318921821*^9, 
+  3.9709153191055593`*^9}, {3.970915424345189*^9, 3.970915424523862*^9}, {
+  3.9709226175261106`*^9, 3.970922638728622*^9}, {3.970924729032324*^9, 
+  3.970924729136766*^9}},
+ CellLabel->"In[11]:=",ExpressionUUID->"e54889a9-3b6a-451a-916a-93f39cfbb6bc"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{
+   RowBox[{"{", 
+    RowBox[{"res", ",", "profileData"}], "}"}], "=", 
+   RowBox[{"ProfileEvaluate", "[", 
+    RowBox[{"HarvestMultiplicitySpaceTree", "[", "tree", "]"}], "]"}]}], 
+  ";"}]], "Input",
+ CellChangeTimes->{{3.9709129522034273`*^9, 3.970912952203444*^9}, {
+   3.9709130023625307`*^9, 3.970913004105763*^9}, {3.9709130488259773`*^9, 
+   3.970913060025292*^9}, {3.9709133525040207`*^9, 3.97091335269551*^9}, 
+   3.970913404375453*^9, {3.970913478677616*^9, 3.9709134802771387`*^9}, {
+   3.970913850419898*^9, 3.97091385700793*^9}, {3.970915035643417*^9, 
+   3.970915059562705*^9}},
+ CellLabel->"In[12]:=",ExpressionUUID->"08b9241e-e32f-42be-ae04-f37c68fc7c32"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"reportData", "=", 
+   RowBox[{"ProfileReport", "[", 
+    RowBox[{"ProfileProcess", "[", "profileData", "]"}], "]"}]}], 
+  ";"}]], "Input",
+ CellChangeTimes->{{3.970912958779356*^9, 3.970912968761161*^9}},
+ CellLabel->"In[13]:=",ExpressionUUID->"e9a2a49e-722a-4182-9fa7-45d470cfe15f"]
+}, Open  ]]
+},
+WindowSize->{1387.5, 762},
+WindowMargins->{{Automatic, 0}, {Automatic, 0}},
+FrontEndVersion->"14.2 for Linux x86 (64-bit) (March 16, 2025)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"fd3ec0fd-e4fd-4452-aefc-d47b01a685a1"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[554, 20, 177, 2, 29, "Input",ExpressionUUID->"719cd5bb-b97c-4af9-ba67-8cc78d7d91b5"],
+Cell[CellGroupData[{
+Cell[756, 26, 154, 3, 65, "Section",ExpressionUUID->"ec57b404-aeb2-4707-b6c8-4d335d0268a7"],
+Cell[913, 31, 225, 3, 29, "Input",ExpressionUUID->"afbb255d-e971-4f19-bf76-ff489616810f"],
+Cell[1141, 36, 868, 23, 49, "Input",ExpressionUUID->"d3235e5f-af0f-43e6-92db-a73c6723da9c"],
+Cell[2012, 61, 547, 11, 29, "Input",ExpressionUUID->"0805fcb3-645d-4004-a51e-430584f9ab88"],
+Cell[2562, 74, 876, 20, 49, "Input",ExpressionUUID->"4757cd08-e601-4dae-aff9-16d12969e9c2"],
+Cell[3441, 96, 606, 15, 29, "Input",ExpressionUUID->"493ff6af-bdb4-4eba-a6c6-ca648f45a578"],
+Cell[4050, 113, 453, 10, 29, "Input",ExpressionUUID->"35dd5b17-f61f-4bae-9804-cc760897a523"],
+Cell[CellGroupData[{
+Cell[4528, 127, 363, 5, 29, "Input",ExpressionUUID->"76440c81-3895-4a14-a37f-0dc6d391717a"],
+Cell[4894, 134, 1202, 23, 26, "Message",ExpressionUUID->"f23ca324-d84e-4a97-948e-d0076ae9bf66"]
+}, Open  ]],
+Cell[6111, 160, 236, 3, 29, "Input",ExpressionUUID->"2cf8dee1-f20d-4e7e-8443-bafc085460d9"],
+Cell[6350, 165, 704, 15, 29, "Input",ExpressionUUID->"e54889a9-3b6a-451a-916a-93f39cfbb6bc"],
+Cell[7057, 182, 705, 14, 29, "Input",ExpressionUUID->"08b9241e-e32f-42be-ae04-f37c68fc7c32"],
+Cell[7765, 198, 318, 7, 29, "Input",ExpressionUUID->"e9a2a49e-722a-4182-9fa7-45d470cfe15f"]
+}, Open  ]]
+}
+]
+*)
+
