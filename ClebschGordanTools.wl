@@ -45,6 +45,9 @@ ClebschGordanTensor::usage="gives the Clebsch-Gordan tensor CG(\[Lambda]s,\[Gamm
 AntisymmetrizedClebschGordanTensor::usage="gives the antisymmetrized Clebsch-Gordan tensor CG((\[Lambda],...,\[Lambda]),\[Gamma]s)."
 
 
+EvaluateClebschGordanTensor::usage="evaluates the tensor CG(\[Lambda]s,\[Gamma]s) at the inputs xs."
+
+
 (* ::Section:: *)
 (*Private Functions*)
 
@@ -138,7 +141,7 @@ ClebschGordanTensorTrain[\[Lambda]s_List?VectorQ][\[Gamma]s_List?VectorQ]:=Clebs
 ClebschGordanTensorTrain[\[Lambda]s_List?VectorQ,\[Gamma]s_List?VectorQ]:=MapThread[ElementaryClebschGordanTensor,{Most[\[Gamma]s],Rest[\[Lambda]s],Rest[\[Gamma]s]}]
 
 
-EvaluateClebschGordanTensorTrain[xs_List?MatrixQ,tt_List]:=Chop@Fold[ContractClebschGordanLegs,First[xs],Transpose[{Rest[xs],tt}]]
+EvaluateClebschGordanTensorTrain[xs_List,tt_List]:=Chop@Fold[ContractClebschGordanLegs,First[xs],Transpose[{Rest[xs],tt}]]
 
 
 EvaluateSymmetrizedClebschGordanTensorTrain[x_List?VectorQ,tt_List]:=EvaluateClebschGordanTensorTrain[ConstantArray[x,Length[tt]+1],tt]
@@ -154,11 +157,13 @@ Chop@Dot@@ClebschGordanTensorTrain[\[Lambda]s,\[Gamma]s]
 ]
 
 
-AntisymmetrizedClebschGordanTensor[\[Gamma]s_List?VectorQ]:=
-If[
-Length[\[Gamma]s]==1,
-IdentityMatrix[2First[\[Gamma]s]+1,SparseArray],
-Module[
+(*Explicitly implement the case legnth=3 as well. Separate into legnth <=3 and length >=4 cases for clarity*)
+AntisymmetrizedClebschGordanTensor[\[Gamma]s_List?VectorQ]/;Length[\[Gamma]s]<=3:=
+Switch[
+Length[\[Gamma]s],
+1,IdentityMatrix[2First[\[Gamma]s]+1,SparseArray],
+2,If[EvenQ[\[Gamma]s[[2]]],0,ClebschGordanTensor[ConstantArray[First[\[Gamma]s],2],\[Gamma]s]],
+_,Module[
 {\[Lambda]=First[\[Gamma]s],\[Mu]=Last[\[Gamma]s],d=Length[\[Gamma]s],msList,\[Lambda]s\[Mu]},
 
 (*We could still try to generate these directly somehow...*)
@@ -176,6 +181,9 @@ Antisymmetric[Range[d]]
 ]
 ]
 ]
+
+
+EvaluateClebschGordanTensor[xs_List,tensor_]:=Chop@Normal@Fold[Dot[#2,#1]&,tensor,Take[xs,TensorRank[tensor]-1]]
 
 
 End[];

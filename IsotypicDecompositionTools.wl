@@ -70,6 +70,7 @@ IsotypicComponentTensorProductQ[\[Lambda]s_List?VectorQ,\[Mu]_Integer?NonNegativ
 IsotypicMultiplicityTensorProduct[\[Lambda]s_List?VectorQ,\[Mu]_Integer?NonNegative]:=Count[Fold[IsotypicComponentsTensorProduct,\[Lambda]s],\[Mu],{-1}]
 
 
+(*create IsotypicComponentExteriorPowerQ, etc. and memoize them based on IsotypicMultiplicityExteriorPower>0. We might use this kind of function to test validity of inputs in the future for code robustness*)
 IsotypicMultiplicityExteriorPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegative,\[Mu]_Integer?NonNegative]:=Count[#,_?(Total[#]==\[Mu]&)]-Count[#,_?(Total[#]==\[Mu]+1&)]&@Subsets[Range[-\[Lambda],\[Lambda]],{d}]
 
 
