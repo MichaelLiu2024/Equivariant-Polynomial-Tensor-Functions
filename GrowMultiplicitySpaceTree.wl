@@ -4,7 +4,7 @@
 (*Public Functions*)
 
 
-BeginPackage["GrowMultiplicitySpaceTree`",{"IsotypicDecompositionTools`","CombinatoricsTools`"}];
+BeginPackage["GrowMultiplicitySpaceTree`",{"ClebschGordanTools`","IsotypicDecompositionTools`","CombinatoricsTools`"}];
 
 
 (* ::Subsection:: *)
@@ -46,13 +46,13 @@ Module[
 (*Level 1: D*)
 tree=Tree[{\[Lambda]s,m\[Lambda]s,\[Nu]},Ds];
 
-(*Level 2: Subscript[(Subscript[d, \[Lambda]]), \[Lambda]]*)
+(*Level 2: d\[Lambda]s*)
 tree=NestTree[StrictCompositions[#,Length[\[Lambda]s]]&,tree];
 
-(*Level 3: Subscript[(Subscript[\[Pi], \[Lambda]]), \[Lambda]]*)
+(*Level 3: \[Pi]\[Lambda]s*)
 tree=NestTree[Tuples@ThinPartitions[#,\[Lambda]s,m\[Lambda]s]&,tree];
 
-(*Level 4: Subscript[(Subscript[\[Mu], \[Lambda]]), \[Lambda]]*)
+(*Level 4: \[Mu]\[Lambda]s*)
 tree=NestTree[MuTuples[\[Lambda]s,#,\[Nu]]&,tree];
 
 (*Prune childless nodes for memory efficiency*)
