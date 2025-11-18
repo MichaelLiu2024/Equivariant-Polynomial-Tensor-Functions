@@ -33,7 +33,7 @@ ClebschGordanPathsSchurPower::usage="gives a list of all Clebsch-Gordan paths fr
 ClebschGordanTensorTrain::usage="gives the tensor train representation of the Clebsch-Gordan tensor CG(\[Lambda]s,\[Gamma]s)."
 
 
-EvaluateTensorTrain::usage="evaluates the tensor train representation of CG(\[Lambda]s,\[Gamma]s) at the inputs xs."
+EvaluateTensorTrain::usage="evaluates the tensor train representation of CG(\[Lambda]s,\[Gamma]s) at the given legs."
 
 
 EvaluateSymmetrizedTensorTrain::usage="evaluates the symmetrized tensor train representation of CG((\[Lambda],...,\[Lambda]),\[Gamma]s) at the inputs (x,...,x)."
@@ -45,7 +45,7 @@ ClebschGordanTensor::usage="gives the Clebsch-Gordan tensor CG(\[Lambda]s,\[Gamm
 AntisymmetrizedClebschGordanTensor::usage="gives the antisymmetrized Clebsch-Gordan tensor CG((\[Lambda],...,\[Lambda]),\[Gamma]s)."
 
 
-EvaluateClebschGordanTensor::usage="evaluates the tensor CG(\[Lambda]s,\[Gamma]s) at the inputs xs."
+EvaluateClebschGordanTensor::usage="evaluates the tensor CG(\[Lambda]s,\[Gamma]s) at the given legs."
 
 
 (* ::Section:: *)
@@ -225,10 +225,13 @@ ClebschGordanTensorTrain[\[Lambda]s_List?VectorQ][\[Gamma]s_List?VectorQ]:=Clebs
 ClebschGordanTensorTrain[\[Lambda]s_List?VectorQ,\[Gamma]s_List?VectorQ]:=MapThread[ElementaryClebschGordanTensor,{Most[\[Gamma]s],Rest[\[Lambda]s],Rest[\[Gamma]s]}]
 
 
-EvaluateTensorTrain[xs_List,tt_List]:=Chop@Fold[ContractLegs,First[xs],Transpose[{Rest[xs],tt}]]
+EvaluateTensorTrain[legs_List,tensorTrain_List]:=Chop@Fold[ContractLegs,First[legs],Transpose[{Rest[legs],tensorTrain}]]
 
 
-EvaluateSymmetrizedTensorTrain[x_List?VectorQ,tt_List]:=EvaluateTensorTrain[ConstantArray[x,Length[tt]+1],tt]
+EvaluateSymmetrizedTensorTrain[leg_List?VectorQ,tensorTrain_List]:=Chop@Fold[Dot[leg,Dot[#1,#2]]&,leg,tensorTrain]
+
+
+EvaluateYoungSymmetrizedTensorTrain[legs_List,coreTensorTrain_List,leafTensors_List]:=Chop@Fold[Dot[leg,Dot[#1,#2]]&,leg,tensorTrain]
 
 
 (*Maybe this should take the tensor train as input?*)
@@ -267,7 +270,7 @@ Antisymmetric[Range[d]]
 ]
 
 
-EvaluateClebschGordanTensor[xs_List,tensor_]:=Chop@Normal@Fold[Dot[#2,#1]&,tensor,Take[xs,TensorRank[tensor]-1]]
+EvaluateClebschGordanTensor[legs_List,tensor_]:=Chop@Normal@Fold[Dot[#2,#1]&,tensor,Take[legs,TensorRank[tensor]-1]]
 
 
 End[];
