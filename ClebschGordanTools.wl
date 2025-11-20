@@ -8,7 +8,7 @@
 (*Public Functions*)
 
 
-BeginPackage["ClebschGordanTools`",{"IsotypicDecompositionTools`"}];
+BeginPackage["ClebschGordanTools`",{"IsotypicDecompositionTools`","TensorTools`"}];
 
 
 (* ::Subsection:: *)
@@ -33,19 +33,7 @@ ClebschGordanPathsSchurPower::usage="gives a list of all Clebsch-Gordan paths fr
 ClebschGordanTensorTrain::usage="gives the tensor train representation of the Clebsch-Gordan tensor CG(\[Lambda]s,\[Gamma]s)."
 
 
-EvaluateTensorTrain::usage="evaluates the tensor train representation of CG(\[Lambda]s,\[Gamma]s) at the given legs."
-
-
-EvaluateSymmetrizedTensorTrain::usage="evaluates the symmetrized tensor train representation of CG((\[Lambda],...,\[Lambda]),\[Gamma]s) at the inputs (x,...,x)."
-
-
-ClebschGordanTensor::usage="gives the Clebsch-Gordan tensor CG(\[Lambda]s,\[Gamma]s)."
-
-
 AntisymmetrizedClebschGordanTensor::usage="gives the antisymmetrized Clebsch-Gordan tensor CG((\[Lambda],...,\[Lambda]),\[Gamma]s)."
-
-
-EvaluateClebschGordanTensor::usage="evaluates the tensor CG(\[Lambda]s,\[Gamma]s) at the given legs."
 
 
 (* ::Section:: *)
@@ -88,10 +76,6 @@ With[
 {ss=Accumulate[ms]},
 Times@@MapThread[ElementaryClebschGordanCoefficient,{Most[\[Gamma]s],Most[ss],ConstantArray[First[\[Gamma]s],Length[\[Gamma]s]-1],Rest[ms],Rest[\[Gamma]s],Rest[ss]}]
 ]
-
-
-(*contracts tensor with y in the first mode and x in the second mode*)
-ContractLegs[y_?VectorQ,{x_List?VectorQ,tensor_SparseArray}]:=Dot[x,Dot[y,tensor]]
 
 
 (*helper to convert indices into paths*)
@@ -173,22 +157,15 @@ With[
 {d=Total[p]},
 Switch[
 Length[p](*number of parts*),
-1,{#,{\[Mu]}}&/@ClebschGordanPathsExteriorPower[\[Lambda],d,\[Mu]],
-d,{\[Xi]\[Lambda]ps(*How to get these? we may need to return these in the original function CGPathsSymmetricPower... although this is somewhat undesirable*),#}&/@ClebschGordanPathsSymmetricPower[\[Lambda],d,\[Mu]],
-_,ClebschGordanPathsSchurPower[\[Lambda],p,\[Mu]]
-]
-]
-
-
-ClebschGordanPathsSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_Integer?NonNegative]/;First[p]<=3\[And]1<Length[p]<Total[p]:=
-Module[
+1,{{#},{\[Mu]}}&/@ClebschGordanPathsExteriorPower[\[Lambda],d,\[Mu]],
+d,{ConstantArray[{\[Lambda]},d],#}&/@ClebschGordanPathsSymmetricPower[\[Lambda],d,\[Mu]],
+_,Module[
 {
 coreLegs,corePaths,coreTensorTrains,
 leafPaths,leafTensors,
 leafRandomProbes,coreRandomProbes,
 syndromeMatrix,
-coreIndices,leafIndices,
-d=Total[p]
+coreIndices,leafIndices
 },
 
 coreLegs=Select[Tuples@IsotypicComponentsExteriorPower[\[Lambda],p],IsotypicComponentTensorProductQ[#,\[Mu]]&];
@@ -199,7 +176,7 @@ leafPaths=ClebschGordanPathsExteriorPower[\[Lambda],p,#]&/@coreLegs;
 leafTensors=Map[AntisymmetrizedClebschGordanTensor,leafPaths,{3}];
 
 leafRandomProbes=RandomReal[1,{d+d(*oversampling*),First[p],2\[Lambda]+1}];
-coreRandomProbes=Outer[EvaluateClebschGordanTensor,leafRandomProbes,leafTensors,1,3];
+coreRandomProbes=Outer[EvaluateTensor,leafRandomProbes,leafTensors,1,3];
 
 (*When First[p]\[LessEqual]3, the subselection below is simple. In general, we would need to take Tuples, and the bookkeeping gets even more complicated.*)
 coreRandomProbes=Flatten[coreRandomProbes,{{1},{2},{3,4}}];
@@ -219,38 +196,28 @@ leafIndices=findIndex[Accumulate[Length/@corePaths],coreIndices];
 
 Transpose[{Flatten[leafPaths,{{1},{2},{3,4}}][[leafIndices]],Flatten[corePaths,1][[coreIndices]]}]
 ]
-
-
-ClebschGordanTensorTrain[\[Lambda]s_List?VectorQ][\[Gamma]s_List?VectorQ]:=ClebschGordanTensorTrain[\[Lambda]s,\[Gamma]s]
-ClebschGordanTensorTrain[\[Lambda]s_List?VectorQ,\[Gamma]s_List?VectorQ]:=MapThread[ElementaryClebschGordanTensor,{Most[\[Gamma]s],Rest[\[Lambda]s],Rest[\[Gamma]s]}]
-
-
-EvaluateTensorTrain[legs_List,tensorTrain_List]:=Chop@Fold[ContractLegs,First[legs],Transpose[{Rest[legs],tensorTrain}]]
-
-
-EvaluateSymmetrizedTensorTrain[leg_List?VectorQ,tensorTrain_List]:=Chop@Fold[Dot[leg,Dot[#1,#2]]&,leg,tensorTrain]
-
-
-EvaluateYoungSymmetrizedTensorTrain[legs_List,coreTensorTrain_List,leafTensors_List]:=Chop@Fold[Dot[leg,Dot[#1,#2]]&,leg,tensorTrain]
-
-
-(*Maybe this should take the tensor train as input?*)
-ClebschGordanTensor[\[Lambda]s_List?VectorQ][\[Gamma]s_List?VectorQ]:=ClebschGordanTensor[\[Lambda]s,\[Gamma]s]
-ClebschGordanTensor[\[Lambda]s_List?VectorQ,\[Gamma]s_List?VectorQ]:=
-If[
-Length[\[Lambda]s]==1,(*we should remove calls with length 1 eventually by adjusting code higher up*)
-IdentityMatrix[2First[\[Gamma]s]+1,SparseArray],
-Chop@Dot@@ClebschGordanTensorTrain[\[Lambda]s,\[Gamma]s]
+]
 ]
 
 
-(*Explicitly implement the case length=3 as well. When done, separate into length <=3 and length >=4 cases for clarity*)
+ClebschGordanTensorTrain[\[Lambda]s_List?VectorQ][\[Gamma]s_List?VectorQ]:=ClebschGordanTensorTrain[\[Lambda]s,\[Gamma]s]
+ClebschGordanTensorTrain[\[Lambda]s_List?VectorQ,\[Gamma]s_List?VectorQ]:=
+If[
+Length[\[Lambda]s]==1,(*we should remove calls with length 1 eventually by adjusting code higher up*)
+{IdentityMatrix[2First[\[Gamma]s]+1,SparseArray]},
+MapThread[ElementaryClebschGordanTensor,{Most[\[Gamma]s],Rest[\[Lambda]s],Rest[\[Gamma]s]}]
+]
+
+
 AntisymmetrizedClebschGordanTensor[\[Gamma]s_List?VectorQ]/;Length[\[Gamma]s]<=3:=
-Switch[
-Length[\[Gamma]s],
-1,IdentityMatrix[2First[\[Gamma]s]+1,SparseArray],
-2,If[EvenQ[\[Gamma]s[[2]]],0,ClebschGordanTensor[ConstantArray[First[\[Gamma]s],2],\[Gamma]s]],
-_,Module[
+Symmetrize[
+ContractTensorTrain@ClebschGordanTensorTrain[ConstantArray[First[\[Gamma]s],Length[\[Gamma]s]],\[Gamma]s],
+Antisymmetric[Range[Length[\[Gamma]s]]]
+]
+
+
+AntisymmetrizedClebschGordanTensor[\[Gamma]s_List?VectorQ]/;Length[\[Gamma]s]>=4:=
+Module[
 {\[Lambda]=First[\[Gamma]s],\[Mu]=Last[\[Gamma]s],d=Length[\[Gamma]s],msList,\[Lambda]s\[Mu]},
 
 (*We could still try to generate these directly somehow...*)
@@ -267,10 +234,6 @@ Antisymmetric[Range[d]]
 ]
 ]
 ]
-]
-
-
-EvaluateClebschGordanTensor[legs_List,tensor_]:=Chop@Normal@Fold[Dot[#2,#1]&,tensor,Take[legs,TensorRank[tensor]-1]]
 
 
 End[];
