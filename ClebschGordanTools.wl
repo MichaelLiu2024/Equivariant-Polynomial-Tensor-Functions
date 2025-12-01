@@ -68,6 +68,7 @@ Join@@Table[
 {2\[Lambda]1+1,2\[Lambda]2+1,2\[Lambda]3+1}
 ]
 ]
+Elementary
 
 
 (*gives the coefficient of the Clebsch-Gordan tensor CG((\[Gamma]1,...,\[Gamma]1),\[Gamma]s)*)
