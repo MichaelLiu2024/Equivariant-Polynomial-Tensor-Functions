@@ -91,7 +91,7 @@ ConjugateTableau[t_List]:=Flatten[t,{2}]
 ConjugatePartition[p_List?VectorQ]:=Total[UnitStep[Outer[Plus,p,-Range[First[p]]]]]
 
 
-SemiStandardYoungTableaux[p_List?VectorQ,n_Integer?Positive]:=Join@@Table[SemiStandardYoungTableaux[p,w],{w,WeakCompositions[Tr[p],n]}]
+SemiStandardYoungTableaux[p_List?VectorQ,n_Integer?Positive]:=Join@@Table[SemiStandardYoungTableaux[p,w],{w,IntegerPartitions[Tr[p],{n}]}]
 
 
 SemiStandardYoungTableaux[pp_List,w_List]:=

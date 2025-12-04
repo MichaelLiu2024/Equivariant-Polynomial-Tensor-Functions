@@ -177,7 +177,7 @@ leafPaths=ClebschGordanPathsExteriorPower[\[Lambda],p,#]&/@coreLegs;
 leafTensors=Map[AntisymmetrizedClebschGordanTensor,leafPaths,{3}];
 
 leafRandomProbes=RandomReal[1,{d+d(*oversampling*),First[p],2\[Lambda]+1}];
-coreRandomProbes=Outer[EvaluateTensor,leafRandomProbes,leafTensors,1,3];
+coreRandomProbes=Outer[ContractLeafVectorsCoreTensor,leafRandomProbes,leafTensors,1,3];
 
 (*When First[p]\[LessEqual]3, the subselection below is simple. In general, we would need to take Tuples, and the bookkeeping gets even more complicated.*)
 coreRandomProbes=Flatten[coreRandomProbes,{{1},{2},{3,4}}];
@@ -187,7 +187,7 @@ syndromeMatrix=
 MapThread[
 Function[
 {coreRandomProbe,coreTensorTrain},
-EvaluateTensorTrain[coreRandomProbe,#]&/@coreTensorTrain
+ContractLeafVectorsCoreTensorTrain[coreRandomProbe,#]&/@coreTensorTrain
 ],
 {#,coreTensorTrains}
 ]&/@coreRandomProbes;
@@ -212,7 +212,7 @@ MapThread[ElementaryClebschGordanTensor,{Most[\[Gamma]s],Rest[\[Lambda]s],Rest[\
 
 AntisymmetrizedClebschGordanTensor[\[Gamma]s_List?VectorQ]/;Length[\[Gamma]s]<=3:=
 Symmetrize[
-ContractTensorTrain@ClebschGordanTensorTrain[ConstantArray[First[\[Gamma]s],Length[\[Gamma]s]],\[Gamma]s],
+ContractCoreTensorTrain@ClebschGordanTensorTrain[ConstantArray[First[\[Gamma]s],Length[\[Gamma]s]],\[Gamma]s],
 Antisymmetric[Range[Length[\[Gamma]s]]]
 ]
 
