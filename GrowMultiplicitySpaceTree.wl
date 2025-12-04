@@ -48,7 +48,7 @@ SphericalBasisToMonomialBasis[sphericalPolynomials_]:=
 Flatten@FullSimplify@ReplaceAll[
 Chop@FullSimplify@ReplaceAll[
 sphericalPolynomials,
-Subscript[Global`x,\[Lambda]_,vec_,mult_]:>SolidHarmonicR[\[Lambda],vec,Subscript[Global`x,mult],Subscript[Global`y,mult],Subscript[Global`z,mult]]
+Subscript[Global`x,\[Lambda]_,vec_,mult_]:>SolidHarmonicR[\[Lambda],vec,Subscript[Global`x,\[Lambda],mult],Subscript[Global`y,\[Lambda],mult],Subscript[Global`z,\[Lambda],mult]]
 ],
 r:(_Real|_Complex):>RootApproximant[r]
 ]
@@ -108,12 +108,12 @@ ImageSize->Large
 (*Public Function Implementations*)
 
 
-GrowMultiplicitySpaceTree[\[Lambda]s_,m\[Lambda]s_,\[Nu]_,Ds_]:=
+GrowMultiplicitySpaceTree[\[Lambda]s_,m\[Lambda]s_,\[Nu]_,dMax_]:=
 Module[
 {tree},
 
 (*Level 1: D*)
-tree=Tree[{\[Lambda]s,m\[Lambda]s,\[Nu]},Ds];
+tree=Tree[{\[Lambda]s,m\[Lambda]s,\[Nu]},Range[Total[m\[Lambda]s],dMax]];
 
 (*Level 2: d\[Lambda]s*)
 tree=NestTree[StrictCompositions[#,Length[\[Lambda]s]]&,tree];
