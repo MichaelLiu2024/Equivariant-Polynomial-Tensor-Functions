@@ -116,11 +116,11 @@ EvaluateSymmetrizedTensorTrain[leafVector_List?VectorQ,coreTensorTrain_List]:=Ch
 EvaluateYoungSymmetrizedTensorTree[leafVectors_List,leafTensors_List,coreTensorTrain_List]:=ContractLeafVectorsCoreTensorTrain[ContractLeafVectorsCoreTensor[leafVectors]/@leafTensors,coreTensorTrain]
 
 
-AntisymmetrizeRows[tensor_?ArrayQ,p_List?VectorQ]:=Symmetrize[tensor,Antisymmetric/@YoungTableau@p]
+AntisymmetrizeRows[tensor_?ArrayQ,p_List?VectorQ]:=Symmetrize[tensor,Antisymmetric/@StandardYoungTableau@p]
 
 
 SymmetrizeColumns[p_List?VectorQ][tensor_?ArrayQ]:=SymmetrizeColumns[tensor,p]
-SymmetrizeColumns[tensor_?ArrayQ,p_List?VectorQ]:=Symmetrize[tensor,Symmetric/@ConjugateTableau@YoungTableau@p]
+SymmetrizeColumns[tensor_?ArrayQ,p_List?VectorQ]:=Symmetrize[tensor,Symmetric/@ConjugateTableau@StandardYoungTableau@p]
 
 
 YoungSymmetrize[tensor_?ArrayQ,p_List?VectorQ]:=SymmetrizeColumns[AntisymmetrizeRows[tensor,p],p]

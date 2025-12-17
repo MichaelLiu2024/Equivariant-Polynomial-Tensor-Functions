@@ -1,6 +1,20 @@
 (* ::Package:: *)
 
 (* ::Section:: *)
+(*To Do*)
+
+
+(*SchurS -> Det is one bottleneck in IsotypicDataTree. Symbolic determinant of a matrix with polynomial entries*)
+(*We could try an alternative implementation of IsotypicMultiplicitySchurPower: find an explicit expression for the generating function of the number of
+semistandard Young tableaux (SSYT) of shape p with powers being the total sum of entries and use Coefficient. Maybe try this for IsotypicMultiplicityExteriorPower
+as well for consistency, though tbh it may be slower. Low priority though.*)
+(*USE MATLAB squeeze in Mathematica via ArrayReshape and Dimensions (or something else) to remove modes of dimension 1*)
+(*Apply identity matrices implicitly; don't form them as sparse arrays and multiply,this is a waste*)
+(*Replace Tuples with Sequence; need to adjust the pure function ContractTensorTree*)
+(*Let's go back to ClebschGordanPathsSchurPower and use our new understanding of Outer to write the most generalized code.*)
+
+
+(* ::Section:: *)
 (*Public Functions*)
 
 
@@ -11,13 +25,8 @@ BeginPackage["GrowMultiplicitySpaceTree`",{"TensorTools`","ClebschGordanTools`",
 (*Public Function Declarations*)
 
 
-(*SchurS -> Det is the only bottleneck. Symbolic determinant of a matrix with polynomial entries*)
-(*We could try an alternative implementation of IsotypicMultiplicitySchurPower: find an explicit expression for the generating function of the number of
-semistandard Young tableaux (SSYT) of shape p with powers being the total sum of entries and use Coefficient. Maybe try this for IsotypicMultiplicityExteriorPower
-as well for consistency, though tbh it may be slower. Low priority though.*)
-(*USE MATLAB squeeze in Mathematica via ArrayReshape and Dimensions (or something else) to remove modes of dimension 1*)
-(*Apply identity matrices implicitly; don't form them as sparse arrays and multiply,this is a waste*)
-GrowMultiplicitySpaceTree::usage="returns the tree"
+IsotypicDataTree::usage="forms the isotypic data tree"
+IsotypicDataTreeToPolynomials::usage="converts the isotypic data tree into the corresponding list of equivariant polynomials"
 
 
 (* ::Section:: *)
@@ -31,66 +40,34 @@ Begin["`Private`"];
 (*Private Function Implementations*)
 
 
-MuTuples[\[Lambda]s_List?VectorQ,\[Pi]\[Lambda]s_List,\[Nu]_Integer?NonNegative]:=Select[Tuples@MapThread[IsotypicComponentsSchurPower,{\[Lambda]s,\[Pi]\[Lambda]s}],IsotypicComponentTensorProductQ[#,\[Nu]]&]
+(* ::Subsubsection:: *)
+(*IsotypicDataTree*)
 
 
-PruneChildlessNodes[tree_]:=TreeFold[If[#2=={},Nothing,Tree[##]]&,tree]
+CoreSpins[\[Lambda]s_List?VectorQ,\[Pi]\[Lambda]s_List,\[Nu]_Integer?NonNegative]:=
+Select[Tuples@MapThread[IsotypicComponentsSchurPower,{\[Lambda]s,\[Pi]\[Lambda]s}],IsotypicComponentTensorProductQ[#,\[Nu]]&]
 
 
-SchurPathToTensorTrain[{leafPaths_List,corePath_List?VectorQ}]:=
-{AntisymmetrizedClebschGordanTensor/@leafPaths,ClebschGordanTensorTrain[Last/@leafPaths,corePath]}
+ThinPartitions::usage="ThinPartitions[] gives a list of all integer partitions of d with parts at most Min[2\[Lambda]+1,m]"
 
 
-SolidHarmonicR=ResourceFunction["SolidHarmonicR"];
+SetAttributes[ThinPartitions,Listable]
+ThinPartitions[d\[Lambda]_Integer?NonNegative,\[Lambda]_Integer?NonNegative,m\[Lambda]_Integer?Positive]:=IntegerPartitions[d\[Lambda],All,Range[Min[2\[Lambda]+1,m\[Lambda]]]]
 
 
-SphericalBasisToMonomialBasis[sphericalPolynomials_]:=
-Flatten@FullSimplify@ReplaceAll[
-Chop@FullSimplify@ReplaceAll[
-sphericalPolynomials,
-Subscript[Global`x,\[Lambda]_,vec_,mult_]:>SolidHarmonicR[\[Lambda],vec,Subscript[Global`x,\[Lambda],mult],Subscript[Global`y,\[Lambda],mult],Subscript[Global`z,\[Lambda],mult]]
-],
-r:(_Real|_Complex):>RootApproximant[r]
-]
+PruneChildlessNodes[tree_Tree]:=TreeFold[If[#2=={},Nothing,Tree[##]]&,tree]
 
 
-HarvestPath[{{\[Lambda]s_,m\[Lambda]s_,\[Nu]_},D_,d\[Lambda]s_,\[Pi]\[Lambda]s_,\[Mu]\[Lambda]s_}]:=
-Module[
+PathsSSYTs[{{\[Lambda]s_,m\[Lambda]s_,\[Nu]_},D_,d\[Lambda]s_,\[Pi]\[Lambda]s_,\[Mu]\[Lambda]s_}]:=
 {
-SSYT\[Lambda]s,
-corePaths,coreTensorTrains,
-leafPaths,leafTensorTrees,
-leafTensors,
-coreProbes,
-sphericalPolynomials
-},
-
-SSYT\[Lambda]s=MapThread[SemiStandardYoungTableaux,{\[Pi]\[Lambda]s,m\[Lambda]s}];
-
-corePaths=ClebschGordanPathsTensorProduct[\[Mu]\[Lambda]s,\[Nu]];
-coreTensorTrains=ClebschGordanTensorTrain[\[Mu]\[Lambda]s]/@corePaths;
-
-leafPaths=MapThread[ClebschGordanPathsSchurPower,{\[Lambda]s,\[Pi]\[Lambda]s,\[Mu]\[Lambda]s}];
-leafTensorTrees=Map[SchurPathToTensorTrain,leafPaths,{2}];
-
-(*Temporary solution; replace with polarization*)
-leafTensors=Map[ContractLeafTensorsCoreTensorTrain[Sequence@@#]&,leafTensorTrees,{2}];
-leafTensors=MapThread[SymmetrizeColumns[#1]/@#2&,{\[Pi]\[Lambda]s,leafTensors}];
-
-coreProbes=MapThread[Flatten[Outer[ContractLeafSSYTCoreTensor,##,1],1]&,{SSYT\[Lambda]s,leafTensors}];
-
-(*Outer[Print@*SpinListToSpinTree@*List,Tuples[leafPaths],corePaths,1];Rewrite this function to work on tensor trains, not paths*)
-(*Replace Tuples with Sequence; need to adjust the pure function ContractTensorTree*)
-(*Let's go back to ClebschGordanPathsSchurPower and use our new understanding of Outer to write the most generalized code.*)
-(*
-{<|"Subscript[Hom, G](Subscript[H, \[Nu]],Underscript[\[CircleTimes], \[Lambda]]Subscript[H, Subscript[\[Mu], \[Lambda]]])"->coreTensorTrees,"(Subscript[Hom, G](Subscript[H, Subscript[\[Mu], \[Lambda]]],Subscript[e, Subscript[\[Pi], \[Lambda]]](Subsuperscript[H, \[Lambda], \[CircleTimes]Subscript[d, \[Lambda]]])Subscript[), \[Lambda]]"->leafTensorTrees|>};*)
-
-sphericalPolynomials=Flatten[Outer[ContractLeafVectorsCoreTensorTrain,Tuples[coreProbes],coreTensorTrains,1],1];
-SphericalBasisToMonomialBasis[sphericalPolynomials]
-]
+<|
+"corePaths"->ClebschGordanPathsTensorProduct[\[Mu]\[Lambda]s,\[Nu]],
+"leafPaths"->MapThread[ClebschGordanPathsSchurPower,{\[Lambda]s,\[Pi]\[Lambda]s,\[Mu]\[Lambda]s}],
+"SSYT\[Lambda]s"->MapThread[SemiStandardYoungTableaux,{\[Pi]\[Lambda]s,m\[Lambda]s}]|>
+}
 
 
-AncestralNestTree[f_,tree_]:=
+AncestralNestTree[f_,tree_Tree]:=
 TreeReplacePart[
 tree,
 Function[
@@ -104,11 +81,71 @@ ImageSize->Large
 ]
 
 
+(* ::Subsubsection:: *)
+(*IsotypicDataTreeToPolynomials*)
+
+
+PathTreeToTensorTree[{leafPaths_List,corePath_List?VectorQ}]:=
+{AntisymmetrizedClebschGordanTensor/@leafPaths,ClebschGordanTensorTrain[Last/@leafPaths,corePath]}
+
+
+(*https://resources.wolframcloud.com/FunctionRepository/resources/SolidHarmonicR/*)
+SolidHarmonicR[l_Integer?NonNegative,m_Integer,x_,y_,z_]/;Abs[m]<=l:=
+With[
+{dpower=If[#2==0,1,#1^#2]&,s=Sign[m],am=Abs[m]},
+(-1)^((1-s)am/2)Sqrt[(l-am)!/(l+am)!]dpower[x+I s y,am]
+Sum[
+(-1)^((l+am)/2-k)(l+am+2k-1)!!dpower[z,2k]dpower[x^2+y^2+z^2,(l-am)/2-k]/((2k)!(l-am-2k)!!),
+{k,Mod[l-am,2]/2,(l-am)/2},
+Method->"Procedural"
+]
+]
+
+
+SphericalBasisToMonomialBasis[sphericalPolynomials_]:=
+FullSimplify@ReplaceAll[
+Chop@FullSimplify@ReplaceAll[
+sphericalPolynomials,
+Subscript[Global`x,l_,m_,mult_]:>ReplaceAll[Expand@SolidHarmonicR[l,m,x,y,z],Times@@({x,y,z}^#)->Subscript[Global`x,mult,Join@@MapThread[ConstantArray,{Range[3],#}]]&/@WeakCompositions[l,3]]
+],
+r:(_Real|_Complex):>RootApproximant[r]
+]
+
+
+PathsSSYTsToPolynomials[assoc_Association]:=
+Module[
+{
+\[Mu]\[Lambda]s,
+\[Pi]\[Lambda]s,
+coreTensorTrains,
+leafTensorTrees,leafTensors,leafVectors,
+sphericalPolynomials
+},
+
+\[Mu]\[Lambda]s=First@*Last@*First@*First/@assoc[["leafPaths"]];
+\[Pi]\[Lambda]s=Length/@First[#]&/@assoc[["SSYT\[Lambda]s"]];
+
+coreTensorTrains=ClebschGordanTensorTrain[\[Mu]\[Lambda]s]/@assoc[["corePaths"]];
+
+leafTensorTrees=Map[PathTreeToTensorTree,assoc[["leafPaths"]],{2}];
+
+(*Temporary solution; replace with polarization*)
+leafTensors=Map[ContractLeafTensorsCoreTensorTrain[Sequence@@#]&,leafTensorTrees,{2}];
+leafTensors=MapThread[SymmetrizeColumns[#1]/@#2&,{\[Pi]\[Lambda]s,leafTensors}];
+
+leafVectors=MapThread[Flatten[Outer[ContractLeafSSYTCoreTensor,##,1],1]&,{assoc[["SSYT\[Lambda]s"]],leafTensors}];
+
+sphericalPolynomials=Flatten[Outer[ContractLeafVectorsCoreTensorTrain,Tuples[leafVectors],coreTensorTrains,1],1];
+SphericalBasisToMonomialBasis[sphericalPolynomials]
+]
+
+
 (* ::Subsection:: *)
 (*Public Function Implementations*)
 
 
-GrowMultiplicitySpaceTree[\[Lambda]s_,m\[Lambda]s_,\[Nu]_,dMax_]:=
+IsotypicDataTree[\[Lambda]s_List?VectorQ,m\[Lambda]s_List?VectorQ,\[Nu]_Integer?NonNegative,dMax_Integer?Positive]/;
+Length[\[Lambda]s]==Length[m\[Lambda]s]\[And]Total[m\[Lambda]s]<=dMax:=
 Module[
 {tree},
 
@@ -122,13 +159,17 @@ tree=NestTree[StrictCompositions[#,Length[\[Lambda]s]]&,tree];
 tree=NestTree[Tuples@ThinPartitions[#,\[Lambda]s,m\[Lambda]s]&,tree];
 
 (*Level 4: \[Mu]\[Lambda]s*)
-tree=NestTree[MuTuples[\[Lambda]s,#,\[Nu]]&,tree];
+tree=NestTree[CoreSpins[\[Lambda]s,#,\[Nu]]&,tree];
 
 (*Prune childless nodes for memory efficiency*)
 tree=PruneChildlessNodes[tree];
 
-AncestralNestTree[HarvestPath,tree]
+(*Level 5: path bases and SSYT bases*)
+AncestralNestTree[PathsSSYTs,tree]
 ]
+
+
+IsotypicDataTreeToPolynomials[tree_Tree]:=Flatten[PathsSSYTsToPolynomials/@TreeData/@TreeLeaves[tree]]
 
 
 End[];
