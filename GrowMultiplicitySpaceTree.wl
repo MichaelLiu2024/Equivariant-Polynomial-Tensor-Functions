@@ -48,9 +48,7 @@ CoreSpins[\[Lambda]s_List?VectorQ,\[Pi]\[Lambda]s_List,\[Nu]_Integer?NonNegative
 Select[Tuples@MapThread[IsotypicComponentsSchurPower,{\[Lambda]s,\[Pi]\[Lambda]s}],IsotypicComponentTensorProductQ[#,\[Nu]]&]
 
 
-ThinPartitions::usage="ThinPartitions[] gives a list of all integer partitions of d with parts at most Min[2\[Lambda]+1,m]"
-
-
+ThinPartitions::usage="gives a list of all integer partitions of d with parts at most Min[2\[Lambda]+1,m]"
 SetAttributes[ThinPartitions,Listable]
 ThinPartitions[d\[Lambda]_Integer?NonNegative,\[Lambda]_Integer?NonNegative,m\[Lambda]_Integer?Positive]:=IntegerPartitions[d\[Lambda],All,Range[Min[2\[Lambda]+1,m\[Lambda]]]]
 
@@ -153,7 +151,7 @@ Module[
 tree=Tree[{\[Lambda]s,m\[Lambda]s,\[Nu]},Range[Total[m\[Lambda]s],dMax]];
 
 (*Level 2: d\[Lambda]s*)
-tree=NestTree[StrictCompositions[#,Length[\[Lambda]s]]&,tree];
+tree=NestTree[Select[StrictCompositions[#,Length[\[Lambda]s]],m\[Lambda]s\[VectorLessEqual]#&]&,tree];
 
 (*Level 3: \[Pi]\[Lambda]s*)
 tree=NestTree[Tuples@ThinPartitions[#,\[Lambda]s,m\[Lambda]s]&,tree];
