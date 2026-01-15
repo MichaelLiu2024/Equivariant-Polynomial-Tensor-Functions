@@ -7,7 +7,7 @@ ContractLeafVectorsCoreTensor
 ContractLeafSSYTCoreTensor
 ContractLeafVectorsCoreTensorTrain
 ContractLeafTensorsCoreTensorTrain
-EvaluateSymmetrizedTensorTrain
+ContractLeafVectorCoreTensorTrain
 ContractCoreTensorTrain
 EvaluateYoungSymmetrizedTensorTree
 AntisymmetrizeRows
@@ -75,6 +75,10 @@ ContractLeafVectorsCoreTensorTrain[leafVectors_List,coreTensorTrain_List]:=
  ]
 
 
+ContractLeafVectorCoreTensorTrain::usage="evaluates the symmetrized tensor train representation of CG((\[Lambda],...,\[Lambda]),\[Gamma]s) at the inputs (x,...,x)."
+ContractLeafVectorCoreTensorTrain[leafVector_List?VectorQ,coreTensorTrain_List]:=Chop@Fold[Dot[leafVector,Dot[#1,#2]]&,leafVector,coreTensorTrain]
+
+
 ContractLeafTensorsCoreTensorTrain::usage="contracts the coreTensorTrain with the leafTensors."
 ContractLeafTensorsCoreTensorTrain[leafTensors_List,coreTensorTrain_List]:=
  If[
@@ -93,10 +97,6 @@ ContractLeafVectorsCoreTensorTrain[leafVectors,coreTensorTrain]
 
 
 ContractCoreTensorTrain[coreTensorTrain_List]:=Chop@Dot@@coreTensorTrain
-
-
-EvaluateSymmetrizedTensorTrain::usage="evaluates the symmetrized tensor train representation of CG((\[Lambda],...,\[Lambda]),\[Gamma]s) at the inputs (x,...,x)."
-EvaluateSymmetrizedTensorTrain[leafVector_List?VectorQ,coreTensorTrain_List]:=Chop@Fold[Dot[leafVector,Dot[#1,#2]]&,leafVector,coreTensorTrain]
 
 
 (*This is really a generalized Tucker format...*)

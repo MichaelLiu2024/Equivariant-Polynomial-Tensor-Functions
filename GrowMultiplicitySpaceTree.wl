@@ -29,9 +29,13 @@ Begin["`Private`"];
 
 
 CoreSpins[\[Lambda]s_List?VectorQ,\[Pi]\[Lambda]s_List,\[Nu]_Integer?NonNegative]:=
- Select[
-  Tuples@MapThread[IsotypicComponentsSchurPower,{\[Lambda]s,\[Pi]\[Lambda]s}],
-  IsotypicComponentTensorProductQ[#,\[Nu]]&
+ If[
+  Length@\[Lambda]s==1\[And]\[Nu]==0\[And]IsotypicMultiplicitySchurPower[First@\[Lambda]s,First@\[Pi]\[Lambda]s,0]>0,
+  {{0}},
+  Select[
+   Tuples@DeleteCases[MapThread[IsotypicComponentsSchurPower,{\[Lambda]s,\[Pi]\[Lambda]s}],0,All],(*algebra generation constraint*)
+   IsotypicComponentTensorProductQ[#,\[Nu]]&
+  ]
  ]
 
 
@@ -44,13 +48,24 @@ PruneChildlessNodes[tree_Tree]:=TreeFold[If[#2=={},Nothing,Tree[##]]&,tree]
 
 
 PathsSSYTs[{{\[Lambda]s_,m\[Lambda]s_,\[Nu]_},D_,d\[Lambda]s_,\[Pi]\[Lambda]s_,\[Mu]\[Lambda]s_}]:=
- {
-  <|
-   "corePaths"->ClebschGordanPathsTensorProduct[\[Mu]\[Lambda]s,\[Nu]],
-   "leafPaths"->MapThread[ClebschGordanPathsSchurPower,{\[Lambda]s,\[Pi]\[Lambda]s,\[Mu]\[Lambda]s}],
-   "SSYT\[Lambda]s"->MapThread[SemiStandardYoungTableaux,{\[Pi]\[Lambda]s,m\[Lambda]s}]
-  |>
- }
+ With[
+  {
+   corePaths=ClebschGordanPathsTensorProduct[\[Mu]\[Lambda]s,\[Nu]],
+   leafPaths=MapThread[ClebschGordanPathsSchurPower,{\[Lambda]s,\[Pi]\[Lambda]s,\[Mu]\[Lambda]s}],
+   SSYT\[Lambda]s=MapThread[SemiStandardYoungTableaux,{\[Pi]\[Lambda]s,m\[Lambda]s}]
+  },
+  If[
+   MemberQ[leafPaths,{}],
+   {},
+   {
+    <|
+     "corePaths"->corePaths,
+     "leafPaths"->leafPaths,
+     "SSYT\[Lambda]s"->SSYT\[Lambda]s
+    |>
+   }
+  ]
+ ]
 
 
 AncestralNestTree[f_,tree_Tree]:=
@@ -154,7 +169,9 @@ IsotypicDataTree[\[Lambda]s_List?VectorQ,m\[Lambda]s_List?VectorQ,\[Nu]_Integer?
   tree=PruneChildlessNodes[tree];
 
   (*Level 5: path bases and SSYT bases*)
-  AncestralNestTree[PathsSSYTs,tree]
+  tree=AncestralNestTree[PathsSSYTs,tree];
+  
+  PruneChildlessNodes[tree]
  ]
 
 

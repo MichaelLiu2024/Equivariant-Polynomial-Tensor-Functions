@@ -20,7 +20,7 @@ Begin["`Private`"];
 
 
 (*https://resources.wolframcloud.com/FunctionRepository/resources/PivotColumns*)
-PivotColumns[matrix_?MatrixQ]:=Flatten@Map[Position[#,_?(N[#]!=0&),{1},1,Heads->False]&,RowReduce[matrix]]
+PivotColumns[matrix_?MatrixQ]:=Flatten@Map[Position[#,_?(N@#!=0&),{1},1,Heads->False]&,RowReduce@matrix]
 
 
 (*helper function that converts the index \[Alpha] to the corresponding spin \[Gamma]*)
@@ -49,7 +49,6 @@ ElementaryClebschGordanTensor[\[Lambda]1_Integer?NonNegative,\[Lambda]2_Integer?
 
 
 ClebschGordanTensorTrain::usage="gives the tensor train representation of the Clebsch-Gordan tensor CG(\[Lambda]s,\[Gamma]s)."
-ClebschGordanTensorTrain[\[Gamma]s_List?VectorQ]:=ClebschGordanTensorTrain[ConstantArray[First[\[Gamma]s],Length[\[Gamma]s]],\[Gamma]s]
 ClebschGordanTensorTrain[\[Lambda]s_List?VectorQ][\[Gamma]s_List?VectorQ]:=ClebschGordanTensorTrain[\[Lambda]s,\[Gamma]s]
 ClebschGordanTensorTrain[\[Lambda]s_List?VectorQ,\[Gamma]s_List?VectorQ]:=
  If[
@@ -62,7 +61,7 @@ ClebschGordanTensorTrain[\[Lambda]s_List?VectorQ,\[Gamma]s_List?VectorQ]:=
 AntisymmetrizedClebschGordanTensor::usage="gives the antisymmetrized Clebsch-Gordan tensor coupling the first element of \[Gamma]s along the path \[Gamma]s."
 AntisymmetrizedClebschGordanTensor[\[Gamma]s_List?VectorQ]:=
  Symmetrize[
-  ContractCoreTensorTrain@ClebschGordanTensorTrain@\[Gamma]s,
+  ContractCoreTensorTrain@ClebschGordanTensorTrain[ConstantArray[First@\[Gamma]s,Length@\[Gamma]s],\[Gamma]s],
   Antisymmetric@Range@Length@\[Gamma]s
  ]
 
@@ -100,22 +99,37 @@ ClebschGordanPathsSymmetricPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNega
 ClebschGordanPathsSymmetricPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegative,\[Mu]_Integer?NonNegative]/;d>=4:=
  Module[
   {
-  corePaths,coreTensorTrains,
+  corePaths,
+  coreTensorTrains,
   coreRandomProbes,
   syndromeMatrix,
   coreIndices
   },
   
-  corePaths=Select[ClebschGordanPathsTensorProduct[ConstantArray[\[Lambda],d],\[Mu]],EvenQ[#[[2]]]&];(*for algebra generation, further select only those paths where 0 does not appear in Most@path*)
+  corePaths=
+   Select[
+    ClebschGordanPathsTensorProduct[ConstantArray[\[Lambda],d],\[Mu]],
+    EvenQ@#[[2]]&(*symmetry constraint*)
+   ];
+  
+  corePaths=SortBy[corePaths,Boole@FreeQ[Most@#,0]&];(*prioritize lower degree invariants for algebra generation*)
+  
   coreTensorTrains=ClebschGordanTensorTrain[ConstantArray[\[Lambda],d]]/@corePaths;
   
   coreRandomProbes=RandomReal[1,{d+d(*oversampling*),2\[Lambda]+1}];
   
-  syndromeMatrix=Outer[EvaluateSymmetrizedTensorTrain,coreRandomProbes,coreTensorTrains,1];
+  syndromeMatrix=
+   Flatten[
+    Outer[ContractLeafVectorCoreTensorTrain,coreRandomProbes,coreTensorTrains,1],
+    {{1,3},{2}}(*level 3 is the vector of syndromes*)
+   ];
   
-  coreIndices=PivotColumns@Flatten[syndromeMatrix,{{1,3},{2}}];
+  coreIndices=PivotColumns@syndromeMatrix;
   
-  corePaths[[coreIndices]]
+  Select[
+   corePaths[[coreIndices]],
+   FreeQ[Most@#,0]&(*algebra generation constraint*)
+  ]
  ]
 
 
@@ -130,18 +144,25 @@ ClebschGordanPathsSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_
    _,
    Module[
     {
-     coreLegs,corePaths,coreTensorTrains,
+     coreSpins,corePaths,coreTensorTrains,
      leafPaths,leafTensors,
      leafRandomProbes,coreRandomProbes,
      syndromeMatrix,
      coreIndices,leafIndices
     },
     
-    coreLegs=Select[Tuples@IsotypicComponentsExteriorPower[\[Lambda],p],IsotypicComponentTensorProductQ[#,\[Mu]]&];
-    corePaths=ClebschGordanPathsTensorProduct[#,\[Mu]]&/@coreLegs;(*discard any paths containing an intermediate zero, since these are algebraically redundant. We need to do this for the symmetric and antisymmetric path functions as well*)
-    coreTensorTrains=MapThread[ClebschGordanTensorTrain[#1]/@#2&,{coreLegs,corePaths}];
+    coreSpins=
+     Select[
+      Tuples@DeleteCases[IsotypicComponentsExteriorPower[\[Lambda],p],0,All],(*algebra generation constraint*)
+      IsotypicComponentTensorProductQ[#,\[Mu]]&
+     ];
     
-    leafPaths=ClebschGordanPathsExteriorPower[\[Lambda],p,#]&/@coreLegs;
+    If[coreSpins=={},Return[{}]];
+    
+    corePaths=ClebschGordanPathsTensorProduct[#,\[Mu]]&/@coreSpins;
+    coreTensorTrains=MapThread[ClebschGordanTensorTrain[#1]/@#2&,{coreSpins,corePaths}];
+    
+    leafPaths=ClebschGordanPathsExteriorPower[\[Lambda],p,#]&/@coreSpins;
     leafTensors=Map[AntisymmetrizedClebschGordanTensor,leafPaths,{3}];
     
     leafRandomProbes=RandomReal[1,{d+d(*oversampling*),First[p],2\[Lambda]+1}];
