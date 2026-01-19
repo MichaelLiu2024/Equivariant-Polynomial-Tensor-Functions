@@ -4,8 +4,8 @@ BeginPackage["ClebschGordanTools`",{"IsotypicDecompositionTools`","TensorTools`"
 
 
 ElementaryClebschGordanTensor
-AntisymmetrizedClebschGordanTensor
 ClebschGordanTensorTrain
+AntisymmetrizedClebschGordanTensor
 ClebschGordanPathsTensorProduct
 ClebschGordanPathsExteriorPower
 ClebschGordanPathsSymmetricPower
@@ -144,6 +144,7 @@ ClebschGordanPathsSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_
    _,
    Module[
     {
+     temp,
      coreSpins,corePaths,coreTensorTrains,
      leafPaths,leafTensors,
      leafRandomProbes,coreRandomProbes,
@@ -151,13 +152,15 @@ ClebschGordanPathsSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_
      coreIndices,leafIndices
     },
     
+    temp=IsotypicComponentsExteriorPower[\[Lambda],p];
+    
+    If[MemberQ[temp,{0}],Return[{}]];(*algebra generation constraint*)
+    
     coreSpins=
      Select[
-      Tuples@DeleteCases[IsotypicComponentsExteriorPower[\[Lambda],p],0,All],(*algebra generation constraint*)
+      Tuples@temp,
       IsotypicComponentTensorProductQ[#,\[Mu]]&
      ];
-    
-    If[coreSpins=={},Return[{}]];
     
     corePaths=ClebschGordanPathsTensorProduct[#,\[Mu]]&/@coreSpins;
     coreTensorTrains=MapThread[ClebschGordanTensorTrain[#1]/@#2&,{coreSpins,corePaths}];
@@ -170,6 +173,8 @@ ClebschGordanPathsSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_
     
     (*When First[p]\[LessEqual]3, the subselection below is simple. In general, we would need to take Tuples, and the bookkeeping gets even more complicated.*)
     coreRandomProbes=Flatten[coreRandomProbes,{{1},{2},{3,4}}];
+    
+    (*somehow we need to sort to the left all paths containing any zero while keeping track of the order. this might be easier in the special case First[p]<=3*)
     
     (*This is unclean but acceptable*)
     syndromeMatrix=
