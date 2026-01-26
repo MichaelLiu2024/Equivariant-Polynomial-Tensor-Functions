@@ -50,7 +50,7 @@ ElementaryClebschGordanTensor[\[Lambda]1_Integer?NonNegative,\[Lambda]2_Integer?
 
 ClebschGordanTensorTrain::usage="gives the tensor train representation of the Clebsch-Gordan tensor CG(\[Lambda]s,\[Gamma]s)."
 ClebschGordanTensorTrain[\[Lambda]s_List?VectorQ][\[Gamma]s_List?VectorQ]:=ClebschGordanTensorTrain[\[Lambda]s,\[Gamma]s]
-ClebschGordanTensorTrain[\[Lambda]s_List?VectorQ,\[Gamma]s_List?VectorQ]:=
+ClebschGordanTensorTrain[\[Lambda]s_List?VectorQ,\[Gamma]s_List?VectorQ](*Abs[ListConvolve[{1,-1},\[Gamma]s]]\[VectorLessEqual]Rest[\[Lambda]s]\[VectorLessEqual]ListConvolve[{1,1},\[Gamma]s]*):=
  If[
   Length[\[Lambda]s]==1,(*we should remove calls with length 1 eventually by adjusting code higher up*)
   {IdentityMatrix[2First[\[Gamma]s]+1,SparseArray]},
@@ -92,7 +92,7 @@ ClebschGordanPathsSymmetricPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNega
   d,
   1,{{\[Lambda]}},
   2,{{\[Lambda],\[Mu]}},
-  3,{{\[Lambda],#+Mod[#,2]&@Abs[\[Lambda]-\[Mu]],\[Mu]}}
+  3,With[{\[Gamma]=#+Mod[#,2]&@Abs[\[Lambda]-\[Mu]]},If[\[Gamma]==0,{},{{\[Lambda],\[Gamma],\[Mu]}}]](*Haven't added the algebra constraint here yet*)
  ]
 
 
@@ -187,7 +187,15 @@ ClebschGordanPathsSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_
      ]&
      /@coreRandomProbes;
     
-    coreIndices=PivotColumns@Flatten[syndromeMatrix,{{1,4},{2,3}}];
+    syndromeMatrix=Flatten[syndromeMatrix,{{1,4},{2,3}}];
+    
+    perm=OrderingBy[Flatten[corePaths,1],FreeQ[Most@#,0]&];
+
+    coreIndices=perm[[PivotColumns@syndromeMatrix[[All,perm]]]];
+    
+    (*temporary solution; this whole function needs to be reviewed and rewritten*)
+    coreIndices=Select[coreIndices,FreeQ[Most[Flatten[corePaths,1][[#]]],0]&];
+    
     leafIndices=findIndex[Accumulate[Length/@corePaths],coreIndices];
     
     Transpose[{Flatten[leafPaths,{{1},{2},{3,4}}][[leafIndices]],Flatten[corePaths,1][[coreIndices]]}]

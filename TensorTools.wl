@@ -75,6 +75,18 @@ ContractLeafVectorsCoreTensorTrain[leafVectors_List,coreTensorTrain_List]:=
  ]
 
 
+ContractLeafVectorsAntisymmetrizedCoreTensorTrain::usage="contracts the antisymmetrized coreTensorTrain with the leafVectors."
+ContractLeafVectorsAntisymmetrizedCoreTensorTrain[leafVectors_List,coreTensorTrain_List]:=
+ Switch[
+  Length[coreTensorTrain],
+  1,ContractLeafVectorsCoreTensorTrain[leafVectors,coreTensorTrain],
+  2,
+   (ContractLeafVectorsCoreTensorTrain[leafVectors,coreTensorTrain]
+   -ContractLeafVectorsCoreTensorTrain[leafVectors[[{3,2,1}]],coreTensorTrain]
+   -ContractLeafVectorsCoreTensorTrain[leafVectors[[{1,3,2}]],coreTensorTrain])/3
+ ]
+
+
 ContractLeafVectorCoreTensorTrain::usage="evaluates the symmetrized tensor train representation of CG((\[Lambda],...,\[Lambda]),\[Gamma]s) at the inputs (x,...,x)."
 ContractLeafVectorCoreTensorTrain[leafVector_List?VectorQ,coreTensorTrain_List]:=Chop@Fold[Dot[leafVector,Dot[#1,#2]]&,leafVector,coreTensorTrain]
 
