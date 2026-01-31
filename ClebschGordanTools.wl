@@ -5,7 +5,6 @@ BeginPackage["ClebschGordanTools`",{"IsotypicDecompositionTools`","TensorTools`"
 
 ElementaryClebschGordanTensor
 ClebschGordanTensorTrain
-AntisymmetrizedClebschGordanTensor
 ClebschGordanPathsTensorProduct
 ClebschGordanPathsExteriorPower
 ClebschGordanPathsSymmetricPower
@@ -53,16 +52,8 @@ ClebschGordanTensorTrain[\[Lambda]s_List?VectorQ][\[Gamma]s_List?VectorQ]:=Clebs
 ClebschGordanTensorTrain[\[Lambda]s_List?VectorQ,\[Gamma]s_List?VectorQ](*Abs[ListConvolve[{1,-1},\[Gamma]s]]\[VectorLessEqual]Rest[\[Lambda]s]\[VectorLessEqual]ListConvolve[{1,1},\[Gamma]s]*):=
  If[
   Length[\[Lambda]s]==1,(*we should remove calls with length 1 eventually by adjusting code higher up*)
-  {IdentityMatrix[2First[\[Gamma]s]+1,SparseArray]},
+  {1},
   MapThread[ElementaryClebschGordanTensor,{Most[\[Gamma]s],Rest[\[Lambda]s],Rest[\[Gamma]s]}]
- ]
-
-
-AntisymmetrizedClebschGordanTensor::usage="gives the antisymmetrized Clebsch-Gordan tensor coupling the first element of \[Gamma]s along the path \[Gamma]s."
-AntisymmetrizedClebschGordanTensor[\[Gamma]s_List?VectorQ]:=
- Symmetrize[
-  ContractCoreTensorTrain@ClebschGordanTensorTrain[ConstantArray[First@\[Gamma]s,Length@\[Gamma]s],\[Gamma]s],
-  Antisymmetric@Range@Length@\[Gamma]s
  ]
 
 
@@ -146,7 +137,7 @@ ClebschGordanPathsSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_
     {
      temp,
      coreSpins,corePaths,coreTensorTrains,
-     leafPaths,leafTensors,
+     leafPaths,leafTensorTrains,
      leafRandomProbes,coreRandomProbes,
      syndromeMatrix,
      coreIndices,leafIndices
@@ -166,10 +157,10 @@ ClebschGordanPathsSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_
     coreTensorTrains=MapThread[ClebschGordanTensorTrain[#1]/@#2&,{coreSpins,corePaths}];
     
     leafPaths=ClebschGordanPathsExteriorPower[\[Lambda],p,#]&/@coreSpins;
-    leafTensors=Map[AntisymmetrizedClebschGordanTensor,leafPaths,{3}];
+    leafTensorTrains=Map[ClebschGordanTensorTrain[ConstantArray[First@#,Length@#],#]&,leafPaths,{3}];
     
     leafRandomProbes=RandomReal[1,{d+d(*oversampling*),First[p],2\[Lambda]+1}];
-    coreRandomProbes=Outer[ContractLeafVectorsCoreTensor,leafRandomProbes,leafTensors,1,3];
+    coreRandomProbes=Outer[ContractLeafVectorsAntisymmetrizedTensorTrain,leafRandomProbes,leafTensorTrains,1,3];
     
     (*When First[p]\[LessEqual]3, the subselection below is simple. In general, we would need to take Tuples, and the bookkeeping gets even more complicated.*)
     coreRandomProbes=Flatten[coreRandomProbes,{{1},{2},{3,4}}];

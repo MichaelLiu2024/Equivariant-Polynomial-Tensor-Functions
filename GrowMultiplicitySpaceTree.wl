@@ -8,10 +8,8 @@
 (*We could try an alternative implementation of IsotypicMultiplicitySchurPower: find an explicit expression for the generating function of the number of
 semistandard Young tableaux (SSYT) of shape p with powers being the total sum of entries and use Coefficient. Maybe try this for IsotypicMultiplicityExteriorPower
 as well for consistency, though tbh it may be slower. Low priority though.*)
-(*USE MATLAB squeeze in Mathematica via ArrayReshape and Dimensions (or something else) to remove modes of dimension 1*)
-(*Apply identity matrices implicitly; don't form them as sparse arrays and multiply,this is a waste*)
 (*Replace Tuples with Sequence; need to adjust the pure function ContractTensorTree*)
-(*Let's go back to ClebschGordanPathsSchurPower and use our new understanding of Outer to write the most generalized code.*)
+(*We could have another layer over all 0\[VectorLessEqual]m\[Lambda]s\[VectorLessEqual]m\[Lambda]sMax, restricting the \[Lambda]s appropriately, etc. each calls IsotypicDataTree*)
 
 
 BeginPackage["GrowMultiplicitySpaceTree`",{"TensorTools`","ClebschGordanTools`","IsotypicDecompositionTools`","CombinatoricsTools`"}];
@@ -54,16 +52,11 @@ PathsSSYTs[{{\[Lambda]s_,m\[Lambda]s_,\[Nu]_},D_,d\[Lambda]s_,\[Pi]\[Lambda]s_,\
    leafPaths=MapThread[ClebschGordanPathsSchurPower,{\[Lambda]s,\[Pi]\[Lambda]s,\[Mu]\[Lambda]s}],
    SSYT\[Lambda]s=MapThread[SemiStandardYoungTableaux,{\[Pi]\[Lambda]s,m\[Lambda]s}]
   },
+  
   If[
    MemberQ[leafPaths,{}],
    {},
-   {
-    <|
-     "corePaths"->corePaths,
-     "leafPaths"->leafPaths,
-     "SSYT\[Lambda]s"->SSYT\[Lambda]s
-    |>
-   }
+   {{corePaths,leafPaths,SSYT\[Lambda]s}}
   ]
  ]
 
@@ -87,7 +80,7 @@ AncestralNestTree[f_,tree_Tree]:=
 
 PathTreeToTensorTree[{leafPaths_List,corePath_List?VectorQ}]:=
  {
-  AntisymmetrizedClebschGordanTensor/@leafPaths,
+  ClebschGordanTensorTrain[ConstantArray[First@#,Length@#],#]&/@leafPaths,
   ClebschGordanTensorTrain[Last/@leafPaths,corePath]
  }
 
@@ -116,28 +109,34 @@ SphericalBasisToMonomialBasis[sphericalPolynomials_]:=
  ]
 
 
-PathsSSYTsToPolynomials[assoc_Association]:=
+SetAttributes[generateVariables,Listable]
+generateVariables[\[Lambda]_Integer?NonNegative,mult_Integer?Positive]:=Table[Subscript[Global`x,\[Lambda],m,n],{n,1,mult},{m,-\[Lambda],\[Lambda]}]
+
+
+PathsSSYTsToPolynomials[{{\[Lambda]s_,m\[Lambda]s_,\[Nu]_},D_,d\[Lambda]s_,\[Pi]\[Lambda]s_,\[Mu]\[Lambda]s_,{corePaths_,leafPaths_,SSYT\[Lambda]s_}}]:=
  Module[
   {
-   \[Mu]\[Lambda]s,
-   \[Pi]\[Lambda]s,
    coreTensorTrains,
-   leafTensorTrees,leafTensors,leafVectors,
+   leafTensorTrees,
+   
+   inputVariables,
+   leafVariables,
+   
+   leafTensors,leafVectors,
    sphericalPolynomials
   },
 
-  \[Mu]\[Lambda]s=First@*Last@*First@*First/@assoc[["leafPaths"]];
-  \[Pi]\[Lambda]s=Length/@First[#]&/@assoc[["SSYT\[Lambda]s"]];
-
-  coreTensorTrains=ClebschGordanTensorTrain[\[Mu]\[Lambda]s]/@assoc[["corePaths"]];
-
-  leafTensorTrees=Map[PathTreeToTensorTree,assoc[["leafPaths"]],{2}];
+  coreTensorTrains=ClebschGordanTensorTrain[\[Mu]\[Lambda]s]/@corePaths;
+  leafTensorTrees=Map[PathTreeToTensorTree,leafPaths,{2}];
+  
+  inputVariables=generateVariables[\[Lambda]s,m\[Lambda]s];
+  leafVariables=SymmetricMonomialCP[x];
 
   (*Temporary solution; replace with polarization*)
   leafTensors=Map[ContractLeafTensorsCoreTensorTrain[Sequence@@#]&,leafTensorTrees,{2}];
   leafTensors=MapThread[SymmetrizeColumns[#1]/@#2&,{\[Pi]\[Lambda]s,leafTensors}];
 
-  leafVectors=MapThread[Flatten[Outer[ContractLeafSSYTCoreTensor,##,1],1]&,{assoc[["SSYT\[Lambda]s"]],leafTensors}];
+  leafVectors=MapThread[Flatten[Outer[ContractLeafSSYTCoreTensor,##,1],1]&,{SSYT\[Lambda]s,leafTensors}];
 
   sphericalPolynomials=Flatten[Outer[ContractLeafVectorsCoreTensorTrain,Tuples[leafVectors],coreTensorTrains,1],1];
   SphericalBasisToMonomialBasis[sphericalPolynomials]
@@ -148,8 +147,7 @@ PathsSSYTsToPolynomials[assoc_Association]:=
 (*Public Function Implementations*)
 
 
-IsotypicDataTree[\[Lambda]s_List?VectorQ,m\[Lambda]s_List?VectorQ,\[Nu]_Integer?NonNegative,dMax_Integer?Positive]/;
- Length[\[Lambda]s]==Length[m\[Lambda]s]\[And]Total[m\[Lambda]s]<=dMax:=
+IsotypicDataTree[\[Lambda]s_List?VectorQ,m\[Lambda]s_List?VectorQ,\[Nu]_Integer?NonNegative,dMax_Integer?Positive]/;Length[\[Lambda]s]==Length[m\[Lambda]s]\[And]Total[m\[Lambda]s]<=dMax:=
  Module[
   {tree},
 
