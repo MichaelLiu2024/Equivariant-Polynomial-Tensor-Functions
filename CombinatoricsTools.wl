@@ -4,7 +4,7 @@ BeginPackage["CombinatoricsTools`"];
 
 
 StrictCompositions
-WeakCompositions
+ThinPartitions
 StandardYoungTableau
 ConjugateTableau
 ConjugatePartition
@@ -43,9 +43,9 @@ SetAttributes[StrictCompositions,Listable]
 StrictCompositions[D_Integer?NonNegative,n_Integer?Positive]:=Join@@Permutations/@IntegerPartitions[D,{n}]
 
 
-WeakCompositions::usage="gives a list of all weak integer compositions of D into n parts."
-SetAttributes[WeakCompositions,Listable]
-WeakCompositions[D_Integer?NonNegative,n_Integer?Positive]:=Join@@Permutations/@IntegerPartitions[D,{n},Range[0,D]]
+ThinPartitions::usage="gives a list of all integer partitions of d with parts at most Min[2\[Lambda]+1,m]."
+SetAttributes[ThinPartitions,Listable]
+ThinPartitions[d_Integer?NonNegative,\[Lambda]_Integer?NonNegative,m_Integer?Positive]:=IntegerPartitions[d,All,Range[Min[2\[Lambda]+1,m]]]
 
 
 StandardYoungTableau::usage="gives the standard Young tableau of shape p filled in English reading order."

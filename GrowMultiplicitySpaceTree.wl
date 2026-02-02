@@ -1,5 +1,8 @@
 (* ::Package:: *)
 
+z
+
+
 (* ::Section:: *)
 (*To Do*)
 
@@ -37,11 +40,7 @@ CoreSpins[\[Lambda]s_List?VectorQ,\[Pi]\[Lambda]s_List,\[Nu]_Integer?NonNegative
  ]
 
 
-ThinPartitions::usage="gives a list of all integer partitions of d with parts at most Min[2\[Lambda]+1,m]"
-SetAttributes[ThinPartitions,Listable]
-ThinPartitions[d\[Lambda]_Integer?NonNegative,\[Lambda]_Integer?NonNegative,m\[Lambda]_Integer?Positive]:=IntegerPartitions[d\[Lambda],All,Range[Min[2\[Lambda]+1,m\[Lambda]]]]
-
-
+(*recursively prunes childless nodes from the input tree*)
 PruneChildlessNodes[tree_Tree]:=TreeFold[If[#2=={},Nothing,Tree[##]]&,tree]
 
 
@@ -147,30 +146,39 @@ PathsSSYTsToPolynomials[{{\[Lambda]s_,m\[Lambda]s_,\[Nu]_},D_,d\[Lambda]s_,\[Pi]
 (*Public Function Implementations*)
 
 
-IsotypicDataTree[\[Lambda]s_List?VectorQ,m\[Lambda]s_List?VectorQ,\[Nu]_Integer?NonNegative,dMax_Integer?Positive]/;Length[\[Lambda]s]==Length[m\[Lambda]s]\[And]Total[m\[Lambda]s]<=dMax:=
- Module[
-  {tree},
+SO3RepresentationQ[\[Lambda]s_List,m\[Lambda]s_List]:=
+ VectorQ[\[Lambda]s,Positive]\[And]
+ VectorQ[m\[Lambda]s,Positive]\[And]
+ Length[\[Lambda]s]==Length[m\[Lambda]s]\[And]
+ DuplicateFreeQ[\[Lambda]s]
 
-  (*Level 1: D*)
-  tree=Tree[{\[Lambda]s,m\[Lambda]s,\[Nu]},Range[Total[m\[Lambda]s],dMax]];
 
-  (*Level 2: d\[Lambda]s*)
-  tree=NestTree[Select[StrictCompositions[#,Length[\[Lambda]s]],m\[Lambda]s\[VectorLessEqual]#&]&,tree];
-
-  (*Level 3: \[Pi]\[Lambda]s*)
-  tree=NestTree[Tuples@ThinPartitions[#,\[Lambda]s,m\[Lambda]s]&,tree];
-
-  (*Level 4: \[Mu]\[Lambda]s*)
-  tree=NestTree[CoreSpins[\[Lambda]s,#,\[Nu]]&,tree];
-
-  (*Prune childless nodes for memory efficiency*)
-  tree=PruneChildlessNodes[tree];
-
-  (*Level 5: path bases and SSYT bases*)
-  tree=AncestralNestTree[PathsSSYTs,tree];
-  
-  PruneChildlessNodes[tree]
- ]
+IsotypicDataTree[\[Lambda]s_List,m\[Lambda]s_List,\[Nu]_Integer?NonNegative,DMax_Integer?Positive]/;
+ SO3RepresentationQ[\[Lambda]s,m\[Lambda]s]\[And]
+ Total[m\[Lambda]s]<=DMax:=
+  Module[
+   {tree},
+   
+   (*Level 1: D*)
+   tree=Tree[{\[Lambda]s,m\[Lambda]s,\[Nu]},Range[Total[m\[Lambda]s],DMax]];
+   
+   (*Level 2: d\[Lambda]s*)
+   tree=NestTree[Select[StrictCompositions[#,Length[\[Lambda]s]],m\[Lambda]s\[VectorLessEqual]#&]&,tree];
+   
+   (*Level 3: \[Pi]\[Lambda]s*)
+   tree=NestTree[Tuples@ThinPartitions[#,\[Lambda]s,m\[Lambda]s]&,tree];
+   
+   (*Level 4: \[Mu]\[Lambda]s*)
+   tree=NestTree[CoreSpins[\[Lambda]s,#,\[Nu]]&,tree];
+   
+   (*Prune childless nodes for memory efficiency*)
+   tree=PruneChildlessNodes[tree];
+   
+   (*Level 5: path bases and SSYT bases*)
+   tree=AncestralNestTree[PathsSSYTs,tree];
+   
+   PruneChildlessNodes[tree]
+  ]
 
 
 IsotypicDataTreeToPolynomials[tree_Tree]:=Flatten[PathsSSYTsToPolynomials/@TreeData/@TreeLeaves@tree]

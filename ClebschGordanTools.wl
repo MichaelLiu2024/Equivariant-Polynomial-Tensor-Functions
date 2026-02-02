@@ -83,7 +83,7 @@ ClebschGordanPathsSymmetricPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNega
   d,
   1,{{\[Lambda]}},
   2,{{\[Lambda],\[Mu]}},
-  3,With[{\[Gamma]=#+Mod[#,2]&@Abs[\[Lambda]-\[Mu]]},If[\[Gamma]==0,{},{{\[Lambda],\[Gamma],\[Mu]}}]](*Haven't added the algebra constraint here yet*)
+  3,If[\[Lambda]==\[Mu],{},{{\[Lambda],#+Mod[#,2]&@Abs[\[Lambda]-\[Mu]],\[Mu]}}]
  ]
 
 
@@ -124,6 +124,7 @@ ClebschGordanPathsSymmetricPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNega
  ]
 
 
+(*these expensive functions need to be memoized, since they are evaluated multiple times above. *)
 ClebschGordanPathsSchurPower::usage="gives a list of all Clebsch-Gordan paths from \[Mu] to the image of the Young symmetrizer p on \[Lambda]."
 ClebschGordanPathsSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_Integer?NonNegative]/;First[p]<=3:=
  With[
