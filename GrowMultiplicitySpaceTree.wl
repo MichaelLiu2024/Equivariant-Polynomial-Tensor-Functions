@@ -1,25 +1,20 @@
 (* ::Package:: *)
 
-z
-
-
 (* ::Section:: *)
 (*To Do*)
 
 
-(*SchurS -> Det is one bottleneck in IsotypicDataTree. Symbolic determinant of a matrix with polynomial entries*)
 (*We could try an alternative implementation of IsotypicMultiplicitySchurPower: find an explicit expression for the generating function of the number of
 semistandard Young tableaux (SSYT) of shape p with powers being the total sum of entries and use Coefficient. Maybe try this for IsotypicMultiplicityExteriorPower
 as well for consistency, though tbh it may be slower. Low priority though.*)
 (*Replace Tuples with Sequence; need to adjust the pure function ContractTensorTree*)
-(*We could have another layer over all 0\[VectorLessEqual]m\[Lambda]s\[VectorLessEqual]m\[Lambda]sMax, restricting the \[Lambda]s appropriately, etc. each calls IsotypicDataTree*)
+(*We will have another layer over all 0\[VectorLessEqual]m\[Lambda]s\[VectorLessEqual]m\[Lambda]sMax, restricting the \[Lambda]s appropriately, etc. each calls IsotypicDataTree*)
 
 
 BeginPackage["GrowMultiplicitySpaceTree`",{"TensorTools`","ClebschGordanTools`","IsotypicDecompositionTools`","CombinatoricsTools`"}];
 
 
 IsotypicDataTree::usage="forms the isotypic data tree"
-IsotypicDataTreeToPolynomials::usage="converts the isotypic data tree into the corresponding list of equivariant polynomials"
 
 
 Begin["`Private`"];
@@ -29,35 +24,8 @@ Begin["`Private`"];
 (*Private Functions*)
 
 
-CoreSpins[\[Lambda]s_List?VectorQ,\[Pi]\[Lambda]s_List,\[Nu]_Integer?NonNegative]:=
- If[
-  Length@\[Lambda]s==1\[And]\[Nu]==0\[And]IsotypicMultiplicitySchurPower[First@\[Lambda]s,First@\[Pi]\[Lambda]s,0]>0,
-  {{0}},
-  Select[
-   Tuples@DeleteCases[MapThread[IsotypicComponentsSchurPower,{\[Lambda]s,\[Pi]\[Lambda]s}],0,All],(*algebra generation constraint*)
-   IsotypicComponentTensorProductQ[#,\[Nu]]&
-  ]
- ]
-
-
 (*recursively prunes childless nodes from the input tree*)
 PruneChildlessNodes[tree_Tree]:=TreeFold[If[#2=={},Nothing,Tree[##]]&,tree]
-
-
-PathsSSYTs[{{\[Lambda]s_,m\[Lambda]s_,\[Nu]_},D_,d\[Lambda]s_,\[Pi]\[Lambda]s_,\[Mu]\[Lambda]s_}]:=
- With[
-  {
-   corePaths=ClebschGordanPathsTensorProduct[\[Mu]\[Lambda]s,\[Nu]],
-   leafPaths=MapThread[ClebschGordanPathsSchurPower,{\[Lambda]s,\[Pi]\[Lambda]s,\[Mu]\[Lambda]s}],
-   SSYT\[Lambda]s=MapThread[SemiStandardYoungTableaux,{\[Pi]\[Lambda]s,m\[Lambda]s}]
-  },
-  
-  If[
-   MemberQ[leafPaths,{}],
-   {},
-   {{corePaths,leafPaths,SSYT\[Lambda]s}}
-  ]
- ]
 
 
 AncestralNestTree[f_,tree_Tree]:=
@@ -73,15 +41,18 @@ AncestralNestTree[f_,tree_Tree]:=
  ]
 
 
+EnumerateTensorProductBases[{{\[Lambda]s_,m\[Lambda]s_,\[Nu]_},D_,d\[Lambda]s_,\[Pi]\[Lambda]s_,\[Mu]\[Lambda]s_}]:=
+ {
+  <|
+   "interiorTensorTrains"->TensorTrainBasisTensorProduct[\[Mu]\[Lambda]s,\[Nu]],
+   "leafObjects"->MapThread[TensorTrainBasisSchurPower,{\[Lambda]s,\[Pi]\[Lambda]s,\[Mu]\[Lambda]s}],
+   "SSYT\[Lambda]s"->MapThread[SemiStandardYoungTableaux,{\[Pi]\[Lambda]s,m\[Lambda]s}]
+  |>
+ }
+
+
 (* ::Subsubsection:: *)
 (*IsotypicDataTreeToPolynomials*)
-
-
-PathTreeToTensorTree[{leafPaths_List,corePath_List?VectorQ}]:=
- {
-  ClebschGordanTensorTrain[ConstantArray[First@#,Length@#],#]&/@leafPaths,
-  ClebschGordanTensorTrain[Last/@leafPaths,corePath]
- }
 
 
 (*https://resources.wolframcloud.com/FunctionRepository/resources/SolidHarmonicR/*)
@@ -89,7 +60,7 @@ SolidHarmonicR[l_Integer?NonNegative,m_Integer,x_,y_,z_]/;Abs[m]<=l:=
  With[
   {dpower=If[#2==0,1,#1^#2]&,s=Sign[m],am=Abs[m]},
   
-  (-1)^((1-s)am/2)Sqrt[(l-am)!/(l+am)!]dpower[x+I s y,am]
+  (-1)^((1-s)am/2)Sqrt[(l-am)!/(l+am)!]dpower[x+I s y,am]*
   Sum[
    (-1)^((l+am)/2-k)(l+am+2k-1)!!dpower[z,2k]dpower[x^2+y^2+z^2,(l-am)/2-k]/((2k)!(l-am-2k)!!),
    {k,Mod[l-am,2]/2,(l-am)/2},
@@ -112,32 +83,26 @@ SetAttributes[generateVariables,Listable]
 generateVariables[\[Lambda]_Integer?NonNegative,mult_Integer?Positive]:=Table[Subscript[Global`x,\[Lambda],m,n],{n,1,mult},{m,-\[Lambda],\[Lambda]}]
 
 
-PathsSSYTsToPolynomials[{{\[Lambda]s_,m\[Lambda]s_,\[Nu]_},D_,d\[Lambda]s_,\[Pi]\[Lambda]s_,\[Mu]\[Lambda]s_,{corePaths_,leafPaths_,SSYT\[Lambda]s_}}]:=
+EvaluatePolynomials[{{\[Lambda]s_,m\[Lambda]s_,\[Nu]_},D_,d\[Lambda]s_,\[Pi]\[Lambda]s_,\[Mu]\[Lambda]s_,assoc_}]:=
  Module[
   {
-   coreTensorTrains,
-   leafTensorTrees,
-   
    inputVariables,
    leafVariables,
    
    leafTensors,leafVectors,
    sphericalPolynomials
   },
-
-  coreTensorTrains=ClebschGordanTensorTrain[\[Mu]\[Lambda]s]/@corePaths;
-  leafTensorTrees=Map[PathTreeToTensorTree,leafPaths,{2}];
   
   inputVariables=generateVariables[\[Lambda]s,m\[Lambda]s];
   leafVariables=SymmetricMonomialCP[x];
 
   (*Temporary solution; replace with polarization*)
-  leafTensors=Map[ContractLeafTensorsCoreTensorTrain[Sequence@@#]&,leafTensorTrees,{2}];
+  leafTensors=Map[ContractLeafTensorsCoreTensorTrain[Sequence@@#]&,assoc[["leafObjects"]],{2}];
   leafTensors=MapThread[SymmetrizeColumns[#1]/@#2&,{\[Pi]\[Lambda]s,leafTensors}];
 
-  leafVectors=MapThread[Flatten[Outer[ContractLeafSSYTCoreTensor,##,1],1]&,{SSYT\[Lambda]s,leafTensors}];
+  leafVectors=MapThread[Flatten[Outer[ContractLeafSSYTCoreTensor,##,1],1]&,{assoc[["SSYT\[Lambda]s"]],leafTensors}];
 
-  sphericalPolynomials=Flatten[Outer[ContractLeafVectorsCoreTensorTrain,Tuples[leafVectors],coreTensorTrains,1],1];
+  sphericalPolynomials=Flatten[Outer[ContractLeafVectorsCoreTensorTrain,Tuples[leafVectors],assoc[["interiorTensorTrains"]],1],1];
   SphericalBasisToMonomialBasis[sphericalPolynomials]
  ]
 
@@ -169,19 +134,17 @@ IsotypicDataTree[\[Lambda]s_List,m\[Lambda]s_List,\[Nu]_Integer?NonNegative,DMax
    tree=NestTree[Tuples@ThinPartitions[#,\[Lambda]s,m\[Lambda]s]&,tree];
    
    (*Level 4: \[Mu]\[Lambda]s*)
-   tree=NestTree[CoreSpins[\[Lambda]s,#,\[Nu]]&,tree];
+   tree=NestTree[ConstrainedIsotypicComponentsSchurPowers[\[Lambda]s,#,\[Nu]]&,tree];
    
    (*Prune childless nodes for memory efficiency*)
    tree=PruneChildlessNodes[tree];
    
-   (*Level 5: path bases and SSYT bases*)
-   tree=AncestralNestTree[PathsSSYTs,tree];
+   (*Level 5: interiorTensorTrains, leafObjects, and SSYT\[Lambda]s*)
+   tree=AncestralNestTree[EnumerateTensorProductBases,tree];
    
-   PruneChildlessNodes[tree]
+   (*Level 6: polynomials*)
+   tree=AncestralNestTree[EvaluatePolynomials,tree]
   ]
-
-
-IsotypicDataTreeToPolynomials[tree_Tree]:=Flatten[PathsSSYTsToPolynomials/@TreeData/@TreeLeaves@tree]
 
 
 End[];

@@ -68,6 +68,7 @@ SchurS[p_List?VectorQ,vars_List?VectorQ]:=
   {n=Length@vars,id=Range@First@p},
   {elist=Table[SymmetricPolynomial[k,vars],{k,n}]},
   
+  (*Det is the bottleneck. Symbolic determinant of a matrix with polynomial entries*)
   Det@Outer[
    With[{r=Plus@##},Which[r==0,1,0<r<=n,elist[[r]],True,0]]&,
    ConjugatePartition@p-id,
