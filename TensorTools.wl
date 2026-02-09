@@ -6,6 +6,8 @@ BeginPackage["TensorTools`",{"CombinatoricsTools`"}];
 EvaluateTensorTrain
 EvaluateAntisymmetrizedTensorTrain
 EvaluateSymmetrizedTensorTrain
+EvaluateAntisymmetrizedTensorTree
+EvaluateYoungSymmetrizedTensorTree
 
 
 Begin["`Private`"];
@@ -24,7 +26,7 @@ ContractVectors[vector1_?VectorQ,{vector2_?VectorQ,tensor_?ArrayQ}]:=Dot[vector2
 
 (*add input checks*)
 EvaluateTensorTrain::usage="evaluates the tensorTrain at the vectors."
-EvaluateTensorTrain[tensorTrain_List,vectors_List]/;Depth[vectors]==3:=
+EvaluateTensorTrain[tensorTrain_List,vectors_List]:=
  If[
   tensorTrain==={1},
   First@vectors,
@@ -34,7 +36,7 @@ EvaluateTensorTrain[tensorTrain_List,vectors_List]/;Depth[vectors]==3:=
 
 EvaluateAntisymmetrizedTensorTrain::usage="contracts the antisymmetrized tensorTrain with the vectors."
 (*assumes the first tensor factor is Antisymmetric[{1,2}]*)
-EvaluateAntisymmetrizedTensorTrain[tensorTrain_List,vectors_List]/;Depth[vectors]==3:=
+EvaluateAntisymmetrizedTensorTrain[tensorTrain_List,vectors_List]:=
  Switch[
   Length[tensorTrain],
   1,EvaluateTensorTrain[tensorTrain,vectors],
@@ -51,6 +53,56 @@ EvaluateSymmetrizedTensorTrain[tensorTrain_List,vector_List?VectorQ]:=
   tensorTrain==={1},
   vector,
   Chop@Fold[Dot[vector,Dot[#1,#2]]&,vector,tensorTrain]
+ ]
+
+
+EvaluateAntisymmetrizedTensorTree[assoc_Association,vectors_List]:=
+ With[
+  {interiorVectors=Map[EvaluateAntisymmetrizedTensorTrain[#,vectors]&,assoc[["leafObjects"]],{2}]},
+  
+  MapThread[EvaluateTensorTrain,{assoc[["interiorTensorTrains"]],interiorVectors}]
+ ]
+
+
+MonomialQ[variables_List,powers_List]:=
+ Length@variables==Length@powers\[And]
+ VectorQ[powers,PositiveIntegerQ]
+
+
+SymmetrizedMonomialCP[variables_List,powers_List]/;MonomialQ[variables,powers]:=
+ With[
+  {ds=N@ReplacePart[powers,1->0]},
+  {\[Zeta]s=Exp[(2\[Pi]*I)/(ds+1)]},
+  {grid=Sequence@@(\[Zeta]s^Range[0,ds])},
+  
+  {
+  1/(Times@@(ds+1)*Multinomial@@N@powers),
+  Chop@Transpose[{Flatten@Outer[Times,grid],Flatten[Outer[Total[variables*{##}]&,grid],Length@ds-1]}]
+  }
+ ]
+
+
+PartiallySymmetrizedMonomialCP[variables_List,SSYT_List]:=
+ With[
+  {conjugateTableau=ConjugateTableau@SSYT},
+  {
+  powersList=Values/@Counts/@conjugateTableau,
+  variablesList=variables[[#]]&/@DeleteDuplicates/@conjugateTableau
+  },
+  
+  Transpose@MapThread[SymmetrizedMonomialCP,{variablesList,powersList}]
+ ]
+
+
+EvaluateYoungSymmetrizedTensorTree[assoc_Association,variables_List,SSYT_List]:=
+ Module[
+  {
+  globalCoefficients,localCoefficientsVariables
+  },
+
+  {globalCoefficients,localCoefficientsVariables}=PartiallySymmetrizedMonomialCP[variables,SSYT];
+  
+  Times@@globalCoefficients*IteratedSum[Times@@(First/@{##})*EvaluateAntisymmetrizedTensorTree[assoc,Last/@{##}]&,localCoefficientsVariables]
  ]
 
 

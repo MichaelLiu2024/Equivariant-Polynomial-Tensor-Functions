@@ -3,6 +3,10 @@
 BeginPackage["CombinatoricsTools`"];
 
 
+PositiveIntegerQ
+NonNegativeIntegerQ
+IteratedSum
+WeakCompositions
 StrictCompositions
 ThinPartitions
 StandardYoungTableau
@@ -36,6 +40,20 @@ pathToSSYT[pathIn_List]:=
 
 (* ::Subsubsection:: *)
 (*Public Functions*)
+
+
+PositiveIntegerQ[n_]:=Positive@n\[And]IntegerQ@n
+
+
+NonNegativeIntegerQ[n_]:=NonNegative@n\[And]IntegerQ@n
+
+
+IteratedSum[f_,ls_List]:=With[{vars=Unique@x&/@ls},Sum[f@@vars,Evaluate[Sequence@@Transpose@{vars,ls}]]]
+
+
+WeakCompositions::usage="gives a list of all weak integer compositions of D into n parts."
+SetAttributes[WeakCompositions,Listable]
+WeakCompositions[D_Integer?NonNegative,n_Integer?Positive]:=Join@@Permutations/@IntegerPartitions[D,{n},Range[0,D]]
 
 
 StrictCompositions::usage="gives a list of all strict integer compositions of D into n parts."

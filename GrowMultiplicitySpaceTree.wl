@@ -86,23 +86,14 @@ generateVariables[\[Lambda]_Integer?NonNegative,mult_Integer?Positive]:=Table[Su
 EvaluatePolynomials[{{\[Lambda]s_,m\[Lambda]s_,\[Nu]_},D_,d\[Lambda]s_,\[Pi]\[Lambda]s_,\[Mu]\[Lambda]s_,assoc_}]:=
  Module[
   {
-   inputVariables,
-   leafVariables,
-   
-   leafTensors,leafVectors,
+   interiorVectors,
    sphericalPolynomials
   },
-  
-  inputVariables=generateVariables[\[Lambda]s,m\[Lambda]s];
-  leafVariables=SymmetricMonomialCP[x];
 
-  (*Temporary solution; replace with polarization*)
-  leafTensors=Map[ContractLeafTensorsCoreTensorTrain[Sequence@@#]&,assoc[["leafObjects"]],{2}];
-  leafTensors=MapThread[SymmetrizeColumns[#1]/@#2&,{\[Pi]\[Lambda]s,leafTensors}];
+  (*this code works on elementary objects, but still needs to be outered over the SSYT*)
+  interiorVectors=MapThread[EvaluateYoungSymmetrizedTensorTree[#1,#2,First@#3]&,{assoc[["leafObjects"]],generateVariables[\[Lambda]s,m\[Lambda]s],assoc[["SSYT\[Lambda]s"]]}];
 
-  leafVectors=MapThread[Flatten[Outer[ContractLeafSSYTCoreTensor,##,1],1]&,{assoc[["SSYT\[Lambda]s"]],leafTensors}];
-
-  sphericalPolynomials=Flatten[Outer[ContractLeafVectorsCoreTensorTrain,Tuples[leafVectors],assoc[["interiorTensorTrains"]],1],1];
+  sphericalPolynomials=Flatten[Outer[EvaluateTensorTrain,assoc[["interiorTensorTrains"]],Tuples[interiorVectors],1],1];
   SphericalBasisToMonomialBasis[sphericalPolynomials]
  ]
 
