@@ -28,18 +28,6 @@ SymmetricTensor[\[Lambda]_Integer?NonNegative,mult_Integer?NonNegative]:=
  ]
 
 
-(*unit test*)
-dsOriginal={1,2,3,4,5};
-d=Total@dsOriginal;
-test=SymmetrizedMonomialCP[{x1,x2,x3,x4,x5},dsOriginal];
-
-
-test[[1]]*(First/@test[[2]]) . (Last/@test[[2]])^d//Expand//Chop
-
-
-1.` x1 x2^2 x3^3 x4^4 x5^5
-
-
 End[];
 
 

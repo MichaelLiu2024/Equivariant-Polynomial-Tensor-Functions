@@ -1,30 +1,14 @@
 (* ::Package:: *)
 
-(* ::Section:: *)
-(*To Do*)
-
-
-(*We could try an alternative implementation of IsotypicMultiplicitySchurPower: find an explicit expression for the generating function of the number of
-semistandard Young tableaux (SSYT) of shape p with powers being the total sum of entries and use Coefficient. Maybe try this for IsotypicMultiplicityExteriorPower
-as well for consistency, though tbh it may be slower. Low priority though.*)
-(*Replace Tuples with Sequence; need to adjust the pure function ContractTensorTree*)
-(*We will have another layer over all 0\[VectorLessEqual]m\[Lambda]s\[VectorLessEqual]m\[Lambda]sMax, restricting the \[Lambda]s appropriately, etc. each calls IsotypicDataTree*)
-
-
 BeginPackage["GrowMultiplicitySpaceTree`",{"TensorTools`","ClebschGordanTools`","IsotypicDecompositionTools`","CombinatoricsTools`"}];
 
 
-IsotypicDataTree::usage="forms the isotypic data tree"
+IsotypicDataTree
 
 
 Begin["`Private`"];
 
 
-(* ::Subsubsection:: *)
-(*Private Functions*)
-
-
-(*recursively prunes childless nodes from the input tree*)
 PruneChildlessNodes[tree_Tree]:=TreeFold[If[#2=={},Nothing,Tree[##]]&,tree]
 
 
@@ -45,14 +29,10 @@ EnumerateTensorProductBases[{{\[Lambda]s_,m\[Lambda]s_,\[Nu]_},D_,d\[Lambda]s_,\
  {
   <|
    "interiorTensorTrains"->TensorTrainBasisTensorProduct[\[Mu]\[Lambda]s,\[Nu]],
-   "leafObjects"->MapThread[TensorTrainBasisSchurPower,{\[Lambda]s,\[Pi]\[Lambda]s,\[Mu]\[Lambda]s}],
+   "leafObjects"->MapThread[TensorTreeBasisSchurPower,{\[Lambda]s,\[Pi]\[Lambda]s,\[Mu]\[Lambda]s}],
    "SSYT\[Lambda]s"->MapThread[SemiStandardYoungTableaux,{\[Pi]\[Lambda]s,m\[Lambda]s}]
   |>
  }
-
-
-(* ::Subsubsection:: *)
-(*IsotypicDataTreeToPolynomials*)
 
 
 (*https://resources.wolframcloud.com/FunctionRepository/resources/SolidHarmonicR/*)
@@ -83,17 +63,21 @@ SetAttributes[generateVariables,Listable]
 generateVariables[\[Lambda]_Integer?NonNegative,mult_Integer?Positive]:=Table[Subscript[Global`x,\[Lambda],m,n],{n,1,mult},{m,-\[Lambda],\[Lambda]}]
 
 
-EvaluatePolynomials[{{\[Lambda]s_,m\[Lambda]s_,\[Nu]_},D_,d\[Lambda]s_,\[Pi]\[Lambda]s_,\[Mu]\[Lambda]s_,assoc_}]:=
+EvaluatePolynomials[{{\[Lambda]s_,m\[Lambda]s_,\[Nu]_},D_,d\[Lambda]s_,\[Pi]\[Lambda]s_,\[Mu]\[Lambda]s_,bases_}]:=
  Module[
   {
    interiorVectors,
    sphericalPolynomials
   },
 
-  (*this code works on elementary objects, but still needs to be outered over the SSYT*)
-  interiorVectors=MapThread[EvaluateYoungSymmetrizedTensorTree[#1,#2,First@#3]&,{assoc[["leafObjects"]],generateVariables[\[Lambda]s,m\[Lambda]s],assoc[["SSYT\[Lambda]s"]]}];
+  (*
+  Level 1: \[Lambda]
+  Level 2: basis elements
+  Object:  interiorVectors
+  *)
+  interiorVectors=MapThread[EvaluateYoungSymmetrizedTensorTree,{bases[["leafObjects"]],bases[["SSYT\[Lambda]s"]],generateVariables[\[Lambda]s,m\[Lambda]s]}];
 
-  sphericalPolynomials=Flatten[Outer[EvaluateTensorTrain,assoc[["interiorTensorTrains"]],Tuples[interiorVectors],1],1];
+  sphericalPolynomials=Flatten[Outer[EvaluateTensorTrain,bases[["interiorTensorTrains"]],Tuples@interiorVectors,1],1];
   SphericalBasisToMonomialBasis[sphericalPolynomials]
  ]
 
@@ -109,6 +93,10 @@ SO3RepresentationQ[\[Lambda]s_List,m\[Lambda]s_List]:=
  DuplicateFreeQ[\[Lambda]s]
 
 
+(*We will have another layer over all 0\[VectorLessEqual]m\[Lambda]s\[VectorLessEqual]m\[Lambda]sMax, restricting the \[Lambda]s appropriately, etc. each calls IsotypicDataTree*)
+
+
+IsotypicDataTree::usage="forms the isotypic data tree"
 IsotypicDataTree[\[Lambda]s_List,m\[Lambda]s_List,\[Nu]_Integer?NonNegative,DMax_Integer?Positive]/;
  SO3RepresentationQ[\[Lambda]s,m\[Lambda]s]\[And]
  Total[m\[Lambda]s]<=DMax:=

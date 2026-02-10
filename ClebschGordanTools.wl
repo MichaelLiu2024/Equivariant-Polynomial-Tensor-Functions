@@ -6,7 +6,7 @@ BeginPackage["ClebschGordanTools`",{"CombinatoricsTools`","IsotypicDecomposition
 TensorTrainBasisTensorProduct
 TensorTrainBasisExteriorPower
 TensorTrainBasisSymmetricPower
-TensorTrainBasisSchurPower
+TensorTreeBasisSchurPower
 
 
 Begin["`Private`"];
@@ -100,7 +100,7 @@ TensorTrainBasisSymmetricPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegati
    d,
    1,{{1}},
    2,{{ClebschGordanTensor[\[Lambda],\[Lambda],\[Mu]]}},
-   3,ClebschGordanTensorTrain[{\[Lambda],\[Lambda],\[Lambda]},{\[Lambda],#+Mod[#,2]&@Abs[\[Lambda]-\[Mu]],\[Mu]}]
+   3,{ClebschGordanTensorTrain[{\[Lambda],\[Lambda],\[Lambda]},{\[Lambda],#+Mod[#,2]&@Abs[\[Lambda]-\[Mu]],\[Mu]}]}
   ]
 
 
@@ -134,14 +134,14 @@ TensorTrainBasisSymmetricPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegati
 
 
 (*these expensive functions need to be memoized, since they are evaluated multiple times*)
-TensorTrainBasisSchurPower::usage="gives a list of all Clebsch-Gordan paths from \[Mu] to the image of the Young symmetrizer p on \[Lambda]."
-TensorTrainBasisSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_Integer?NonNegative]/;First[p]<=3:=
+TensorTreeBasisSchurPower::usage="gives a list of all Clebsch-Gordan paths from \[Mu] to the image of the Young symmetrizer p on \[Lambda]."
+TensorTreeBasisSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_Integer?NonNegative]/;First[p]<=3:=
  With[
   {d=Total[p]},
   Switch[
    Length[p],
-   1,<|"interiorTensorTrains"->ConstantArray[{1},Length@#],"leafObjects"->#|>&@TensorTrainBasisExteriorPower[\[Lambda],d,\[Mu]],
-   d,<|"interiorTensorTrains"->#,"leafObjects"->ConstantArray[ConstantArray[{1},d],Length@#]|>&@TensorTrainBasisSymmetricPower[\[Lambda],d,\[Mu]],
+   1,<|"interiorTensorTrains"->({1}&/@#),"leafObjects"->List/@#|>&@TensorTrainBasisExteriorPower[\[Lambda],d,\[Mu]],
+   d,<|"interiorTensorTrains"->#,"leafObjects"->(ConstantArray[{1},d]&/@#)|>&@TensorTrainBasisSymmetricPower[\[Lambda],d,\[Mu]],
    _,
    Module[
     {

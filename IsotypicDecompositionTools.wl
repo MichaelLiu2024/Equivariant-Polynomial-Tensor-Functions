@@ -26,6 +26,11 @@ IsotypicMultiplicityExteriorPower::usage="gives the isotypic multiplicity of \[M
 IsotypicMultiplicityExteriorPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegative,\[Mu]_Integer?NonNegative]:=Count[#,_?(Total[#]==\[Mu]&)]-Count[#,_?(Total[#]==\[Mu]+1&)]&@Subsets[Range[-\[Lambda],\[Lambda]],{d}]
 
 
+(*We could try an alternative implementation of IsotypicMultiplicitySchurPower: find an explicit expression for the generating function of the number of
+semistandard Young tableaux (SSYT) of shape p with powers being the total sum of entries and use Coefficient. Maybe try this for IsotypicMultiplicityExteriorPower
+as well for consistency, though tbh it may be slower. Low priority though.*)
+
+
 IsotypicMultiplicitySchurPower::usage="gives the isotypic multiplicity of \[Mu] in the Schur power \!\(\*SubscriptBox[\(e\), \(p\)]\)\!\(\*SubsuperscriptBox[\(H\), \(\[Lambda]\), \(\[CircleTimes]d\)]\)."
 IsotypicMultiplicitySchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_Integer?NonNegative]:=Module[{x},Coefficient[#,x,\[Mu]]-Coefficient[#,x,\[Mu]+1]&@SchurS[ConjugatePartition@p,x^Range[-\[Lambda],\[Lambda]]]]
 
