@@ -72,7 +72,7 @@ MonomialQ[variables_List,powers_List]:=
 
 SymmetrizedMonomialCP[variables_List,powers_List]/;MonomialQ[variables,powers]:=
  With[
-  {ds=N@ReplacePart[powers,1->0]},
+  {ds=N@ReplacePart[Reverse@powers,1->0]},
   {\[Zeta]s=Exp[(2\[Pi]*I)/(ds+1)]},
   {grid=Sequence@@(\[Zeta]s^Range[0,ds])},
   
@@ -81,7 +81,7 @@ SymmetrizedMonomialCP[variables_List,powers_List]/;MonomialQ[variables,powers]:=
    Chop@Transpose[
     {
      Flatten[Outer[Times,grid]],(*local coefficients*)
-     Flatten[Outer[{##} . variables&,grid],Length@ds-1](*local variables*)
+     Flatten[Outer[{##} . Reverse@variables&,grid],Length@ds-1](*local variables*)
     }
    ]
   }

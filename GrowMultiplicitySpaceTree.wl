@@ -4,6 +4,7 @@ BeginPackage["GrowMultiplicitySpaceTree`",{"TensorTools`","ClebschGordanTools`",
 
 
 IsotypicDataTree
+EnumerateVectorSpaceBases
 
 
 Begin["`Private`"];
@@ -37,7 +38,7 @@ EnumerateTensorProductBases[{{\[Lambda]s_,m\[Lambda]s_,\[Nu]_},D_,d\[Lambda]s_,\
 
 (*https://resources.wolframcloud.com/FunctionRepository/resources/SolidHarmonicR/*)
 SolidHarmonicR[l_Integer?NonNegative,m_Integer,x_,y_,z_]/;Abs[m]<=l:=
- With[
+ N@With[
   {dpower=If[#2==0,1,#1^#2]&,s=Sign[m],am=Abs[m]},
   
   (-1)^((1-s)am/2)Sqrt[(l-am)!/(l+am)!]dpower[x+I s y,am]*
@@ -49,21 +50,29 @@ SolidHarmonicR[l_Integer?NonNegative,m_Integer,x_,y_,z_]/;Abs[m]<=l:=
  ]
 
 
+HarmonicTensorCoordinates[l_Integer?NonNegative,m_Integer]:=HarmonicTensorCoordinates[l,m]=
+ Total@ReplaceAll[
+  CoefficientRules[SolidHarmonicR[l,m,x,y,z],{x,y,z}],
+  (powers_->coefficients_):>coefficients*Global`x[Join@@MapThread[ConstantArray,{Range[3],powers}]]
+ ]
+
+
+(*This and any other FullSimplify will take up a lot of time! But it is only a one-time cost, and simplifications here will make the final evaluation faster*)
 SphericalBasisToMonomialBasis[sphericalPolynomials_]:=
- FullSimplify@ReplaceAll[
-  Chop@FullSimplify@ReplaceAll[
+ ReplaceAll[
+  Chop@Expand@ReplaceAll[
    sphericalPolynomials,
-   Subscript[Global`x,l_,m_,mult_]:>ReplaceAll[Expand@SolidHarmonicR[l,m,x,y,z],Times@@({x,y,z}^#)->Subscript[Global`x,mult,Join@@MapThread[ConstantArray,{Range[3],#}]]&/@WeakCompositions[l,3]]
+   Global`x[l_][m_][mult_]:>(HarmonicTensorCoordinates[l,m]/.Global`x[p_]:>Global`x[p][mult])
   ],
   r:(_Real|_Complex):>RootApproximant[r]
  ]
 
 
 SetAttributes[generateVariables,Listable]
-generateVariables[\[Lambda]_Integer?NonNegative,mult_Integer?Positive]:=Table[Subscript[Global`x,\[Lambda],m,n],{n,1,mult},{m,-\[Lambda],\[Lambda]}]
+generateVariables[\[Lambda]_Integer?NonNegative,mult_Integer?Positive]:=Table[Global`x[\[Lambda]][m][n],{n,1,mult},{m,-\[Lambda],\[Lambda]}]
 
 
-EvaluatePolynomials[{{\[Lambda]s_,m\[Lambda]s_,\[Nu]_},D_,d\[Lambda]s_,\[Pi]\[Lambda]s_,\[Mu]\[Lambda]s_,bases_}]:=
+EvaluatePolynomials[bases_Association,variables_List]:=
  Module[
   {
    interiorVectors,
@@ -75,15 +84,40 @@ EvaluatePolynomials[{{\[Lambda]s_,m\[Lambda]s_,\[Nu]_},D_,d\[Lambda]s_,\[Pi]\[La
   Level 2: basis elements
   Object:  interiorVectors
   *)
-  interiorVectors=MapThread[EvaluateYoungSymmetrizedTensorTree,{bases[["leafObjects"]],bases[["SSYT\[Lambda]s"]],generateVariables[\[Lambda]s,m\[Lambda]s]}];
+  interiorVectors=MapThread[EvaluateYoungSymmetrizedTensorTree,{bases[["leafObjects"]],bases[["SSYT\[Lambda]s"]],variables}];
 
   sphericalPolynomials=Flatten[Outer[EvaluateTensorTrain,bases[["interiorTensorTrains"]],Tuples@interiorVectors,1],1];
   SphericalBasisToMonomialBasis[sphericalPolynomials]
  ]
 
 
+EvaluateIsotypicDataTree[tree_Tree]:=
+ EvaluatePolynomials[#,generateVariables[Sequence@@Most@TreeData@tree]]&/@TreeData/@TreeLeaves@tree
+
+
+degree[p_]:=Total@Exponent[First@p,Variables[First@p]]
+
+
+EnumerateVectorSpaceBases[\[Lambda]s_List,m\[Lambda]s_List,\[Nu]_Integer?NonNegative,DMax_Integer?Positive]/;
+ SO3RepresentationQ[\[Lambda]s,m\[Lambda]s]:=
+  GatherBy[
+   SortBy[
+    Flatten@MapThread[
+     EvaluateIsotypicDataTree@IsotypicDataTree[##,\[Nu],DMax]&,
+     {Subsets[\[Lambda]s,{1,\[Infinity]}],Subsets[m\[Lambda]s,{1,\[Infinity]}]}
+    ],
+    degree
+   ],
+   degree
+  ]
+
+
 (* ::Subsection:: *)
 (*Public Function Implementations*)
+
+
+(*Write a function to take permutations of multiplicities and substitute labels.*)
+(*Then, write a function to multiply all lower degree invariants and do pivot finding to get independent higher degree invariants. you can do simple checks like toss out zeros, and if there is nothing left, you are already done!*)
 
 
 SO3RepresentationQ[\[Lambda]s_List,m\[Lambda]s_List]:=
@@ -93,21 +127,19 @@ SO3RepresentationQ[\[Lambda]s_List,m\[Lambda]s_List]:=
  DuplicateFreeQ[\[Lambda]s]
 
 
-(*We will have another layer over all 0\[VectorLessEqual]m\[Lambda]s\[VectorLessEqual]m\[Lambda]sMax, restricting the \[Lambda]s appropriately, etc. each calls IsotypicDataTree*)
-
-
 IsotypicDataTree::usage="forms the isotypic data tree"
 IsotypicDataTree[\[Lambda]s_List,m\[Lambda]s_List,\[Nu]_Integer?NonNegative,DMax_Integer?Positive]/;
- SO3RepresentationQ[\[Lambda]s,m\[Lambda]s]\[And]
- Total[m\[Lambda]s]<=DMax:=
+ SO3RepresentationQ[\[Lambda]s,m\[Lambda]s]:=
   Module[
    {tree},
    
+   If[Length@\[Lambda]s>DMax,Return[Tree[{\[Lambda]s,m\[Lambda]s,\[Nu]},{}]]];
+   
    (*Level 1: D*)
-   tree=Tree[{\[Lambda]s,m\[Lambda]s,\[Nu]},Range[Total[m\[Lambda]s],DMax]];
+   tree=Tree[{\[Lambda]s,m\[Lambda]s,\[Nu]},Range[Length@\[Lambda]s,DMax]];
    
    (*Level 2: d\[Lambda]s*)
-   tree=NestTree[Select[StrictCompositions[#,Length[\[Lambda]s]],m\[Lambda]s\[VectorLessEqual]#&]&,tree];
+   tree=NestTree[StrictCompositions[#,Length[\[Lambda]s]]&,tree];
    
    (*Level 3: \[Pi]\[Lambda]s*)
    tree=NestTree[Tuples@ThinPartitions[#,\[Lambda]s,m\[Lambda]s]&,tree];
@@ -118,11 +150,10 @@ IsotypicDataTree[\[Lambda]s_List,m\[Lambda]s_List,\[Nu]_Integer?NonNegative,DMax
    (*Prune childless nodes for memory efficiency*)
    tree=PruneChildlessNodes[tree];
    
-   (*Level 5: interiorTensorTrains, leafObjects, and SSYT\[Lambda]s*)
-   tree=AncestralNestTree[EnumerateTensorProductBases,tree];
+   If[tree==Nothing,Return[Tree[{\[Lambda]s,m\[Lambda]s,\[Nu]},{}]]];
    
-   (*Level 6: polynomials*)
-   tree=AncestralNestTree[EvaluatePolynomials,tree]
+   (*Level 5: interiorTensorTrains, leafObjects, and SSYT\[Lambda]s*)
+   AncestralNestTree[EnumerateTensorProductBases,tree]
   ]
 
 

@@ -22,7 +22,7 @@ IndependentSymmetricIndices[\[Lambda]_Integer?NonNegative]:=Join@@MapThread[Cons
 
 SymmetricTensor[\[Lambda]_Integer?NonNegative,mult_Integer?NonNegative]:=
  SymmetrizedArray[
-  #->Subscript[Global`x, mult,#]&/@IndependentSymmetricIndices[\[Lambda]],
+  #->Global`x[#][mult]&/@IndependentSymmetricIndices[\[Lambda]],
   ConstantArray[3,\[Lambda]],
   Symmetric
  ]
