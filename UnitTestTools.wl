@@ -20,9 +20,9 @@ IndependentSymmetricIndices[\[Lambda]_Integer?NonNegative]:=Join@@MapThread[Cons
 (*Public Functions*)
 
 
-SymmetricTensor[\[Lambda]_Integer?NonNegative,mult_Integer?NonNegative]:=
+SymmetricTensor[\[Lambda]_Integer?NonNegative,multiplicity_Integer?NonNegative]:=
  SymmetrizedArray[
-  #->Global`x[#][mult]&/@IndependentSymmetricIndices[\[Lambda]],
+  #->Global`x[\[Lambda]][multiplicity][Sequence@@#]&/@IndependentSymmetricIndices[\[Lambda]],
   ConstantArray[3,\[Lambda]],
   Symmetric
  ]

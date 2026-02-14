@@ -97,7 +97,7 @@ SchurS[p_List?VectorQ,vars_List?VectorQ]:=
 
 (*https://github.com/PerAlexandersson/Mathematica-packages*)
 SemiStandardYoungTableaux::usage="gives a list of all semistandard Young tableaux of shape p with largest entry n."
-SemiStandardYoungTableaux[p_List?VectorQ,n_Integer?Positive]:=Join@@SemiStandardYoungTableaux[p]/@IntegerPartitions[Tr@p,n]
+SemiStandardYoungTableaux[p_List?VectorQ,n_Integer?Positive]:=Join@@SemiStandardYoungTableaux[p]/@WeakCompositions[Tr@p,n]
 SemiStandardYoungTableaux[p_List?VectorQ][w_List?VectorQ]:=SemiStandardYoungTableaux[p,w]
 SemiStandardYoungTableaux[p_List?VectorQ,w_List?VectorQ]:=
  With[
