@@ -4,13 +4,14 @@ BeginPackage["GrowMultiplicitySpaceTree`",{"TreeTools`","TensorTools`","ClebschG
 
 
 IsotypicDataTree
-EnumerateVectorSpaceBases
+IsotypicDataTreeToVectorSpaceBases
+VectorSpaceBasesToAlgebraBases
 
 
 Begin["`Private`"];
 
 
-EnumerateTensorProductBases[{{\[Lambda]s_,m\[Lambda]s_,\[Nu]_},D_,d\[Lambda]s_,\[Pi]\[Lambda]s_,\[Mu]\[Lambda]s_}]:=
+EnumerateTensorProductBases[{{\[Lambda]s_,m\[Lambda]s_,\[Nu]_,DMax_},D_,d\[Lambda]s_,\[Pi]\[Lambda]s_,\[Mu]\[Lambda]s_}]:=
  {
   <|
    "interiorTensorTrains"->TensorTrainBasisTensorProduct[\[Mu]\[Lambda]s,\[Nu]],
@@ -34,7 +35,7 @@ SolidHarmonicR[l_Integer?NonNegative,m_Integer,x_,y_,z_]/;Abs[m]<=l:=
  ]
 
 
-HarmonicTensorCoordinates[\[Lambda]_Integer?NonNegative,m_Integer]:=HarmonicTensorCoordinates[\[Lambda],m]=
+HarmonicTensorCoordinates[\[Lambda]_Integer?Positive,m_Integer]:=HarmonicTensorCoordinates[\[Lambda],m]=
  Total@ReplaceAll[
   CoefficientRules[SolidHarmonicR[\[Lambda],m,x,y,z],{x,y,z}],
   (powers_->coefficients_):>coefficients*x[Sequence@@Join@@MapThread[ConstantArray,{Range[3],powers}]]
@@ -49,48 +50,90 @@ SphericalBasisToMonomialBasis[sphericalPolynomials_]:=
 
 
 SetAttributes[generateVariables,Listable]
-generateVariables[\[Lambda]_Integer?NonNegative,m\[Lambda]_Integer?Positive]:=Table[Global`x[\[Lambda]][m][multiplicity],{multiplicity,1,m\[Lambda]},{m,-\[Lambda],\[Lambda]}]
+generateVariables[\[Lambda]_Integer?Positive,m\[Lambda]_Integer?Positive]:=Table[Global`x[\[Lambda]][m][multiplicity],{multiplicity,1,m\[Lambda]},{m,-\[Lambda],\[Lambda]}]
 
 
-FormPolynomials[bases_Association,variables_List]:=
+IsotypicDataTreeToVectorSpaceBases[tree_Tree]:=
+ Lookup[
+  Association[TreeData@#->TreeData/@TreeLeaves@#&/@TreeChildren@tree],
+  Range[TreeData[tree][[4]]],
+  {}
+ ]
+
+
+EvaluateVectorSpaceBasis[bases_Association,inputVectors_List]:=
  Module[
   {
    interiorVectors,
-   sphericalPolynomials
+   outputVectors
   },
 
   (*
   Level 1: \[Lambda]
-  Level 2: basis elements
+  Level 2: inputVectors
+  Level 3: SSYTs
+  Level 4: tensorTrees
   Object:  interiorVectors
   *)
-  interiorVectors=MapThread[EvaluateYoungSymmetrizedTensorTree,{bases[["leafObjects"]],bases[["SSYT\[Lambda]s"]],variables}];
+  interiorVectors=MapThread[EvaluateYoungSymmetrizedTensorTree,{bases[["leafObjects"]],bases[["SSYT\[Lambda]s"]],inputVectors}];
 
-  sphericalPolynomials=Flatten[Outer[EvaluateTensorTrain,bases[["interiorTensorTrains"]],Tuples@interiorVectors,1],1]
+  (*
+  Level 1: interiorTensorTrains
+  Level 2 through 1+3n: inputVectors,SSYTs,tensorTrees for each \[Lambda]
+  Object:  outputVectors in Subscript[H, \[Nu]]
+  *)
+  outputVectors=Outer[EvaluateTensorTrain,bases[["interiorTensorTrains"]],Sequence@@interiorVectors,1,Sequence@@ConstantArray[3,Length@inputVectors]]
  ]
 
 
-FormPolynomials[,generateVariables[##]]
-SphericalBasisToMonomialBasis[sphericalPolynomials]
+EvaluateVectorSpaceBases[VectorSpaceBases_List,inputVectors_List]:=
+ Map[
+  EvaluateVectorSpaceBasis[#,inputVectors]&,
+  VectorSpaceBases,
+  {2}
+ ]
 
 
-(*find a better way to sort these; maybe just pad degrees and Transpose...*)
-EnumerateVectorSpaceBases[\[Lambda]s_List,m\[Lambda]s_List,\[Nu]_Integer?NonNegative,DMax_Integer?Positive]/;
- SO3RepresentationQ[\[Lambda]s,m\[Lambda]s]:=
-  Flatten@MapThread[
-   HarvestIsotypicDataTree@IsotypicDataTree[##,\[Nu],DMax]&,
-   {Subsets[\[Lambda]s,{1,\[Infinity]}],Subsets[m\[Lambda]s,{1,\[Infinity]}]}
-  ]
-
-
-HarvestIsotypicDataTree[tree_Tree]:=<|"\[Lambda]s"->TreeData[tree][[1]],"m\[Lambda]s"->TreeData[tree][[2]],"D"->TreeData@#,"IsotypicData"->TreeData/@TreeLeaves@#|>&/@TreeChildren@tree
-
-
-(* ::Subsection:: *)
-(*Public Function Implementations*)
-
-
-(*Then, write a function to multiply all lower degree invariants and do pivot finding to get independent higher degree invariants. you can do simple checks like toss out zeros, and if there is nothing left, you are already done!*)
+VectorSpaceBasesToAlgebraBases[\[Lambda]s_List,m\[Lambda]s_List,DMax_Integer?Positive,VectorSpaceBases_List]:=
+ Module[
+  {
+   randomProbes,
+   syndromeMatrix,
+   rowIndices,
+   columnIndices,
+   linearIndices
+  },
+  
+  (*
+  Level 1: \[Lambda]
+  Level 2: random probe
+  Level 3: multiplicity
+  Object:  random vector
+  *)
+  randomProbes=
+   MapThread[
+    Function[{\[Lambda],m\[Lambda]},RandomReal[1,{DMax+DMax(*oversampling*),m\[Lambda],2\[Lambda]+1}]],
+    {\[Lambda]s,m\[Lambda]s}
+   ];
+   
+  (*
+  Level 1: degree
+  Level 2: leaf of subtree
+  Level 3: interiorTensorTrains
+  Level 4 through 3+3n: inputVectors,SSYTs,tensorTrees for each \[Lambda]
+  Object:  random vector
+  *)
+  syndromeMatrix=EvaluateVectorSpaceBases[VectorSpaceBases,randomProbes];
+  
+  rowIndices=4+3*Range[0,Length@\[Lambda]s];
+  columnIndices=Complement[Range[4+3*Length@\[Lambda]s],rowIndices,{1}];
+  
+  (*Actually, you're supposed to multiply lower degree syndromes and compare them to the higher degree ones...*)
+  
+  syndromeMatrix=Flatten[syndromeMatrix,{{1},rowIndices,columnIndices}];
+  
+  syndromeMatrix
+ ]
 
 
 SO3RepresentationQ[\[Lambda]s_List,m\[Lambda]s_List]:=
@@ -105,13 +148,11 @@ IsotypicDataTree[\[Lambda]s_List,m\[Lambda]s_List,\[Nu]_Integer?NonNegative,DMax
   Module[
    {tree},
    
-   If[Length@\[Lambda]s>DMax,Return[Tree[{\[Lambda]s,m\[Lambda]s,\[Nu]},{}]]];
-   
    (*Level 1: D*)
-   tree=Tree[{\[Lambda]s,m\[Lambda]s,\[Nu]},Range[Length@\[Lambda]s,DMax]];
+   tree=Tree[{\[Lambda]s,m\[Lambda]s,\[Nu],DMax},Range@DMax];
    
    (*Level 2: d\[Lambda]s*)
-   tree=NestTree[StrictCompositions[#,Length[\[Lambda]s]]&,tree];
+   tree=NestTree[WeakCompositions[#,Length[\[Lambda]s]]&,tree];
    
    (*Level 3: \[Pi]\[Lambda]s*)
    tree=NestTree[Tuples@ThinPartitions[#,\[Lambda]s,m\[Lambda]s]&,tree];
@@ -121,8 +162,6 @@ IsotypicDataTree[\[Lambda]s_List,m\[Lambda]s_List,\[Nu]_Integer?NonNegative,DMax
    
    (*Prune childless nodes for memory efficiency*)
    tree=PruneChildlessNodes[tree];
-   
-   If[tree===Nothing,Return[Tree[{\[Lambda]s,m\[Lambda]s,\[Nu]},{}]]];
    
    (*Level 5: interiorTensorTrains, leafObjects, and SSYT\[Lambda]s*)
    AncestralNestTree[EnumerateTensorProductBases,tree]

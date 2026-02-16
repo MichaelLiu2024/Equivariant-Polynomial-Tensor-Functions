@@ -5,6 +5,7 @@ BeginPackage["CombinatoricsTools`"];
 
 PositiveIntegerQ
 NonNegativeIntegerQ
+PivotColumns
 IteratedSum
 WeakCompositions
 StrictCompositions
@@ -48,6 +49,10 @@ PositiveIntegerQ[n_]:=Positive@n\[And]IntegerQ@n
 NonNegativeIntegerQ[n_]:=NonNegative@n\[And]IntegerQ@n
 
 
+(*https://resources.wolframcloud.com/FunctionRepository/resources/PivotColumns*)
+PivotColumns[matrix_?MatrixQ]:=Flatten@Map[Position[#,_?(N@#!=0&),{1},1,Heads->False]&,RowReduce@matrix]
+
+
 IteratedSum[f_,ls_List]:=With[{vars=Unique@x&/@ls},Sum[f@@vars,Evaluate[Sequence@@Transpose@{vars,ls}]]]
 
 
@@ -63,7 +68,7 @@ StrictCompositions[D_Integer?NonNegative,n_Integer?Positive]:=Join@@Permutations
 
 ThinPartitions::usage="gives a list of all integer partitions of d with parts at most Min[2\[Lambda]+1,m]."
 SetAttributes[ThinPartitions,Listable]
-ThinPartitions[d_Integer?NonNegative,\[Lambda]_Integer?NonNegative,m_Integer?Positive]:=IntegerPartitions[d,All,Range[Min[2\[Lambda]+1,m]]]
+ThinPartitions[d_Integer?NonNegative,\[Lambda]_Integer?Positive,m_Integer?Positive]:=IntegerPartitions[d,All,Range[Min[2\[Lambda]+1,m]]]
 
 
 StandardYoungTableau::usage="gives the standard Young tableau of shape p filled in English reading order."
@@ -97,8 +102,13 @@ SchurS[p_List?VectorQ,vars_List?VectorQ]:=
 
 (*https://github.com/PerAlexandersson/Mathematica-packages*)
 SemiStandardYoungTableaux::usage="gives a list of all semistandard Young tableaux of shape p with largest entry n."
+
+SemiStandardYoungTableaux[{},n_Integer?Positive]:={{}}
+
 SemiStandardYoungTableaux[p_List?VectorQ,n_Integer?Positive]:=Join@@SemiStandardYoungTableaux[p]/@WeakCompositions[Tr@p,n]
+
 SemiStandardYoungTableaux[p_List?VectorQ][w_List?VectorQ]:=SemiStandardYoungTableaux[p,w]
+
 SemiStandardYoungTableaux[p_List?VectorQ,w_List?VectorQ]:=
  With[
   {

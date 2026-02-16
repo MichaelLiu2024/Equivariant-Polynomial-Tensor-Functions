@@ -26,6 +26,7 @@ ContractVectors[vector1_?VectorQ,{vector2_?VectorQ,tensor_?ArrayQ}]:=Dot[vector2
 
 (*add input checks*)
 EvaluateTensorTrain::usage="evaluates the tensorTrain at the vectors."
+EvaluateTensorTrain[tensorTrain_List,vectors__]:=EvaluateTensorTrain[tensorTrain,{vectors}]
 EvaluateTensorTrain[tensorTrain_List,vectors_List]:=
  If[
   tensorTrain==={1},
@@ -91,7 +92,7 @@ SymmetrizedMonomialCP[variables_List,powers_List]/;MonomialQ[variables,powers]:=
 PartiallySymmetrizedMonomialCP[variables_List][SSYT_List]:=PartiallySymmetrizedMonomialCP[variables,SSYT]
 PartiallySymmetrizedMonomialCP[variables_List,SSYT_List]:=
  With[
-  {conjugateTableau=ConjugateTableau@SSYT},
+  {conjugateTableau=ConjugateTableau@SSYT},(*eventually, move these up as Map[ConjugateTableau,SSYTs,blah], same with below*)
   {
    powersList=Values@*Counts/@conjugateTableau,
    variablesList=variables[[DeleteDuplicates[#]]]&/@conjugateTableau
@@ -102,10 +103,31 @@ PartiallySymmetrizedMonomialCP[variables_List,SSYT_List]:=
 
 
 EvaluateYoungSymmetrizedTensorTree[tensorTrees_Association,SSYTs_List,variables_List]:=
- With[
-  {CPData=PartiallySymmetrizedMonomialCP[variables]/@SSYTs},
-
-  Flatten[Times@@#[[1]]*IteratedSum[Times@@(First/@{##})*EvaluateAntisymmetrizedTensorTree[tensorTrees,Last/@{##}]&,#[[2]]]&/@CPData,1]
+ If[
+  SSYTs=={{}},
+  {{{{1}}}},
+  With[
+   {
+    (*
+    Level 1: variables
+    Level 2: SSYTs
+    Object:  
+    *)
+    CPData=Outer[PartiallySymmetrizedMonomialCP,variables,SSYTs,1]
+   },
+   
+   (*
+   Level 1: variables
+   Level 2: SSYTs
+   Level 3: tensorTrees
+   Object:  vector
+   *)
+   Map[
+    Times@@#[[1]]*IteratedSum[Times@@(First/@{##})*EvaluateAntisymmetrizedTensorTree[tensorTrees,Last/@{##}]&,#[[2]]]&,
+    CPData,
+    {2}
+   ]
+  ]
  ]
 
 

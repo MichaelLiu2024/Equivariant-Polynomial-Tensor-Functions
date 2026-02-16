@@ -16,10 +16,6 @@ Begin["`Private`"];
 (*Private Function Implementations*)
 
 
-(*https://resources.wolframcloud.com/FunctionRepository/resources/PivotColumns*)
-PivotColumns[matrix_?MatrixQ]:=Flatten@Map[Position[#,_?(N@#!=0&),{1},1,Heads->False]&,RowReduce@matrix]
-
-
 (*helper function that converts the index \[Alpha] to the corresponding spin \[Gamma]*)
 indicesToPaths[\[Gamma]_Integer?NonNegative,{\[Lambda]_Integer?NonNegative,\[Alpha]_Integer?NonNegative}]:=Abs[\[Gamma]-\[Lambda]]+\[Alpha]-1
 
@@ -135,11 +131,12 @@ TensorTrainBasisSymmetricPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegati
 
 (*these expensive functions need to be memoized, since they are evaluated multiple times*)
 TensorTreeBasisSchurPower::usage="gives a list of all Clebsch-Gordan paths from \[Mu] to the image of the Young symmetrizer p on \[Lambda]."
-TensorTreeBasisSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_Integer?NonNegative]/;First[p]<=3:=
+TensorTreeBasisSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_Integer?NonNegative]:=
  With[
-  {d=Total[p]},
+  {d=Total@p},
   Switch[
-   Length[p],
+   Length@p,
+   0,<||>,
    1,<|"interiorTensorTrains"->({1}&/@#),"leafObjects"->List/@#|>&@TensorTrainBasisExteriorPower[\[Lambda],d,\[Mu]],
    d,<|"interiorTensorTrains"->#,"leafObjects"->(ConstantArray[{1},d]&/@#)|>&@TensorTrainBasisSymmetricPower[\[Lambda],d,\[Mu]],
    _,
@@ -182,9 +179,9 @@ TensorTreeBasisSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_Int
     
     (*
     Level 1: random probe
-    Object:  list of First[p] random vectors in Subscript[H, \[Lambda]]
+    Object:  list of First@p random vectors in Subscript[H, \[Lambda]]
     *)
-    leafRandomProbes=RandomReal[1,{d+d(*oversampling*),First[p],2\[Lambda]+1}];
+    leafRandomProbes=RandomReal[1,{d+d(*oversampling*),First@p,2\[Lambda]+1}];
     
     (*
     Level 1: interiorSpins
