@@ -117,7 +117,7 @@ TensorTrainBasisSymmetricPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegati
   
   interiorTensorTrains=ClebschGordanTensorTrain[ConstantArray[\[Lambda],d]]/@interiorPaths;
   
-  interiorRandomProbes=RandomReal[1,{d+d(*oversampling*),2\[Lambda]+1}];
+  interiorRandomProbes=RandomReal[1,{Binomial[2\[Lambda]+d,d](*worse case sampling; may need oversampling*),2\[Lambda]+1}];
   
   syndromeMatrix=
    Flatten[
@@ -129,14 +129,14 @@ TensorTrainBasisSymmetricPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegati
  ]
 
 
-(*these expensive functions need to be memoized, since they are evaluated multiple times*)
+(*these expensive functions need to be memoized when we are sure they work, since they are evaluated multiple times*)
 TensorTreeBasisSchurPower::usage="gives a list of all Clebsch-Gordan paths from \[Mu] to the image of the Young symmetrizer p on \[Lambda]."
 TensorTreeBasisSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_Integer?NonNegative]:=
  With[
   {d=Total@p},
   Switch[
    Length@p,
-   0,<||>,
+   0,<|"interiorTensorTrains"->{{1}},"leafObjects"->{{1}}|>,
    1,<|"interiorTensorTrains"->({1}&/@#),"leafObjects"->List/@#|>&@TensorTrainBasisExteriorPower[\[Lambda],d,\[Mu]],
    d,<|"interiorTensorTrains"->#,"leafObjects"->(ConstantArray[{1},d]&/@#)|>&@TensorTrainBasisSymmetricPower[\[Lambda],d,\[Mu]],
    _,
@@ -181,7 +181,7 @@ TensorTreeBasisSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_Int
     Level 1: random probe
     Object:  list of First@p random vectors in Subscript[H, \[Lambda]]
     *)
-    leafRandomProbes=RandomReal[1,{d+d(*oversampling*),First@p,2\[Lambda]+1}];
+    leafRandomProbes=RandomReal[1,{Binomial[2\[Lambda]+d,d](*worse case sampling; may need oversampling*),First@p,2\[Lambda]+1}];
     
     (*
     Level 1: interiorSpins
@@ -242,20 +242,6 @@ TensorTreeBasisSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_Int
    ]
   ]
  ]
-
-
-linearIndicesToRaggedMultiIndices[linearIndices_List?VectorQ,dimensions_List?VectorQ]/;Max@linearIndices<=Total@dimensions:=
- With[
-  {accumulateDimensions=Prepend[Accumulate@dimensions,0]},
-  {i=Flatten[FirstPosition[accumulateDimensions,total_/;#<=total]&/@linearIndices]-1},
-  {j=linearIndices-accumulateDimensions[[i]]},
-  
-  Transpose@{i,j}
- ]
-
-
-linearIndexToArrayMultiIndex[linearIndex_Integer?Positive,dimensions_List?VectorQ]/;linearIndex<=Times@@dimensions:=
- IntegerDigits[linearIndex-1,MixedRadix@dimensions,Length@dimensions]+1
 
 
 End[];

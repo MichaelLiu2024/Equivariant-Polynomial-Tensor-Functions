@@ -73,7 +73,7 @@ MonomialQ[variables_List,powers_List]:=
 
 SymmetrizedMonomialCP[variables_List,powers_List]/;MonomialQ[variables,powers]:=
  With[
-  {ds=N@ReplacePart[Reverse@powers,1->0]},
+  {ds=N@ReplacePart[Sort@powers,1->0]},
   {\[Zeta]s=Exp[(2\[Pi]*I)/(ds+1)]},
   {grid=Sequence@@(\[Zeta]s^Range[0,ds])},
   
@@ -82,7 +82,7 @@ SymmetrizedMonomialCP[variables_List,powers_List]/;MonomialQ[variables,powers]:=
    Chop@Transpose[
     {
      Flatten[Outer[Times,grid]],(*local coefficients*)
-     Flatten[Outer[{##} . Reverse@variables&,grid],Length@ds-1](*local variables*)
+     Flatten[Outer[{##} . variables[[Ordering@powers]]&,grid],Length@ds-1](*local variables*)
     }
    ]
   }
@@ -92,7 +92,7 @@ SymmetrizedMonomialCP[variables_List,powers_List]/;MonomialQ[variables,powers]:=
 PartiallySymmetrizedMonomialCP[variables_List][SSYT_List]:=PartiallySymmetrizedMonomialCP[variables,SSYT]
 PartiallySymmetrizedMonomialCP[variables_List,SSYT_List]:=
  With[
-  {conjugateTableau=ConjugateTableau@SSYT},(*eventually, move these up as Map[ConjugateTableau,SSYTs,blah], same with below*)
+  {conjugateTableau=ConjugateTableau@SSYT},(*eventually, move these up as Map[ConjugateTableau,SSYTs,blah], same with below. maybe we can merge this function with EvaluateYoungSYmmetrizedTensorTree*)
   {
    powersList=Values@*Counts/@conjugateTableau,
    variablesList=variables[[DeleteDuplicates[#]]]&/@conjugateTableau
@@ -105,7 +105,7 @@ PartiallySymmetrizedMonomialCP[variables_List,SSYT_List]:=
 EvaluateYoungSymmetrizedTensorTree[tensorTrees_Association,SSYTs_List,variables_List]:=
  If[
   SSYTs=={{}},
-  {{{{1}}}},
+  ConstantArray[{{{1}}},Length@variables],
   With[
    {
     (*

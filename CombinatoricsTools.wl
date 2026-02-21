@@ -3,6 +3,8 @@
 BeginPackage["CombinatoricsTools`"];
 
 
+linearIndicesToRaggedMultiIndices
+linearIndexToArrayMultiIndex
 PositiveIntegerQ
 NonNegativeIntegerQ
 PivotColumns
@@ -41,6 +43,21 @@ pathToSSYT[pathIn_List]:=
 
 (* ::Subsubsection:: *)
 (*Public Functions*)
+
+
+linearIndicesToRaggedMultiIndices[{},dimensions_List?VectorQ]:={}
+linearIndicesToRaggedMultiIndices[linearIndices_List?VectorQ,dimensions_List?VectorQ]/;Max@linearIndices<=Total@dimensions:=
+ With[
+  {accumulateDimensions=Prepend[Accumulate@dimensions,0]},
+  {i=Flatten[FirstPosition[accumulateDimensions,total_/;#<=total]&/@linearIndices]-1},
+  {j=linearIndices-accumulateDimensions[[i]]},
+  
+  Transpose@{i,j}
+ ]
+
+
+linearIndexToArrayMultiIndex[linearIndex_Integer?Positive,dimensions_List?VectorQ]/;linearIndex<=Times@@dimensions:=
+ IntegerDigits[linearIndex-1,MixedRadix@dimensions,Length@dimensions]+1
 
 
 PositiveIntegerQ[n_]:=Positive@n\[And]IntegerQ@n
