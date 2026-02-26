@@ -63,15 +63,13 @@ generateVariables[\[Lambda]_Integer?Positive,m\[Lambda]_Integer?Positive]:={Tabl
 UnitTest[]:=
  Module[
   {
-   \[Lambda]s={1,2},m\[Lambda]s={2,2},\[Nu]=0,DMax=4,
-   tree,vs,alg,polys,
+   \[Lambda]s={1,2},m\[Lambda]s={2,2},DMax=4,
+   alg,polys,
    v1,v2,a1,a2,\[Epsilon],temp
   },
   
-  tree=IsotypicDataTree[\[Lambda]s,m\[Lambda]s,\[Nu],DMax];
-  vs=IsotypicDataTreeToVectorSpaceBases[tree];
-  alg=VectorSpaceBasesToAlgebraBases[\[Lambda]s,m\[Lambda]s,vs];
-  polys=Chop@FullSimplify@Flatten@SphericalBasisToMonomialBasis@EvaluateVectorSpaceBases[alg,generateVariables[\[Lambda]s,m\[Lambda]s]];
+  alg=AlgebraBasis[\[Lambda]s,m\[Lambda]s,DMax];
+  polys=Chop@FullSimplify@Flatten@SphericalBasisToMonomialBasis@EvaluateBasis[alg,generateVariables[\[Lambda]s,m\[Lambda]s]];
   
   v1=SymmetricTensor[1,1];
   v2=SymmetricTensor[1,2];
