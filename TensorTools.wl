@@ -26,7 +26,6 @@ ContractVectors[vector1_?VectorQ,{vector2_?VectorQ,tensor_?ArrayQ}]:=Dot[vector2
 
 (*add input checks*)
 EvaluateTensorTrain::usage="evaluates the tensorTrain at the vectors."
-EvaluateTensorTrain[tensorTrain_List,vectors__]:=EvaluateTensorTrain[tensorTrain,{vectors}]
 EvaluateTensorTrain[tensorTrain_List,vectors_List]:=
  If[
   tensorTrain==={1},
@@ -45,7 +44,15 @@ EvaluateAntisymmetrizedTensorTrain[tensorTrain_List,vectors_List]:=
   2,
    (EvaluateTensorTrain[tensorTrain,vectors[[{1,2,3}]]]
    -EvaluateTensorTrain[tensorTrain,vectors[[{3,2,1}]]]
-   -EvaluateTensorTrain[tensorTrain,vectors[[{1,3,2}]]])/3
+   -EvaluateTensorTrain[tensorTrain,vectors[[{1,3,2}]]])/3,
+  3,
+   (EvaluateTensorTrain[tensorTrain,vectors[[{1,2,3}]]]
+   -EvaluateTensorTrain[tensorTrain,vectors[[{3,2,1}]]]
+   -EvaluateTensorTrain[tensorTrain,vectors[[{1,3,2}]]])/3,(*TODO: fix this*)
+  4,
+   (EvaluateTensorTrain[tensorTrain,vectors[[{1,2,3}]]]
+   -EvaluateTensorTrain[tensorTrain,vectors[[{3,2,1}]]]
+   -EvaluateTensorTrain[tensorTrain,vectors[[{1,3,2}]]])/3(*TODO: fix this*)
  ]
 
 
@@ -89,16 +96,10 @@ SymmetrizedMonomialCP[variables_List,powers_List]/;MonomialQ[variables,powers]:=
  ]
 
 
-PartiallySymmetrizedMonomialCP[variables_List][SSYT_List]:=PartiallySymmetrizedMonomialCP[variables,SSYT]
 PartiallySymmetrizedMonomialCP[variables_List,SSYT_List]:=
- With[
-  {conjugateTableau=ConjugateTableau@SSYT},(*eventually, move these up as Map[ConjugateTableau,SSYTs,blah], same with below. maybe we can merge this function with EvaluateYoungSYmmetrizedTensorTree*)
-  {
-   powersList=Values@*Counts/@conjugateTableau,
-   variablesList=variables[[DeleteDuplicates[#]]]&/@conjugateTableau
-  },
-  
-  Transpose@MapThread[SymmetrizedMonomialCP,{variablesList,powersList}]
+ Transpose@MapThread[
+  SymmetrizedMonomialCP,
+  {(variables[[#]]&)/@Keys/@SSYT,Values/@SSYT}
  ]
 
 
@@ -111,7 +112,7 @@ EvaluateYoungSymmetrizedTensorTree[tensorTrees_Association,SSYTs_List,variables_
     (*
     Level 1: variables
     Level 2: SSYTs
-    Object:  
+    Object:  globalCoefficient, localCoefficientsVariables
     *)
     CPData=Outer[PartiallySymmetrizedMonomialCP,variables,SSYTs,1]
    },

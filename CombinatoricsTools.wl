@@ -158,7 +158,10 @@ SemiStandardYoungTableaux[p_List?VectorQ,w_List?VectorQ]:=
    ]
   },
   
-  Map[ConjugateTableau[pathToSSYT[First/@#]]&,ssytPaths]
+  Map[
+   Counts/@pathToSSYT[First/@#]&,
+   ssytPaths
+  ]
  ];
 
 
