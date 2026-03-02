@@ -33,13 +33,10 @@ IsotypicMultiplicityExteriorPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNeg
 
 IsotypicMultiplicitySchurPower::usage="gives the isotypic multiplicity of \[Mu] in the Schur power \!\(\*SubscriptBox[\(e\), \(p\)]\)\!\(\*SubsuperscriptBox[\(H\), \(\[Lambda]\), \(\[CircleTimes]d\)]\)."
 IsotypicMultiplicitySchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_Integer?NonNegative]:=
- If[
-  p=={},
-  If[\[Mu]==0,Return@1,Return@0],
-  With[
-   {x=Unique@x},
-   Coefficient[#,x,\[Mu]]-Coefficient[#,x,\[Mu]+1]&@SchurS[ConjugatePartition@p,x^Range[-\[Lambda],\[Lambda]]]
-  ]
+ With[
+  {q=Unique@q},
+  {poly=SchurS[ConjugatePartition@p,q,\[Lambda]]},
+  SeriesCoefficient[poly,{q,0,\[Mu]}]-SeriesCoefficient[poly,{q,0,\[Mu]+1}]
  ]
 
 

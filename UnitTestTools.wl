@@ -98,7 +98,7 @@ UnitTest[]:=
      v1 . \[Epsilon] . v2 . temp,
      v1 . a1 . a1 . v1-1/3 Tr[a1 . a1]v1 . v1,v1 . a2 . a2 . v1-1/3 Tr[a2 . a2]v1 . v1,v1 . a1 . a2 . v1-1/3 Tr[a1 . a2]v1 . v1,
      v2 . a1 . a1 . v2-1/3 Tr[a1 . a1]v2 . v2,v2 . a2 . a2 . v2-1/3 Tr[a2 . a2]v2 . v2,v2 . a1 . a2 . v2-1/3 Tr[a1 . a2]v2 . v2,
-     v1 . a1 . a1 . v2-1/3 Tr[a1 . a1]v1 . v2,v1 . a2 . a2 . v2-1/3 Tr[a2 . a2]v1 . v2,v1 . a1 . a2 . v2-1/3 Tr[a1 . a2]v1 . v2+v1 . a2 . a1 . v2-1/3 Tr[a1 . a2]v1 . v2(*19*)
+     v1 . a1 . a1 . v2-1/3 Tr[a1 . a1]v1 . v2,v1 . a2 . a2 . v2-1/3 Tr[a2 . a2]v1 . v2,v1 . a1 . a2 . v2-1/3 Tr[a1 . a2]v1 . v2 + v1 . a2 . a1 . v2-1/3 Tr[a1 . a2]v1 . v2(*19*)
     },
    Assumptions->_\[Element]Reals\[And]Tr[a1]==0\[And]Tr[a2]==0
   ]

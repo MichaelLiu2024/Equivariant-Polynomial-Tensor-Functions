@@ -23,13 +23,14 @@ indicesToPaths[\[Gamma]_Integer?NonNegative,{\[Lambda]_Integer?NonNegative,\[Alp
 ClebschGordanTensor::usage="gives the elementary Clebsch-Gordan tensor coupling \[Lambda]1 and \[Lambda]2 to \[Lambda]3."
 ClebschGordanTensor[\[Lambda]1_Integer?NonNegative,\[Lambda]2_Integer?NonNegative,\[Lambda]3_Integer?NonNegative]:=
  ClebschGordanTensor[\[Lambda]1,\[Lambda]2,\[Lambda]3]=
-  Chop@SparseArray[
+  Developer`ToPackedArray@Normal@SparseArray[
    Join@@Table[
     {1+\[Lambda]1+m1,1+\[Lambda]2+m2,1+\[Lambda]3+m1+m2}->N@ClebschGordan[{\[Lambda]1,m1},{\[Lambda]2,m2},{\[Lambda]3,m1+m2}],
     {m1,-\[Lambda]1,\[Lambda]1},
     {m2,Max[-\[Lambda]2,-\[Lambda]3-m1],Min[\[Lambda]2,\[Lambda]3-m1]}
    ],
-   {2\[Lambda]1+1,2\[Lambda]2+1,2\[Lambda]3+1}
+   {2\[Lambda]1+1,2\[Lambda]2+1,2\[Lambda]3+1},
+   0.
  ]
 
 
@@ -117,14 +118,14 @@ TensorTrainBasisSymmetricPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegati
   
   interiorTensorTrains=ClebschGordanTensorTrain[ConstantArray[\[Lambda],d]]/@interiorPaths;
   
-  interiorRandomProbes=RandomReal[1,{Binomial[2\[Lambda]+d,d](*worse case sampling; may need oversampling*),2\[Lambda]+1}];
+  interiorRandomProbes=RandomReal[1,{Ceiling[1.1*Length@interiorPaths/(2\[Mu]+1)],2\[Lambda]+1}];
   
   syndromeMatrix=
-   Flatten[
-    Outer[EvaluateSymmetrizedTensorTrain,interiorTensorTrains,interiorRandomProbes,1],
-    {{2,3},{1}}(*level 3 contains the vectors of syndromes*)
-   ];
-  
+    Flatten[
+     Outer[EvaluateSymmetrizedTensorTrain,interiorTensorTrains,interiorRandomProbes,1],
+     {{2,3},{1}}(*level 3 contains the vectors of syndromes*)
+    ];
+    
   interiorTensorTrains[[PivotColumns@syndromeMatrix]]
  ]
 
@@ -152,6 +153,7 @@ TensorTreeBasisSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_Int
      interiorDimensions,
      leafDimensions,
      totalDimensions,
+     tempDimensions,
      interiorSpinsIndices,
      tensorTrainIndices
     },
@@ -177,12 +179,13 @@ TensorTreeBasisSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_Int
     *)
     leafTensorTrains=TensorTrainBasisExteriorPower[\[Lambda],p,#]&/@interiorSpins;
     
-    (*
-    Level 1: random probe
-    Object:  list of First@p random vectors in Subscript[H, \[Lambda]]
-    *)
-    leafRandomProbes=RandomReal[1,{Binomial[2\[Lambda]+d,d](*worse case sampling; may need oversampling*),First@p,2\[Lambda]+1}];
+    interiorDimensions=Length/@interiorTensorTrains;
+    leafDimensions=Map[Length,leafTensorTrains,{2}];
+    totalDimensions=MapThread[Prepend,{leafDimensions,interiorDimensions}];
+    tempDimensions=interiorDimensions*MapApply[Times,leafDimensions];
     
+    (*random probe; multiplicity; random vector*)
+    leafRandomProbes=RandomReal[1,{Ceiling[1.1*Total[tempDimensions]/(2\[Mu]+1)],First@p,2\[Lambda]+1}];
     (*
     Level 1: interiorSpins
     Level 2: part of partition
@@ -209,13 +212,13 @@ TensorTreeBasisSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_Int
     Object:  syndrome vector
     *)
     syndromeMatrix=
-     MapThread[
-      Function[
-       {interiorTensorTrain,interiorRandomProbe},
-       Outer[EvaluateTensorTrain,interiorTensorTrain,Tuples/@interiorRandomProbe,1,2]
-      ],
-      {interiorTensorTrains,interiorRandomProbes}
-     ];
+      MapThread[
+       Function[
+        {interiorTensorTrain,interiorRandomProbe},
+        Outer[EvaluateTensorTrain,interiorTensorTrain,Tuples/@interiorRandomProbe,1,2]
+       ],
+       {interiorTensorTrains,interiorRandomProbes}
+      ];
     
     syndromeMatrix=Flatten[syndromeMatrix,{{3,5},{1,2,4}}];
     
@@ -224,15 +227,11 @@ TensorTreeBasisSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_Int
     (*prioritize paths with 0 to include in the basis*)
     (*perm=OrderingBy[Flatten[interiorTensorTrains,1],FreeQ[Most@#,0]&];
     linearIndices=perm[[PivotColumns@syndromeMatrix[[All,perm]]]];*)
-    
-    interiorDimensions=Length/@interiorTensorTrains;
-    leafDimensions=Map[Length,leafTensorTrains,{2}];
-    totalDimensions=MapThread[Prepend,{leafDimensions,interiorDimensions}];
-    
+
     {interiorSpinsIndices,tensorTrainIndices}=
      Transpose@MapApply[
       {#1,linearIndexToArrayMultiIndex[#2,totalDimensions[[#1]]]}&,
-      linearIndicesToRaggedMultiIndices[linearIndices,interiorDimensions*MapApply[Times,leafDimensions]]
+      linearIndicesToRaggedMultiIndices[linearIndices,tempDimensions]
      ];
     
     <|

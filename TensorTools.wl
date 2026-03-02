@@ -17,21 +17,16 @@ Begin["`Private`"];
 (*Private Functions*)
 
 
-ContractVectors[vector1_?VectorQ,{vector2_?VectorQ,tensor_?ArrayQ}]:=Dot[vector2,Dot[vector1,tensor]]
+ContractVectors[vector1_,{vector2_,tensor_}]:=Dot[vector2,Dot[vector1,tensor]]
 
 
 (* ::Subsubsection:: *)
 (*Public Functions*)
 
 
-(*add input checks*)
 EvaluateTensorTrain::usage="evaluates the tensorTrain at the vectors."
-EvaluateTensorTrain[tensorTrain_List,vectors_List]:=
- If[
-  tensorTrain==={1},
-  First@vectors,
-  Chop@Fold[ContractVectors,First@vectors,Transpose[{vectors[[2;;1+Length@tensorTrain]],tensorTrain}]]
- ]
+EvaluateTensorTrain[{1},vectors_List]:=First@vectors
+EvaluateTensorTrain[tensorTrain_List,vectors_List]:=Fold[ContractVectors,First@vectors,Transpose[{vectors[[2;;1+Length@tensorTrain]],tensorTrain}]]
 
 
 EvaluateAntisymmetrizedTensorTrain::usage="contracts the antisymmetrized tensorTrain with the vectors."
@@ -61,7 +56,7 @@ EvaluateSymmetrizedTensorTrain[tensorTrain_List,vector_List?VectorQ]:=
  If[
   tensorTrain==={1},
   vector,
-  Chop@Fold[Dot[vector,Dot[#1,#2]]&,vector,tensorTrain]
+  Fold[Dot[vector,Dot[#1,#2]]&,vector,tensorTrain]
  ]
 
 
@@ -73,23 +68,33 @@ EvaluateAntisymmetrizedTensorTree[tensorTrees_Association,vectors_List]:=
  ]
 
 
-MonomialQ[variables_List,powers_List]:=
- Length@variables==Length@powers\[And]
- VectorQ[powers,PositiveIntegerQ]
+(*check that powers is weakly increasing and numerical*)
+SymmetrizedMonomialCP[powers_List]/;
+ VectorQ[powers,Positive]:=
+  SymmetrizedMonomialCP[powers]=
+   With[
+    {ds=ReplacePart[powers,1->0]},
+    {\[Zeta]s=Exp[(2\[Pi]*I)/(ds+1)]},
+    {grid=Sequence@@(\[Zeta]s^Range[0,ds])},
+    
+    <|
+     "globalCoefficient"->1/(Times@@(ds+1)*Multinomial@@powers),
+     "localCoefficients"->Flatten[Outer[Times,grid]],
+     "localVariables"->Function[variables,Flatten[Outer[{##} . variables&,grid],Length@powers-1]]
+    |>
+   ]
 
 
-SymmetrizedMonomialCP[variables_List,powers_List]/;MonomialQ[variables,powers]:=
+SymmetrizedMonomialCP[variables_List,powers_List]:=
  With[
-  {ds=N@ReplacePart[Sort@powers,1->0]},
-  {\[Zeta]s=Exp[(2\[Pi]*I)/(ds+1)]},
-  {grid=Sequence@@(\[Zeta]s^Range[0,ds])},
-  
+  {assoc=SymmetrizedMonomialCP[powers]},
+   
   {
-   1/(Times@@(ds+1)*Multinomial@@N@powers),(*global coefficient*)
-   Chop@Transpose[
+   assoc[["globalCoefficient"]],
+   Transpose[
     {
-     Flatten[Outer[Times,grid]],(*local coefficients*)
-     Flatten[Outer[{##} . variables[[Ordering@powers]]&,grid],Length@ds-1](*local variables*)
+     assoc[["localCoefficients"]],
+     assoc[["localVariables"]][variables]
     }
    ]
   }
@@ -99,7 +104,7 @@ SymmetrizedMonomialCP[variables_List,powers_List]/;MonomialQ[variables,powers]:=
 PartiallySymmetrizedMonomialCP[variables_List,SSYT_List]:=
  Transpose@MapThread[
   SymmetrizedMonomialCP,
-  {(variables[[#]]&)/@Keys/@SSYT,Values/@SSYT}
+  {(variables[[#]]&)/@First/@SSYT,Last/@SSYT}
  ]
 
 
@@ -109,11 +114,7 @@ EvaluateYoungSymmetrizedTensorTree[tensorTrees_Association,SSYTs_List,variables_
   ConstantArray[{{{1}}},Length@variables],
   With[
    {
-    (*
-    Level 1: variables
-    Level 2: SSYTs
-    Object:  globalCoefficient, localCoefficientsVariables
-    *)
+    (*variables; SSYTs; globalCoefficient, localCoefficientsVariables*)
     CPData=Outer[PartiallySymmetrizedMonomialCP,variables,SSYTs,1]
    },
    

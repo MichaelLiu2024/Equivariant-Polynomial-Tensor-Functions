@@ -10,9 +10,7 @@ NonNegativeIntegerQ
 PivotColumns
 IteratedSum
 WeakCompositions
-StrictCompositions
 ThinPartitions
-StandardYoungTableau
 ConjugateTableau
 ConjugatePartition
 SchurS
@@ -41,6 +39,19 @@ pathToSSYT[pathIn_List]:=
  ];
 
 
+MacdonaldN[p_List?VectorQ]:=p . Range[0,Length@p-1]
+
+
+Contents[p_List?VectorQ]:=Flatten@Table[j-i,{i,Length@p},{j,p[[i]]}]
+
+
+HookLengths[p_List?VectorQ]:=
+ With[
+  {cp=ConjugatePartition@p},
+  Flatten@Table[p[[i]]+cp[[j]]-i-j+1,{i,Length@p},{j,p[[i]]}]
+ ]
+
+
 (* ::Subsubsection:: *)
 (*Public Functions*)
 
@@ -66,8 +77,8 @@ PositiveIntegerQ[n_]:=Positive@n\[And]IntegerQ@n
 NonNegativeIntegerQ[n_]:=NonNegative@n\[And]IntegerQ@n
 
 
-(*https://resources.wolframcloud.com/FunctionRepository/resources/PivotColumns*)
-PivotColumns[matrix_?MatrixQ]:=Flatten@Map[Position[#,_?(N@#!=0&),{1},1,Heads->False]&,RowReduce@matrix]
+(*https://resources.wolframcloud.com/FunctionRepository/resources/PivotColumns/*)
+PivotColumns[matrix_?MatrixQ]:=Flatten@Map[Position[#,_?(#!=0&),{1},1,Heads->False]&,RowReduce[matrix,Tolerance->10^-10]]
 
 
 IteratedSum[f_,ls_List]:=With[{vars=Unique@x&/@ls},Sum[f@@vars,Evaluate[Sequence@@Transpose@{vars,ls}]]]
@@ -76,11 +87,6 @@ IteratedSum[f_,ls_List]:=With[{vars=Unique@x&/@ls},Sum[f@@vars,Evaluate[Sequence
 WeakCompositions::usage="gives a list of all weak integer compositions of D into n parts."
 SetAttributes[WeakCompositions,Listable]
 WeakCompositions[D_Integer?NonNegative,n_Integer?Positive]:=Join@@Permutations/@IntegerPartitions[D,{n},Range[0,D]]
-
-
-StrictCompositions::usage="gives a list of all strict integer compositions of D into n parts."
-SetAttributes[StrictCompositions,Listable]
-StrictCompositions[D_Integer?NonNegative,n_Integer?Positive]:=Join@@Permutations/@IntegerPartitions[D,{n}]
 
 
 ThinPartitions::usage="gives a list of all integer partitions of d with parts at most Min[2\[Lambda]+1,m]."
@@ -98,23 +104,13 @@ ConjugateTableau[t_List]:=Flatten[t,{2}]
 
 (*https://resources.wolframcloud.com/FunctionRepository/resources/ConjugatePartition/*)
 ConjugatePartition::usage="gives the integer partition conjugate to p."
+ConjugatePartition[{}]={}
 ConjugatePartition[p_List?VectorQ]:=Total@UnitStep@Outer[Plus,p,-Range@First@p]
 
 
-(*https://resources.wolframcloud.com/FunctionRepository/resources/SchurS*)
-SchurS::usage="gives the Schur polynomial corresponding to the integer partition p in the variables vars."
-SchurS[p_List?VectorQ,vars_List?VectorQ]:=
- With[
-  {n=Length@vars,id=Range@First@p},
-  {elist=Table[SymmetricPolynomial[k,vars],{k,n}]},
-  
-  (*Det is the bottleneck. Symbolic determinant of a matrix with polynomial entries*)
-  Det@Outer[
-   With[{r=Plus@##},Which[r==0,1,0<r<=n,elist[[r]],True,0]]&,
-   ConjugatePartition@p-id,
-   id
-  ]
- ]
+SchurS::usage="gives the Schur polynomial corresponding to the integer partition p in the variables \!\(\*SuperscriptBox[\(q\), \(-\[Lambda]\)]\),...,\!\(\*SuperscriptBox[\(q\), \(\[Lambda]\)]\)."
+SchurS[{},q_Symbol,\[Lambda]_Integer?NonNegative]:=1
+SchurS[p_List?VectorQ,q_Symbol,\[Lambda]_Integer?NonNegative]:=q^(MacdonaldN@p-\[Lambda]*Total@p)*Times@@((1-q^(2\[Lambda]+1+Contents@p))/(1-q^HookLengths@p))
 
 
 (*https://github.com/PerAlexandersson/Mathematica-packages*)
@@ -158,8 +154,8 @@ SemiStandardYoungTableaux[p_List?VectorQ,w_List?VectorQ]:=
    ]
   },
   
-  Map[
-   Counts/@pathToSSYT[First/@#]&,
+  N@Map[
+   Through[{Keys,Values}[Sort@Counts@#]]&/@pathToSSYT[First/@#]&,
    ssytPaths
   ]
  ];
