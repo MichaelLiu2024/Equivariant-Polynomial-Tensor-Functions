@@ -38,7 +38,7 @@ generateRandomProbes[\[Lambda]s_?DistinctPositiveIntegersQ,m\[Lambda]s_?Positive
   ]
 
 
-flattenLevels[n_Integer?Positive]:=
+flattenLevels[n_?PositiveIntegerQ]:=
  With[
   {maxLvl=5+2*n},
   {{1},{3},Complement[Range@maxLvl,{1,3,maxLvl}],{maxLvl}}
@@ -222,7 +222,7 @@ AlgebraBasis[\[Lambda]s_?DistinctPositiveIntegersQ,m\[Lambda]s_?PositiveIntegers
   ]
 
 
-ModuleBasis[\[Lambda]s_?DistinctPositiveIntegersQ,m\[Lambda]s_?PositiveIntegersQ,\[Nu]_Integer?Positive,DMax_?NonNegativeIntegerQ]/;
+ModuleBasis[\[Lambda]s_?DistinctPositiveIntegersQ,m\[Lambda]s_?PositiveIntegersQ,\[Nu]_?PositiveIntegerQ,DMax_?NonNegativeIntegerQ]/;
  Length@\[Lambda]s==Length@m\[Lambda]s:=
   Module[
    {
