@@ -23,9 +23,7 @@ Begin["`Private`"];
 
 pathToSSYT[
  pathIn_List
-] /;
-True
-:=
+] :=
 
 With[
  {m=Length@pathIn, numRows=Length@First@pathIn},
@@ -43,27 +41,21 @@ With[
 
 MacdonaldN[
  p_?IntegerPartitionQ
-] /;
-True
-:=
+] :=
 
 p . Range[0, Length@p-1]
 
 
 Contents[
  p_?IntegerPartitionQ
-] /;
-True
-:=
+] :=
 
 Flatten@Table[j-i, {i, Length@p}, {j, p[[i]]}]
 
 
 HookLengths[
  p_?IntegerPartitionQ
-] /;
-True
-:=
+] :=
 
 With[
  {cp=ConjugatePartition@p},
@@ -79,9 +71,7 @@ With[
 RaggedMultiIndex[
  {},
  dimensions_?PositiveIntegersQ
-] /;
-True
-:=
+] :=
 
 {}
 
@@ -90,8 +80,7 @@ RaggedMultiIndex[
  linearIndices_?PositiveIntegersQ,
  dimensions_?PositiveIntegersQ
 ] /;
-Max@linearIndices <= Total@dimensions
-:=
+Max@linearIndices <= Total@dimensions :=
 
 With[
  {accumulateDimensions=Prepend[Accumulate@dimensions, 0]},
@@ -106,8 +95,7 @@ ArrayMultiIndex[
  linearIndex_?PositiveIntegerQ,
  dimensions_?PositiveIntegersQ
 ] /;
-linearIndex <= Times@@dimensions
-:=
+linearIndex <= Times@@dimensions :=
 
 IntegerDigits[linearIndex-1, MixedRadix@dimensions, Length@dimensions]+1
 
@@ -115,9 +103,7 @@ IntegerDigits[linearIndex-1, MixedRadix@dimensions, Length@dimensions]+1
 (*https://resources.wolframcloud.com/FunctionRepository/resources/PivotColumns/*)
 PivotColumns[
  matrix_?MatrixQ
-] /;
-True
-:=
+] :=
 
 Flatten@Map[
  Position[#, _?(#!=0&), {1}, 1, Heads->False]&,
@@ -128,9 +114,7 @@ Flatten@Map[
 IteratedSum[
  f_,
  ls_List
-] /;
-True
-:=
+] :=
 
 With[
  {vars=Unique@x&/@ls},
@@ -143,9 +127,7 @@ SetAttributes[WeakCompositions, Listable]
 WeakCompositions[
  D_?NonNegativeIntegerQ,
  n_?PositiveIntegerQ
-] /;
-True
-:=
+] :=
 
 Join@@Permutations/@IntegerPartitions[D, {n}, Range[0, D]]
 
@@ -156,9 +138,7 @@ ThinPartitions[
  d_?NonNegativeIntegerQ,
  \[Lambda]_?PositiveIntegerQ,
  m_?PositiveIntegerQ
-] /;
-True
-:=
+] :=
 
 IntegerPartitions[d, All, Range[Min[2\[Lambda]+1, m]]]
 
@@ -174,9 +154,7 @@ ConjugatePartition[
 
 ConjugatePartition[
  p_?IntegerPartitionQ
-] /;
-True
-:=
+] :=
 
 Total@UnitStep@Outer[Plus, p, -Range@First@p]
 
@@ -186,9 +164,7 @@ SchurS[
  {},
  q_Symbol,
  \[Lambda]_?NonNegativeIntegerQ
-] /;
-True
-:=
+] :=
 
 1
 
@@ -197,9 +173,7 @@ SchurS[
  p_?IntegerPartitionQ,
  q_Symbol,
  \[Lambda]_?NonNegativeIntegerQ
-] /;
-True
-:=
+] :=
 
 q^(MacdonaldN@p-\[Lambda]*Total@p)*Times@@((1-q^(2\[Lambda]+1+Contents@p))/(1-q^HookLengths@p))
 
@@ -211,9 +185,7 @@ SemiStandardYoungTableaux::usage="gives a list of all semistandard Young tableau
 SemiStandardYoungTableaux[
  {},
  n_?PositiveIntegerQ
-] /;
-True
-:=
+] :=
 
 {{}}
 
@@ -221,9 +193,7 @@ True
 SemiStandardYoungTableaux[
  p_?IntegerPartitionQ,
  n_?PositiveIntegerQ
-] /;
-True
-:=
+] :=
 
 Join@@SemiStandardYoungTableaux[p]/@WeakCompositions[Tr@p, n]
 
@@ -232,9 +202,7 @@ SemiStandardYoungTableaux[
  p_?IntegerPartitionQ
 ][
  w_List?VectorQ
-] /;
-True
-:=
+] :=
 
 SemiStandardYoungTableaux[p, w]
 
@@ -242,9 +210,7 @@ SemiStandardYoungTableaux[p, w]
 SemiStandardYoungTableaux[
  p_?IntegerPartitionQ,
  w_List?VectorQ
-] /;
-True
-:=
+] :=
 
 With[
  {

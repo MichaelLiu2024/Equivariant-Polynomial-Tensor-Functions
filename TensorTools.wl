@@ -20,9 +20,7 @@ Begin["`Private`"];
 ContractVectors[
  vector1_,
  {vector2_, tensor_}
-] /;
-True
-:=
+] :=
 
 Dot[vector2, Dot[vector1, tensor]]
 
@@ -34,9 +32,7 @@ Dot[vector2, Dot[vector1, tensor]]
 EvaluateTensorTrain[
  {1},
  vectors_List
-] /;
-True
-:=
+] :=
 
 First @ vectors
 
@@ -44,9 +40,7 @@ First @ vectors
 EvaluateTensorTrain[
  tensorTrain_List,
  vectors_List
-] /;
-True
-:=
+] :=
 
 Fold[ContractVectors, First @ vectors, Transpose[{vectors[[2 ;; 1 + Length @ tensorTrain]], tensorTrain}]]
 
@@ -54,9 +48,7 @@ Fold[ContractVectors, First @ vectors, Transpose[{vectors[[2 ;; 1 + Length @ ten
 EvaluateAntisymmetrizedTensorTrain[
  tensorTrain_List,
  vectors_List
-] /;
-True
-:=
+] :=
 
 With[
  {
@@ -75,9 +67,7 @@ With[
 EvaluateSymmetrizedTensorTrain[
  tensorTrain_List,
  vector_List?VectorQ
-] /;
-True
-:=
+] :=
 
 With[
  {d = Length @ tensorTrain + 1},
@@ -88,9 +78,7 @@ With[
 EvaluateAntisymmetrizedTensorTree[
  tensorTrees_Association,
  vectors_List
-] /;
-True
-:=
+] :=
 
 MapApply[
  EvaluateAntisymmetrizedTensorTrain,
@@ -101,8 +89,7 @@ MapApply[
 SymmetrizedMonomialCP[
  powers_List
 ] /;
-VectorQ[powers, Positive]
-:=
+VectorQ[powers, Positive] :=
 
 With[
  {
@@ -121,9 +108,7 @@ With[
 SymmetrizedMonomialCP[
  variables_List,
  powers_List
-] /;
-True
-:=
+] :=
 
 With[
  {
@@ -143,9 +128,7 @@ With[
 PartiallySymmetrizedMonomialCP[
  variables_List,
  SSYT_List
-] /;
-True
-:=
+] :=
 
 Times @@ Map[SymmetrizedMonomialCP[variables, #] &, Values @ Sort @ GroupBy[SSYT, Last -> First], {2}]
 
@@ -154,9 +137,7 @@ EvaluateYoungSymmetrizedTensorTree[
  tensorTrees_Association,
  SSYTs_List,
  variables_List
-] /;
-True
-:=
+] :=
 
 With[
  {interiorVectors = PartiallySymmetrizedMonomialCP[variables, #] & /@ SSYTs},

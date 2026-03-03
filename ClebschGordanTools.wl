@@ -20,9 +20,7 @@ Begin["`Private`"];
 indicesToPaths[
  \[Gamma]_?NonNegativeIntegerQ,
  {\[Lambda]_?NonNegativeIntegerQ, \[Alpha]_?NonNegativeIntegerQ}
-] /;
-True
-:=
+] :=
 
 Abs[\[Gamma] - \[Lambda]] + \[Alpha] - 1
 
@@ -32,9 +30,7 @@ ClebschGordanTensor[
  \[Lambda]1_?NonNegativeIntegerQ,
  \[Lambda]2_?NonNegativeIntegerQ,
  \[Lambda]3_?NonNegativeIntegerQ
-] /;
-True
-:=
+] :=
 
 ClebschGordanTensor[\[Lambda]1, \[Lambda]2, \[Lambda]3] =
 Developer`ToPackedArray @ Normal @ SparseArray[
@@ -51,9 +47,7 @@ Developer`ToPackedArray @ Normal @ SparseArray[
 ValidPathQ[
  \[Lambda]s_?NonNegativeIntegersQ,
  \[Gamma]s_?NonNegativeIntegersQ
-] /;
-True
-:=
+] :=
 
 Length @ \[Lambda]s == Length @ \[Gamma]s \[And]
 First @ \[Lambda]s == First @ \[Gamma]s \[And]
@@ -65,9 +59,7 @@ ClebschGordanTensorTrain[
  \[Lambda]s_?NonNegativeIntegersQ
 ][
  \[Gamma]s_?NonNegativeIntegersQ
-] /;
-True
-:=
+] :=
 
 ClebschGordanTensorTrain[\[Lambda]s, \[Gamma]s]
 
@@ -76,8 +68,7 @@ ClebschGordanTensorTrain[
  \[Lambda]s_?NonNegativeIntegersQ,
  \[Gamma]s_?NonNegativeIntegersQ
 ] /;
-ValidPathQ[\[Lambda]s, \[Gamma]s]
-:=
+ValidPathQ[\[Lambda]s, \[Gamma]s] :=
 
 If[
  Length @ \[Lambda]s == 1,
@@ -90,9 +81,7 @@ PathBasisTensorProduct::usage = "gives a list of all Clebsch-Gordan paths from \
 PathBasisTensorProduct[
  \[Lambda]s_?NonNegativeIntegersQ,
  \[Mu]_?NonNegativeIntegerQ
-] /;
-True
-:=
+] :=
 
 SortBy[
  Map[
@@ -110,9 +99,7 @@ SortBy[
 TensorTrainBasisTensorProduct[
  \[Lambda]s_?NonNegativeIntegersQ,
  \[Mu]_?NonNegativeIntegerQ
-] /;
-True
-:=
+] :=
 
 ClebschGordanTensorTrain[\[Lambda]s] /@ PathBasisTensorProduct[\[Lambda]s, \[Mu]]
 
@@ -124,8 +111,7 @@ TensorTrainBasisExteriorPower[
  d_?NonNegativeIntegerQ,
  \[Mu]_?NonNegativeIntegerQ
 ] /;
-d <= 3
-:=
+d <= 3 :=
 
 Switch[
  d,
@@ -142,8 +128,7 @@ TensorTrainBasisSymmetricPower[
  d_?NonNegativeIntegerQ,
  \[Mu]_?NonNegativeIntegerQ
 ] /;
-d <= 3
-:=
+d <= 3 :=
 
 Switch[
  d,
@@ -158,8 +143,7 @@ TensorTrainBasisSymmetricPower[
  d_?NonNegativeIntegerQ,
  \[Mu]_?NonNegativeIntegerQ
 ] /;
-d >= 4
-:=
+d >= 4 :=
 
 Module[
  {
@@ -181,9 +165,7 @@ TensorTreeBasisSchurPower[
  \[Lambda]_?NonNegativeIntegerQ,
  p_?IntegerPartitionQ,
  \[Mu]_?NonNegativeIntegerQ
-] /;
-True
-:=
+] :=
 
 With[
  {d = Total @ p},
