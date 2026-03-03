@@ -17,11 +17,11 @@ Begin["`Private`"];
 
 
 (*helper function that converts the index \[Alpha] to the corresponding spin \[Gamma]*)
-indicesToPaths[\[Gamma]_Integer?NonNegative,{\[Lambda]_Integer?NonNegative,\[Alpha]_Integer?NonNegative}]:=Abs[\[Gamma]-\[Lambda]]+\[Alpha]-1
+indicesToPaths[\[Gamma]_?NonNegativeIntegerQ,{\[Lambda]_?NonNegativeIntegerQ,\[Alpha]_?NonNegativeIntegerQ}]:=Abs[\[Gamma]-\[Lambda]]+\[Alpha]-1
 
 
 ClebschGordanTensor::usage="gives the elementary Clebsch-Gordan tensor coupling \[Lambda]1 and \[Lambda]2 to \[Lambda]3."
-ClebschGordanTensor[\[Lambda]1_Integer?NonNegative,\[Lambda]2_Integer?NonNegative,\[Lambda]3_Integer?NonNegative]:=
+ClebschGordanTensor[\[Lambda]1_?NonNegativeIntegerQ,\[Lambda]2_?NonNegativeIntegerQ,\[Lambda]3_?NonNegativeIntegerQ]:=
  ClebschGordanTensor[\[Lambda]1,\[Lambda]2,\[Lambda]3]=
   Developer`ToPackedArray@Normal@SparseArray[
    Join@@Table[
@@ -57,7 +57,7 @@ ClebschGordanTensorTrain[\[Lambda]s_List?VectorQ,\[Gamma]s_List?VectorQ]/;ValidP
 
 
 PathBasisTensorProduct::usage="gives a list of all Clebsch-Gordan paths from \[Mu] to the tensor product of the \[Lambda]s."
-PathBasisTensorProduct[\[Lambda]s_List?VectorQ,\[Mu]_Integer?NonNegative]:=
+PathBasisTensorProduct[\[Lambda]s_List?VectorQ,\[Mu]_?NonNegativeIntegerQ]:=
  SortBy[
   Map[
    Function[indices,FoldList[indicesToPaths,First[\[Lambda]s],Transpose[{Rest[\[Lambda]s],indices}]]],
@@ -71,7 +71,7 @@ PathBasisTensorProduct[\[Lambda]s_List?VectorQ,\[Mu]_Integer?NonNegative]:=
 (*Public Functions*)
 
 
-TensorTrainBasisTensorProduct[\[Lambda]s_List?VectorQ,\[Mu]_Integer?NonNegative]:=ClebschGordanTensorTrain[\[Lambda]s]/@PathBasisTensorProduct[\[Lambda]s,\[Mu]]
+TensorTrainBasisTensorProduct[\[Lambda]s_List?VectorQ,\[Mu]_?NonNegativeIntegerQ]:=ClebschGordanTensorTrain[\[Lambda]s]/@PathBasisTensorProduct[\[Lambda]s,\[Mu]]
 
 
 (*add input checks below for evenness/oddness of \[Gamma]2!*)
@@ -79,7 +79,7 @@ TensorTrainBasisTensorProduct[\[Lambda]s_List?VectorQ,\[Mu]_Integer?NonNegative]
 
 TensorTrainBasisExteriorPower::usage="gives a list of all Clebsch-Gordan paths from \[Mu] to the d-fold exterior power of \[Lambda]."
 SetAttributes[TensorTrainBasisExteriorPower,Listable]
-TensorTrainBasisExteriorPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegative,\[Mu]_Integer?NonNegative]/;
+TensorTrainBasisExteriorPower[\[Lambda]_?NonNegativeIntegerQ,d_?NonNegativeIntegerQ,\[Mu]_?NonNegativeIntegerQ]/;
  d<=3:=
   Switch[
    d,
@@ -91,7 +91,7 @@ TensorTrainBasisExteriorPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegativ
 
 TensorTrainBasisSymmetricPower::usage="gives a list of all Clebsch-Gordan paths from \[Mu] to the d-fold symmetric power of \[Lambda]."
 SetAttributes[TensorTrainBasisSymmetricPower,Listable]
-TensorTrainBasisSymmetricPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegative,\[Mu]_Integer?NonNegative]/;
+TensorTrainBasisSymmetricPower[\[Lambda]_?NonNegativeIntegerQ,d_?NonNegativeIntegerQ,\[Mu]_?NonNegativeIntegerQ]/;
  d<=3:=
   Switch[
    d,
@@ -101,7 +101,7 @@ TensorTrainBasisSymmetricPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegati
   ]
 
 
-TensorTrainBasisSymmetricPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegative,\[Mu]_Integer?NonNegative]/;d>=4:=
+TensorTrainBasisSymmetricPower[\[Lambda]_?NonNegativeIntegerQ,d_?NonNegativeIntegerQ,\[Mu]_?NonNegativeIntegerQ]/;d>=4:=
  Module[
   {
   interiorPaths,
@@ -132,7 +132,7 @@ TensorTrainBasisSymmetricPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegati
 
 (*these expensive functions need to be memoized when we are sure they work, since they are evaluated multiple times*)
 TensorTreeBasisSchurPower::usage="gives a list of all Clebsch-Gordan paths from \[Mu] to the image of the Young symmetrizer p on \[Lambda]."
-TensorTreeBasisSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_Integer?NonNegative]:=
+TensorTreeBasisSchurPower[\[Lambda]_?NonNegativeIntegerQ,p_List?VectorQ,\[Mu]_?NonNegativeIntegerQ]:=
  With[
   {d=Total@p},
   Switch[

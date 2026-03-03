@@ -14,7 +14,7 @@ Begin["`Private`"];
 
 
 (*https://resources.wolframcloud.com/FunctionRepository/resources/SolidHarmonicR/*)
-SolidHarmonicR[l_Integer?NonNegative,m_Integer,x_,y_,z_]/;Abs[m]<=l:=
+SolidHarmonicR[l_?NonNegativeIntegerQ,m_Integer,x_,y_,z_]/;Abs[m]<=l:=
  N@With[
   {dpower=If[#2==0,1,#1^#2]&,s=Sign[m],am=Abs[m]},
   
@@ -27,7 +27,7 @@ SolidHarmonicR[l_Integer?NonNegative,m_Integer,x_,y_,z_]/;Abs[m]<=l:=
  ]
 
 
-HarmonicTensorCoordinates[\[Lambda]_Integer?Positive,m_Integer]:=HarmonicTensorCoordinates[\[Lambda],m]=
+HarmonicTensorCoordinates[\[Lambda]_?PositiveIntegerQ,m_Integer]:=HarmonicTensorCoordinates[\[Lambda],m]=
  Total@ReplaceAll[
   CoefficientRules[SolidHarmonicR[\[Lambda],m,x,y,z],{x,y,z}],
   (powers_->coefficients_):>coefficients*x[Sequence@@Join@@MapThread[ConstantArray,{Range[3],powers}]]
@@ -41,10 +41,10 @@ SphericalBasisToMonomialBasis[sphericalPolynomials_]:=
  ]
 
 
-IndependentSymmetricIndices[\[Lambda]_Integer?NonNegative]:=Join@@MapThread[ConstantArray,{Range[3],#}]&/@WeakCompositions[\[Lambda],3]
+IndependentSymmetricIndices[\[Lambda]_?NonNegativeIntegerQ]:=Join@@MapThread[ConstantArray,{Range[3],#}]&/@WeakCompositions[\[Lambda],3]
 
 
-SymmetricTensor[\[Lambda]_Integer?NonNegative,multiplicity_Integer?NonNegative]:=
+SymmetricTensor[\[Lambda]_?NonNegativeIntegerQ,multiplicity_?NonNegativeIntegerQ]:=
  SymmetrizedArray[
   #->Global`x[\[Lambda]][multiplicity][Sequence@@#]&/@IndependentSymmetricIndices[\[Lambda]],
   ConstantArray[3,\[Lambda]],
@@ -53,7 +53,7 @@ SymmetricTensor[\[Lambda]_Integer?NonNegative,multiplicity_Integer?NonNegative]:
 
 
 SetAttributes[generateVariables,Listable]
-generateVariables[\[Lambda]_Integer?Positive,m\[Lambda]_Integer?Positive]:={Table[Global`x[\[Lambda]][multiplicity][m],{multiplicity,1,m\[Lambda]},{m,-\[Lambda],\[Lambda]}]}
+generateVariables[\[Lambda]_?PositiveIntegerQ,m\[Lambda]_?PositiveIntegerQ]:={Table[Global`x[\[Lambda]][multiplicity][m],{multiplicity,1,m\[Lambda]},{m,-\[Lambda],\[Lambda]}]}
 
 
 (* ::Subsubsection:: *)
