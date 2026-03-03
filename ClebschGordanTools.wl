@@ -47,13 +47,11 @@ ClebschGordanTensor[\[Lambda]1, \[Lambda]2, \[Lambda]3] =
 
 
 ValidPathQ[
- \[Lambda]s_List,
- \[Gamma]s_List
+ \[Lambda]s_?NonNegativeIntegersQ,
+ \[Gamma]s_?NonNegativeIntegersQ
 ] :=
 
 
-VectorQ[\[Lambda]s, NonNegativeIntegerQ] \[And]
-VectorQ[\[Gamma]s, NonNegativeIntegerQ] \[And]
 Length @ \[Lambda]s == Length @ \[Gamma]s \[And]
 First @ \[Lambda]s == First @ \[Gamma]s \[And]
 If[Length @ \[Lambda]s >= 2, Abs[ListConvolve[{1, -1}, \[Gamma]s]] \[VectorLessEqual] Rest[\[Lambda]s] \[VectorLessEqual] ListConvolve[{1, 1}, \[Gamma]s], True]

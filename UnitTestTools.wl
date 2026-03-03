@@ -91,7 +91,8 @@ generateVariables[
 (*Public Functions*)
 
 
-UnitTest[] :=
+UnitTest[
+ ] :=
 
  Module[
   {

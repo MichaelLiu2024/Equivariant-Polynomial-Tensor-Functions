@@ -17,11 +17,20 @@ Begin["`Private`"];
 (*Private Functions*)
 
 
-RowKroneckerProduct[m1_List?ArrayQ,{{{}}}] :=
+RowKroneckerProduct[
+ m1_List?ArrayQ,
+ {{{}}}
+] :=
 {{}}
-RowKroneckerProduct[{{{}}},m2_List?ArrayQ] :=
+RowKroneckerProduct[
+ {{{}}},
+ m2_List?ArrayQ
+] :=
 {{}}
-RowKroneckerProduct[m1_List?ArrayQ,m2_List?ArrayQ]/;
+RowKroneckerProduct[
+ m1_List?ArrayQ,
+ m2_List?ArrayQ
+] /;
  Length@m1==Length@m2\[And]Depth@m1==4==Depth@m2 :=
 
   Flatten[
@@ -30,11 +39,17 @@ RowKroneckerProduct[m1_List?ArrayQ,m2_List?ArrayQ]/;
   ]
 
 
-RowJoin[ms__] :=
+RowJoin[
+ ms__
+] :=
 Join[ms,2]
 
 
-generateRandomProbes[\[Lambda]s_?DistinctPositiveIntegersQ,m\[Lambda]s_?PositiveIntegersQ,numProbes_Integer]/;
+generateRandomProbes[
+ \[Lambda]s_?DistinctPositiveIntegersQ,
+ m\[Lambda]s_?PositiveIntegersQ,
+ numProbes_Integer
+] /;
  Length@\[Lambda]s==Length@m\[Lambda]s :=
 
   MapThread[
@@ -43,7 +58,9 @@ generateRandomProbes[\[Lambda]s_?DistinctPositiveIntegersQ,m\[Lambda]s_?Positive
   ]
 
 
-flattenLevels[n_?PositiveIntegerQ] :=
+flattenLevels[
+ n_?PositiveIntegerQ
+] :=
 
  With[
   {maxLvl=5+2*n},
@@ -51,11 +68,15 @@ flattenLevels[n_?PositiveIntegerQ] :=
  ];
 
 
-dims[VectorSpaceBasis_List] :=
+dims[
+ VectorSpaceBasis_List
+] :=
 Total/@Map[Times@@#[["dimensions"]]&,VectorSpaceBasis,{2}]
 
 
-algebraDimensionBound[invariantBasis_List] :=
+algebraDimensionBound[
+ invariantBasis_List
+] :=
 
  With[
   {invariantDims=dims[invariantBasis]},
@@ -72,12 +93,19 @@ algebraDimensionBound[invariantBasis_List] :=
  ]
 
 
-moduleDimensionBound[\[Nu]_?NonNegativeIntegerQ,invariantBasis_List,covariantBasis_List] :=
+moduleDimensionBound[
+ \[Nu]_?NonNegativeIntegerQ,
+ invariantBasis_List,
+ covariantBasis_List
+] :=
 
  Ceiling[1.1*Max@ListConvolve[dims[invariantBasis],dims[covariantBasis],1,0]/(2\[Nu]+1)]
 
 
-extract[linearIndices_List,basis_List] :=
+extract[
+ linearIndices_List,
+ basis_List
+] :=
 
  Module[
   {leafIndices,finalIndices,fullDimensions,leafDimensions},
@@ -121,7 +149,19 @@ extract[linearIndices_List,basis_List] :=
  ]
 
 
-TensorProductBasis[{{\[Lambda]s_,m\[Lambda]s_,\[Nu]_},D_,d\[Lambda]s_,\[Pi]\[Lambda]s_,\[Mu]\[Lambda]s_}] :=
+TensorProductBasis[
+ {
+  {
+   \[Lambda]s_?DistinctPositiveIntegersQ,
+   m\[Lambda]s_,
+   \[Nu]_
+  },
+  D_,
+  d\[Lambda]s_,
+  \[Pi]\[Lambda]s_,
+  \[Mu]\[Lambda]s_
+ }
+] :=
 
  With[
   {
@@ -140,7 +180,10 @@ TensorProductBasis[{{\[Lambda]s_,m\[Lambda]s_,\[Nu]_},D_,d\[Lambda]s_,\[Pi]\[Lam
  ]
 
 
-EvaluateTensorProductBasis[basis_Association,inputVectors_List] :=
+EvaluateTensorProductBasis[
+ basis_Association,
+ inputVectors_List
+] :=
 
  Module[
   {
@@ -160,7 +203,12 @@ EvaluateTensorProductBasis[basis_Association,inputVectors_List] :=
 (*Public Functions*)
 
 
-IsotypicDataTree[\[Lambda]s_?DistinctPositiveIntegersQ,m\[Lambda]s_?PositiveIntegersQ,\[Nu]_?NonNegativeIntegerQ,DMax_?NonNegativeIntegerQ]/;
+IsotypicDataTree[
+ \[Lambda]s_?DistinctPositiveIntegersQ,
+ m\[Lambda]s_?PositiveIntegersQ,
+ \[Nu]_?NonNegativeIntegerQ,
+ DMax_?NonNegativeIntegerQ
+] /;
  Length@\[Lambda]s==Length@m\[Lambda]s :=
 
   Module[
@@ -181,7 +229,12 @@ IsotypicDataTree[\[Lambda]s_?DistinctPositiveIntegersQ,m\[Lambda]s_?PositiveInte
 
 
 (*degree; leaf; TensorProductBasis*)
-VectorSpaceBasis[\[Lambda]s_?DistinctPositiveIntegersQ,m\[Lambda]s_?PositiveIntegersQ,\[Nu]_?NonNegativeIntegerQ,DMax_?NonNegativeIntegerQ]/;
+VectorSpaceBasis[
+ \[Lambda]s_?DistinctPositiveIntegersQ,
+ m\[Lambda]s_?PositiveIntegersQ,
+ \[Nu]_?NonNegativeIntegerQ,
+ DMax_?NonNegativeIntegerQ
+] /;
  Length@\[Lambda]s==Length@m\[Lambda]s :=
 
   Lookup[
@@ -191,7 +244,11 @@ VectorSpaceBasis[\[Lambda]s_?DistinctPositiveIntegersQ,m\[Lambda]s_?PositiveInte
   ]
 
 
-AlgebraBasis[\[Lambda]s_?DistinctPositiveIntegersQ,m\[Lambda]s_?PositiveIntegersQ,DMax_?NonNegativeIntegerQ]/;
+AlgebraBasis[
+ \[Lambda]s_?DistinctPositiveIntegersQ,
+ m\[Lambda]s_?PositiveIntegersQ,
+ DMax_?NonNegativeIntegerQ
+] /;
  Length@\[Lambda]s==Length@m\[Lambda]s :=
 
   Module[
@@ -237,7 +294,12 @@ AlgebraBasis[\[Lambda]s_?DistinctPositiveIntegersQ,m\[Lambda]s_?PositiveIntegers
   ]
 
 
-ModuleBasis[\[Lambda]s_?DistinctPositiveIntegersQ,m\[Lambda]s_?PositiveIntegersQ,\[Nu]_?PositiveIntegerQ,DMax_?NonNegativeIntegerQ]/;
+ModuleBasis[
+ \[Lambda]s_?DistinctPositiveIntegersQ,
+ m\[Lambda]s_?PositiveIntegersQ,
+ \[Nu]_?PositiveIntegerQ,
+ DMax_?NonNegativeIntegerQ
+] /;
  Length@\[Lambda]s==Length@m\[Lambda]s :=
 
   Module[
@@ -283,7 +345,10 @@ ModuleBasis[\[Lambda]s_?DistinctPositiveIntegersQ,m\[Lambda]s_?PositiveIntegersQ
   ]
 
 
-EvaluateBasis[VectorSpaceBasis_List,inputVectors_List] :=
+EvaluateBasis[
+ VectorSpaceBasis_List,
+ inputVectors_List
+] :=
 
  Map[
   EvaluateTensorProductBasis[#,inputVectors]&,
