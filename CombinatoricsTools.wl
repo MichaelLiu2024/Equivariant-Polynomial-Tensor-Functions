@@ -5,12 +5,17 @@ BeginPackage["CombinatoricsTools`", {"BooleanTools`"}];
 
 RaggedMultiIndex
 ArrayMultiIndex
+
 PivotColumns
 IteratedSum
+
 WeakCompositions
 ThinPartitions
+
 ConjugatePartition
+
 SchurS
+
 SemiStandardYoungTableaux
 
 
@@ -36,14 +41,14 @@ With[
   ],
   {r, numRows}
  ]
-];
+]
 
 
 MacdonaldN[
  p_?IntegerPartitionQ
 ] :=
 
-p . Range[0, Length @ p-1]
+p . Range[0, Length @ p - 1]
 
 
 Contents[
@@ -80,6 +85,7 @@ RaggedMultiIndex[
  linearIndices_?PositiveIntegersQ,
  dimensions_?PositiveIntegersQ
 ] /;
+
 Max @ linearIndices <= Total @ dimensions :=
 
 With[
@@ -95,6 +101,7 @@ ArrayMultiIndex[
  linearIndex_?PositiveIntegerQ,
  dimensions_?PositiveIntegersQ
 ] /;
+
 linearIndex <= Times @@ dimensions :=
 
 IntegerDigits[linearIndex-1, MixedRadix @ dimensions, Length @ dimensions]+1
@@ -147,7 +154,9 @@ IntegerPartitions[d, All, Range[Min[2\[Lambda]+1, m]]]
 ConjugatePartition::usage = "gives the integer partition conjugate to p."
 ConjugatePartition[
  {}
-] = {}
+] = 
+
+{}
 
 
 ConjugatePartition[

@@ -1,6 +1,6 @@
 (* ::Package:: *)
 
-BeginPackage["IsotypicDecompositionTools`", {"CombinatoricsTools`"}];
+BeginPackage["IsotypicDecompositionTools`", {"CombinatoricsTools`","BooleanTools`"}];
 
 
 IsotypicComponentsTensorProduct
