@@ -21,8 +21,7 @@ SolidHarmonicR[
  y_,
  z_
 ] /;
-Abs[m] <= l
-:=
+Abs[m] <= l :=
 
 N@With[
  {dpower=If[#2==0,1,#1^#2]&,s=Sign[m],am=Abs[m]},
@@ -39,9 +38,7 @@ N@With[
 HarmonicTensorCoordinates[
  \[Lambda]_?PositiveIntegerQ,
  m_Integer
-] /;
-True
-:=
+] :=
 
 HarmonicTensorCoordinates[\[Lambda], m] =
 Total@ReplaceAll[
@@ -52,9 +49,7 @@ Total@ReplaceAll[
 
 SphericalBasisToMonomialBasis[
  sphericalPolynomials_
-] /;
-True
-:=
+] :=
 
 ReplaceAll[
  sphericalPolynomials,
@@ -64,9 +59,7 @@ ReplaceAll[
 
 IndependentSymmetricIndices[
  \[Lambda]_?NonNegativeIntegerQ
-] /;
-True
-:=
+] :=
 
 Join @@ MapThread[ConstantArray, {Range[3], #}] & /@ WeakCompositions[\[Lambda], 3]
 
@@ -74,9 +67,7 @@ Join @@ MapThread[ConstantArray, {Range[3], #}] & /@ WeakCompositions[\[Lambda],
 SymmetricTensor[
  \[Lambda]_?NonNegativeIntegerQ,
  multiplicity_?NonNegativeIntegerQ
-] /;
-True
-:=
+] :=
 
 SymmetrizedArray[
  #->Global`x[\[Lambda]][multiplicity][Sequence@@#]&/@IndependentSymmetricIndices[\[Lambda]],
@@ -89,9 +80,7 @@ SetAttributes[generateVariables,Listable]
 generateVariables[
  \[Lambda]_?PositiveIntegerQ,
  m\[Lambda]_?PositiveIntegerQ
-] /;
-True
-:=
+] :=
 
 {Table[Global`x[\[Lambda]][multiplicity][m], {multiplicity, 1, m\[Lambda]}, {m, -\[Lambda], \[Lambda]}]}
 

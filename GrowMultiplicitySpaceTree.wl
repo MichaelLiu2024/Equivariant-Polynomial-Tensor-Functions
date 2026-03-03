@@ -20,9 +20,7 @@ Begin["`Private`"];
 RowKroneckerProduct[
  m1_List?ArrayQ,
  {{{}}}
-] /;
-True
-:=
+] :=
 
 {{}}
 
@@ -30,9 +28,7 @@ True
 RowKroneckerProduct[
  {{{}}},
  m2_List?ArrayQ
-] /;
-True
-:=
+] :=
 
 {{}}
 
@@ -41,8 +37,7 @@ RowKroneckerProduct[
  m1_List?ArrayQ,
  m2_List?ArrayQ
 ] /;
-Length@m1==Length@m2\[And]Depth@m1==4==Depth@m2
-:=
+Length@m1==Length@m2\[And]Depth@m1==4==Depth@m2 :=
 
 Flatten[
  MapThread[KroneckerProduct,{m1,m2}],
@@ -52,9 +47,7 @@ Flatten[
 
 RowJoin[
  ms__
-] /;
-True
-:=
+] :=
 
 Join[ms,2]
 
@@ -64,8 +57,7 @@ generateRandomProbes[
  m\[Lambda]s_?PositiveIntegersQ,
  numProbes_Integer
 ] /;
-Length@\[Lambda]s==Length@m\[Lambda]s
-:=
+Length@\[Lambda]s==Length@m\[Lambda]s :=
 
 MapThread[
  Function[{\[Lambda],m\[Lambda]},RandomReal[1,{numProbes,m\[Lambda],2\[Lambda]+1}]],
@@ -75,9 +67,7 @@ MapThread[
 
 flattenLevels[
  n_?PositiveIntegerQ
-] /;
-True
-:=
+] :=
 
 With[
  {maxLvl=5+2*n},
@@ -87,18 +77,14 @@ With[
 
 dims[
  VectorSpaceBasis_List
-] /;
-True
-:=
+] :=
 
 Total/@Map[Times@@#[["dimensions"]]&,VectorSpaceBasis,{2}]
 
 
 algebraDimensionBound[
  invariantBasis_List
-] /;
-True
-:=
+] :=
 
 With[
  {invariantDims=dims[invariantBasis]},
@@ -119,9 +105,7 @@ moduleDimensionBound[
  \[Nu]_?NonNegativeIntegerQ,
  invariantBasis_List,
  covariantBasis_List
-] /;
-True
-:=
+] :=
 
 Ceiling[1.1*Max@ListConvolve[dims[invariantBasis],dims[covariantBasis],1,0]/(2\[Nu]+1)]
 
@@ -129,9 +113,7 @@ Ceiling[1.1*Max@ListConvolve[dims[invariantBasis],dims[covariantBasis],1,0]/(2\[
 extract[
  linearIndices_List,
  basis_List
-] /;
-True
-:=
+] :=
 
 Module[
  {leafIndices,finalIndices,fullDimensions,leafDimensions},
@@ -187,9 +169,7 @@ TensorProductBasis[
   \[Pi]\[Lambda]s_,
   \[Mu]\[Lambda]s_
  }
-] /;
-True
-:=
+] :=
 
 With[
  {
@@ -211,9 +191,7 @@ With[
 EvaluateTensorProductBasis[
  basis_Association,
  inputVectors_List
-] /;
-True
-:=
+] :=
 
 Module[
  {
@@ -239,8 +217,7 @@ IsotypicDataTree[
  \[Nu]_?NonNegativeIntegerQ,
  DMax_?NonNegativeIntegerQ
 ] /;
-Length@\[Lambda]s==Length@m\[Lambda]s
-:=
+Length@\[Lambda]s==Length@m\[Lambda]s :=
 
 Module[
  {tree},
@@ -266,8 +243,7 @@ VectorSpaceBasis[
  \[Nu]_?NonNegativeIntegerQ,
  DMax_?NonNegativeIntegerQ
 ] /;
-Length@\[Lambda]s==Length@m\[Lambda]s
-:=
+Length@\[Lambda]s==Length@m\[Lambda]s :=
 
 Lookup[
  Association[TreeData@#->TreeData/@TreeLeaves@#&/@TreeChildren@IsotypicDataTree[\[Lambda]s,m\[Lambda]s,\[Nu],DMax]],
@@ -281,8 +257,7 @@ AlgebraBasis[
  m\[Lambda]s_?PositiveIntegersQ,
  DMax_?NonNegativeIntegerQ
 ] /;
-Length@\[Lambda]s==Length@m\[Lambda]s
-:=
+Length@\[Lambda]s==Length@m\[Lambda]s :=
 
 Module[
  {
@@ -333,8 +308,7 @@ ModuleBasis[
  \[Nu]_?PositiveIntegerQ,
  DMax_?NonNegativeIntegerQ
 ] /;
-Length@\[Lambda]s==Length@m\[Lambda]s
-:=
+Length@\[Lambda]s==Length@m\[Lambda]s :=
 
 Module[
  {
@@ -382,9 +356,7 @@ Module[
 EvaluateBasis[
  VectorSpaceBasis_List,
  inputVectors_List
-] /;
-True
-:=
+] :=
 
 Map[
  EvaluateTensorProductBasis[#,inputVectors]&,
