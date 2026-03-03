@@ -20,7 +20,7 @@ Begin["`Private`"];
 
 IsotypicComponentTensorProductQ::usage = "gives True if \[Mu] is an isotypic component in the tensor product \!\(\*UnderscriptBox[\(\[CircleTimes]\), \(\[Lambda] \[Element] \[Lambda]s\)]\)\!\(\*SubscriptBox[\(H\), \(\[Lambda]\)]\).";
 IsotypicComponentTensorProductQ[
- \[Lambda]s_List?VectorQ,
+ \[Lambda]s_?NonNegativeIntegersQ,
  \[Mu]_?NonNegativeIntegerQ
 ] :=
 
@@ -45,7 +45,7 @@ Count[#1, _?(Total[#] == \[Mu] &)] - Count[#1, _?(Total[#] == \[Mu] + 1 &)] & @ 
 IsotypicMultiplicitySchurPower::usage = "gives the isotypic multiplicity of \[Mu] in the Schur power \!\(\*SubscriptBox[\(e\), \(p\)]\)\!\(\*SubsuperscriptBox[\(H\), \(\[Lambda]\), \(\[CircleTimes]d\)]\).";
 IsotypicMultiplicitySchurPower[
  \[Lambda]_?NonNegativeIntegerQ,
- p_List?VectorQ,
+ p_?IntegerPartitionQ,
  \[Mu]_?NonNegativeIntegerQ
 ] :=
 
@@ -99,8 +99,8 @@ Select[
 
 IsotypicComponentsSchurPower::usage = "gives a list of all isotypic components contained in the Schur power \!\(\*SubscriptBox[\(e\), \(p\)]\)\!\(\*SubsuperscriptBox[\(H\), \(\[Lambda]\), \(\[CircleTimes]d\)]\).";
 IsotypicComponentsSchurPower[
- \[Lambda]s_List?VectorQ,
- \[Pi]\[Lambda]s_List
+ \[Lambda]s_?NonNegativeIntegersQ,
+ \[Pi]\[Lambda]s_?IntegerPartitionsQ
 ] :=
 
 
@@ -109,7 +109,7 @@ MapThread[IsotypicComponentsSchurPower, {\[Lambda]s, \[Pi]\[Lambda]s}]
 
 IsotypicComponentsSchurPower[
  \[Lambda]_?NonNegativeIntegerQ,
- p_List?VectorQ
+ p_?IntegerPartitionQ
 ] :=
 
 
@@ -121,7 +121,7 @@ Select[
 
 ConstrainedIsotypicComponentsExteriorPowers[
  \[Lambda]_?NonNegativeIntegerQ,
- p_List?VectorQ,
+ p_?IntegerPartitionQ,
  \[Mu]_?NonNegativeIntegerQ
 ] :=
 
@@ -133,8 +133,8 @@ Select[
 
 
 ConstrainedIsotypicComponentsSchurPowers[
- \[Lambda]s_List?VectorQ,
- \[Pi]\[Lambda]s_List,
+ \[Lambda]s_?NonNegativeIntegersQ,
+ \[Pi]\[Lambda]s_?IntegerPartitionsQ,
  \[Mu]_?NonNegativeIntegerQ
 ] :=
 
