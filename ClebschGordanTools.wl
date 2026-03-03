@@ -32,8 +32,7 @@ ClebschGordanTensor[
  \[Lambda]3_?NonNegativeIntegerQ
 ] :=
 
-ClebschGordanTensor[\[Lambda]1, \[Lambda]2, \[Lambda]3] =
-Developer`ToPackedArray @ Normal @ SparseArray[
+ClebschGordanTensor[\[Lambda]1, \[Lambda]2, \[Lambda]3] = Developer`ToPackedArray @ Normal @ SparseArray[
  Join @@ Table[
   {1 + \[Lambda]1 + m1, 1 + \[Lambda]2 + m2, 1 + \[Lambda]3 + m1 + m2} -> N @ ClebschGordan[{\[Lambda]1, m1}, {\[Lambda]2, m2}, {\[Lambda]3, m1 + m2}],
   {m1, -\[Lambda]1, \[Lambda]1},

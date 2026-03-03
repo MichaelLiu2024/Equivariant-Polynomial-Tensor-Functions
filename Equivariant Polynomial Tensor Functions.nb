@@ -3,7 +3,7 @@
 (*** Wolfram Notebook File ***)
 (* http://www.wolfram.com/nb *)
 
-(* CreatedBy='Wolfram 14.1' *)
+(* CreatedBy = 'Wolfram 14.1' *)
 
 (*CacheID: 234*)
 (* Internal cache information:
@@ -506,14 +506,14 @@ Cell[TextData[{
  ". Now, suppose that ",
  Cell[BoxData[
   FormBox[
-   RowBox[{"Y", "=", 
+   RowBox[{"Y", " = ", 
     SubscriptBox["H", "\[Nu]"]}], TraditionalForm]],ExpressionUUID->
   "a4092436-93ad-5c41-943e-e0d58f3462e2"],
  ". Then ",
  Cell[BoxData[
   FormBox[
    RowBox[{
-    SuperscriptBox["M", "D"], "=", 
+    SuperscriptBox["M", "D"], " = ", 
     RowBox[{
      SuperscriptBox[
       RowBox[{"(", 
@@ -773,7 +773,7 @@ Cell[TextData[{
    RowBox[{
     RowBox[{
      UnderscriptBox["\[Sum]", "\[Lambda]"], 
-     SubscriptBox["d", "\[Lambda]"]}], "=", "D"}], TraditionalForm]],
+     SubscriptBox["d", "\[Lambda]"]}], " = ", "D"}], TraditionalForm]],
   ExpressionUUID->"9b343e3d-9dd6-7045-a65c-10d6ed6e7053"],
  ","
 }], "Item",
@@ -1461,13 +1461,12 @@ Cell[TextData[{
 8Yf56s8gesmhyN1xs986WjhK7wXRPQXrDoPoEu85Z0D0D8e+OwWL3zruCAm6
 C6JZTt5kKQTSMeuTWEH0EnlpKRCtkPgKTP8Qf6+1AEivMd+uDaLPPMkwQKYr
 puTvANEm05eD6Qt/C9sWAekZu5aA6TWCz58lrXzryPDuH5hOWLLyNYhesF/6
-A4gGAFbtvkI=
-  "],ExpressionUUID->"c7cd9159-c0d6-406b-ab27-bafda197b2b6"],
+A4gGAFbtvkI = "],ExpressionUUID->"c7cd9159-c0d6-406b-ab27-bafda197b2b6"],
 
 Cell[BoxData[
  FormBox[
   RowBox[{
-   RowBox[{"x", "=", 
+   RowBox[{"x", " = ", 
     RowBox[{
      UnderscriptBox["\[CirclePlus]", "\[Lambda]"], 
      SubscriptBox["x", "\[Lambda]"]}]}], ","}], 
@@ -1522,7 +1521,7 @@ Cell[TextData[{
 Cell[BoxData[
  FormBox[
   RowBox[{
-   SubscriptBox["x", "\[Lambda]"], "=", 
+   SubscriptBox["x", "\[Lambda]"], " = ", 
    RowBox[{
     UnderscriptBox["\[CirclePlus]", 
      SubscriptBox["k", "\[Lambda]"]], 
@@ -1584,7 +1583,7 @@ Cell[TextData[{
       RowBox[{"\[Lambda]", " ", 
        SubscriptBox["k", "\[Lambda]"]}]], "}"}], 
     RowBox[{
-     SubscriptBox["k", "\[Lambda]"], "=", "1"}], 
+     SubscriptBox["k", "\[Lambda]"], " = ", "1"}], 
     RowBox[{"dim", " ", 
      SubscriptBox["X", "\[Lambda]"]}]], TraditionalForm]],ExpressionUUID->
   "ebf93737-23f8-194f-93e8-08842006446a"],
@@ -1614,7 +1613,7 @@ Cell[BoxData[
  FormBox[
   RowBox[{
    RowBox[{
-    RowBox[{"p", "(", "x", ")"}], "=", 
+    RowBox[{"p", "(", "x", ")"}], " = ", 
     RowBox[{
      RowBox[{"(", GridBox[{
         {"D"},
@@ -1728,7 +1727,7 @@ Cell[BoxData["Quit"], "Input",
 
 Cell[BoxData["Qiut"], "Output",
  CellChangeTimes->{3.9815482243189335`*^9},
- CellLabel->"Out[5]=",ExpressionUUID->"2dae52c3-9c51-c946-8c0b-85a01fcdfcef"]
+ CellLabel->"Out[5] = ",ExpressionUUID->"2dae52c3-9c51-c946-8c0b-85a01fcdfcef"]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -1785,7 +1784,7 @@ Cell[BoxData[
    RowBox[{"-", "2.2771001702132456`"}]}], "}"}]], "Output",
  CellChangeTimes->{3.981468645538149*^9, 3.9814686844682198`*^9, 
   3.9815477138344784`*^9, 3.9815484443674316`*^9},
- CellLabel->"Out[4]=",ExpressionUUID->"e98e62f0-2fda-7041-b6f3-ba718e641b2d"]
+ CellLabel->"Out[4] = ",ExpressionUUID->"e98e62f0-2fda-7041-b6f3-ba718e641b2d"]
 }, Open  ]]
 }, Open  ]],
 
@@ -1797,7 +1796,7 @@ Cell[TextData[{
   FormBox[
    RowBox[{
     UnderoverscriptBox["\[CirclePlus]", 
-     RowBox[{"D", "=", "0"}], "3"], 
+     RowBox[{"D", " = ", "0"}], "3"], 
     RowBox[{
      SubscriptBox["Hom", "G"], "(", 
      RowBox[{
@@ -1834,7 +1833,7 @@ Cell[TextData[{
 this corresponds to the data ",
  Cell[BoxData[
   FormBox[
-   RowBox[{"X", "=", 
+   RowBox[{"X", " = ", 
     RowBox[{
      RowBox[{"(", 
       RowBox[{
@@ -1852,13 +1851,13 @@ this corresponds to the data ",
  ", ",
  Cell[BoxData[
   FormBox[
-   RowBox[{"Y", "=", 
+   RowBox[{"Y", " = ", 
     SubscriptBox["H", "0"]}], TraditionalForm]],ExpressionUUID->
   "da816978-360e-c54f-b019-29dd6002eafd"],
  ", and ",
  Cell[BoxData[
   FormBox[
-   RowBox[{"D", "=", "3"}], TraditionalForm]],ExpressionUUID->
+   RowBox[{"D", " = ", "3"}], TraditionalForm]],ExpressionUUID->
   "deca6e36-7faa-d34d-8420-fe45c93ee754"],
  ". We represent this data as follows."
 }], "Text",
@@ -1880,17 +1879,17 @@ Cell[BoxData["Quit"], "Input",
 
 Cell[BoxData[{
  RowBox[{
-  RowBox[{"\[Lambda]s", "=", 
+  RowBox[{"\[Lambda]s", " = ", 
    RowBox[{"{", 
     RowBox[{"2", ",", "3"}], "}"}]}], ";"}], "\[IndentingNewLine]", 
  RowBox[{
-  RowBox[{"m\[Lambda]s", "=", 
+  RowBox[{"m\[Lambda]s", " = ", 
    RowBox[{"{", 
     RowBox[{"2", ",", "1"}], "}"}]}], ";"}], "\[IndentingNewLine]", 
  RowBox[{
-  RowBox[{"\[Nu]", "=", "0"}], ";"}], "\n", 
+  RowBox[{"\[Nu]", " = ", "0"}], ";"}], "\n", 
  RowBox[{
-  RowBox[{"DMax", "=", "5"}], ";"}]}], "Input",
+  RowBox[{"DMax", " = ", "5"}], ";"}]}], "Input",
  CellChangeTimes->CompressedData["
 1:eJxTTMoPSmViYGAQBWIQ7XB0glfSyreOCyomg+mMc82VPUA6R2N2NYgOeJ06
 BUSLyG6YCqI/rJ3zAkRv4dkEpn2+T/4Holm2TwPTHLzL1HuBdET1cjDd0x9p
@@ -1907,7 +1906,7 @@ Cell[TextData[{
   FormBox[
    RowBox[{
     UnderoverscriptBox["\[CirclePlus]", 
-     RowBox[{"D", "=", "0"}], "3"], 
+     RowBox[{"D", " = ", "0"}], "3"], 
     RowBox[{
      SubscriptBox["Hom", "G"], "(", 
      RowBox[{
@@ -1926,7 +1925,7 @@ Cell[CellGroupData[{
 
 Cell[BoxData[
  RowBox[{
-  RowBox[{"algebraBasis", "=", 
+  RowBox[{"algebraBasis", " = ", 
    RowBox[{"AlgebraBasis", "[", 
     RowBox[{"\[Lambda]s", ",", "m\[Lambda]s", ",", "DMax"}], "]"}]}], 
   ";"}]], "Input",
@@ -2686,7 +2685,7 @@ Cell[BoxData[
 \[RightDoubleBracket]\\\"}], \\\"\[LeftDoubleBracket]\\\", \\\"\\\\\\\"SSYT\
 \[Lambda]s\\\\\\\"\\\", \\\"\[RightDoubleBracket]\\\"}]\\) at position {2, \
 \\!\\(\\*RowBox[{\\\"1\\\"}]\\)} in \\!\\(\\*RowBox[{\\\"MapThread\\\", \\\"[\
-\\\", RowBox[{RowBox[{\\\"List\\\", \\\"@*\\\", \\\"Part\\\"}], \\\",\\\", \
+\\\", RowBox[{RowBox[{\\\"List\\\", \\\" @ *\\\", \\\"Part\\\"}], \\\",\\\", \
 RowBox[{\\\"{\\\", RowBox[{RowBox[{RowBox[{RowBox[{\\\"{\\\", \\\"}\\\"}], \\\
 \"\[LeftDoubleBracket]\\\", RowBox[{\\\"-\\\", \\\"2\\\"}], \\\"\
 \[RightDoubleBracket]\\\"}], \\\"\[LeftDoubleBracket]\\\", \\\"\\\\\\\"SSYT\
@@ -2787,7 +2786,7 @@ Cell[BoxData[
 \[LeftDoubleBracket]\\\", \\\"\\\\\\\"SSYT\[Lambda]s\\\\\\\"\\\", \\\"\
 \[RightDoubleBracket]\\\"}]\\) at position {2, \
 \\!\\(\\*RowBox[{\\\"1\\\"}]\\)} in \\!\\(\\*RowBox[{\\\"MapThread\\\", \\\"[\
-\\\", RowBox[{RowBox[{\\\"List\\\", \\\"@*\\\", \\\"Part\\\"}], \\\",\\\", \
+\\\", RowBox[{RowBox[{\\\"List\\\", \\\" @ *\\\", \\\"Part\\\"}], \\\",\\\", \
 RowBox[{\\\"{\\\", RowBox[{RowBox[{RowBox[{RowBox[{\\\"{\\\", \\\"}\\\"}], \\\
 \"\[LeftDoubleBracket]\\\", \\\"#1\\\", \\\"\[RightDoubleBracket]\\\"}], \\\"\
 \[LeftDoubleBracket]\\\", \\\"\\\\\\\"SSYT\[Lambda]s\\\\\\\"\\\", \\\"\
@@ -2825,7 +2824,7 @@ In[8]:=",ExpressionUUID->"fb89e1a6-3655-884a-9073-d5a6326a9d4f"]
 
 Cell[BoxData[
  RowBox[{
-  RowBox[{"moduleBasis", "=", 
+  RowBox[{"moduleBasis", " = ", 
    RowBox[{"ModuleBasis", "[", 
     RowBox[{"\[Lambda]s", ",", "m\[Lambda]s", ",", "\[Nu]", ",", "DMax"}], 
     "]"}]}], ";"}]], "Input",
@@ -2838,9 +2837,9 @@ Cell[CellGroupData[{
 Cell[BoxData[{
  RowBox[{
   RowBox[{"Accumulate", "[", 
-   RowBox[{"Length", "/@", "algebraBasis"}], "]"}], "-", "1"}], "\[IndentingNewLine]", 
+   RowBox[{"Length", " /@ ", "algebraBasis"}], "]"}], "-", "1"}], "\[IndentingNewLine]", 
  RowBox[{
-  RowBox[{"Length", "/@", "moduleBasis"}], "//", "Accumulate"}]}], "Input",
+  RowBox[{"Length", " /@ ", "moduleBasis"}], "//", "Accumulate"}]}], "Input",
  CellChangeTimes->{{3.981206678331478*^9, 3.9812066839053764`*^9}, {
   3.9812283202145805`*^9, 3.9812283210292377`*^9}, {3.9812338099356728`*^9, 
   3.9812338666566067`*^9}},
@@ -2870,7 +2869,7 @@ Cell[BoxData[
    3.9812897587148857`*^9, 3.9812897914510593`*^9}, {3.981289825896055*^9, 
    3.981289844158806*^9}, 3.9812898885727406`*^9, 3.981290278914257*^9, {
    3.981290565875389*^9, 3.9812905898006763`*^9}, 3.981290831541847*^9},
- CellLabel->"Out[10]=",ExpressionUUID->"c65b4615-947f-7646-b9f4-052d1ddefa32"],
+ CellLabel->"Out[10] = ",ExpressionUUID->"c65b4615-947f-7646-b9f4-052d1ddefa32"],
 
 Cell[BoxData[
  RowBox[{"{", 
@@ -2896,7 +2895,7 @@ Cell[BoxData[
    3.9812897587148857`*^9, 3.9812897914510593`*^9}, {3.981289825896055*^9, 
    3.981289844158806*^9}, 3.9812898885727406`*^9, 3.981290278914257*^9, {
    3.981290565875389*^9, 3.9812905898006763`*^9}, 3.9812908315535736`*^9},
- CellLabel->"Out[11]=",ExpressionUUID->"86995702-0f3b-6d42-9691-605a5fb60224"]
+ CellLabel->"Out[11] = ",ExpressionUUID->"86995702-0f3b-6d42-9691-605a5fb60224"]
 }, Open  ]],
 
 Cell["The isotypic data tree stores the following information:", "Text",
@@ -2922,14 +2921,14 @@ Cell[BoxData[
          RowBox[{"dim", " ", 
           SubscriptBox["X", "\[Lambda]"]}], ")"}], "\[Lambda]"], ",", 
        "\[Nu]"}], "}"}], 
-     RowBox[{"X", "=", 
+     RowBox[{"X", " = ", 
       RowBox[{
        RowBox[{
         UnderscriptBox["\[CirclePlus]", "\[Lambda]"], 
         RowBox[{
          RowBox[{
           SubscriptBox["H", "\[Lambda]"], "\[CircleTimes]", 
-          SubscriptBox["X", "\[Lambda]"]}], " ", "and", " ", "Y"}]}], "=", 
+          SubscriptBox["X", "\[Lambda]"]}], " ", "and", " ", "Y"}]}], " = ", 
        SubscriptBox["H", "\[Nu]"]}]}]},
     {"1", "D", 
      RowBox[{"total", " ", "polynomial", " ", "degree"}]},
@@ -3049,11 +3048,11 @@ basis for ",
 
 Cell[BoxData[
  RowBox[{
-  RowBox[{"polys", "=", 
-   RowBox[{"Chop", "@", 
-    RowBox[{"FullSimplify", "@", 
-     RowBox[{"Flatten", "@", 
-      RowBox[{"SphericalBasisToMonomialBasis", "@", 
+  RowBox[{"polys", " = ", 
+   RowBox[{"Chop", " @ ", 
+    RowBox[{"FullSimplify", " @ ", 
+     RowBox[{"Flatten", " @ ", 
+      RowBox[{"SphericalBasisToMonomialBasis", " @ ", 
        RowBox[{"EvaluateVectorSpaceBases", "[", 
         RowBox[{"alg", ",", 
          RowBox[{"generateVariables", "[", 
@@ -3229,7 +3228,7 @@ Cell[TextData[{
    RowBox[{
     RowBox[{
      SubscriptBox["\[Sum]", "\[Lambda]"], 
-     SubscriptBox["d", "\[Lambda]"]}], "=", "D"}], TraditionalForm]],
+     SubscriptBox["d", "\[Lambda]"]}], " = ", "D"}], TraditionalForm]],
   ExpressionUUID->"d1ecc066-05d8-704e-8863-119d004e6a44"]
 }], "Subitem",
  CellChangeTimes->{{3.969018569604607*^9, 3.969018689332345*^9}, {
@@ -3462,8 +3461,7 @@ orualpaC6Pzr3gtB9KGmi8tBtNX3mAWlQHrfruAlIDru6MutIJp/x4pdIFqn
 6Lq5ud4gesHFUjD9YmJIEIhm3rwxGETHfdsTD6YLv+aD6KCmRRUg+vXRV2B6
 nc3/GhAt82FWA4jOOzipHUQnbZoHptseF5wE0WyLq8D0tPO9TN5T3zrugtL+
 pSu0QLTighZtEN1hs2KlL5AOW3NkNYg+3TKB0w9Iz0wp4wbRK+boBsbNfuvo
-M70gCEQDAHCmvm0=
-  "],ExpressionUUID->"38054efc-1539-4e95-9101-37cb9abc3ce8"],
+M70gCEQDAHCmvm0 = "],ExpressionUUID->"38054efc-1539-4e95-9101-37cb9abc3ce8"],
 
 Cell[TextData[{
  "compute a basis for each ",
@@ -3489,8 +3487,7 @@ orualpaC6Pzr3gtB9KGmi8tBtNX3mAWlQHrfruAlIDru6MutIJp/x4pdIFqn
 6Lq5ud4gesHFUjD9YmJIEIhm3rwxGETHfdsTD6YLv+aD6KCmRRUg+vXRV2B6
 nc3/GhAt82FWA4jOOzipHUQnbZoHptseF5wE0WyLq8D0tPO9TN5T3zrugtL+
 pSu0QLTighZtEN1hs2KlL5AOW3NkNYg+3TKB0w9Iz0wp4wbRK+boBsbNfusY
-Mu1qEIgGAHM9vtk=
-  "],ExpressionUUID->"017d04f4-b808-f248-8f78-9a774ad8f759"],
+Mu1qEIgGAHM9vtk = "],ExpressionUUID->"017d04f4-b808-f248-8f78-9a774ad8f759"],
 
 Cell[TextData[{
  "enumerate all SSYT with shapes ",
@@ -3562,7 +3559,7 @@ Cell[BoxData[
         SubscriptBox["d", "1"]}]], "\[CircleTimes]", "\[Ellipsis]", "\[CircleTimes]", 
       SubsuperscriptBox["h", "m", 
        RowBox[{"\[CircleTimes]", 
-        SubscriptBox["d", "m"]}]]}], ")"}], "=", 
+        SubscriptBox["d", "m"]}]]}], ")"}], " = ", 
     RowBox[{
      RowBox[{
       RowBox[{
@@ -3655,7 +3652,7 @@ Cell[TextData[{
  "Let ",
  Cell[BoxData[
   FormBox[
-   RowBox[{"M", "=", 
+   RowBox[{"M", " = ", 
     RowBox[{
      UnderscriptBox["\[CirclePlus]", 
       RowBox[{"D", "\[Element]", 
@@ -3665,7 +3662,7 @@ Cell[TextData[{
  " be a finitely generated graded module over a graded ring ",
  Cell[BoxData[
   FormBox[
-   RowBox[{"R", "=", 
+   RowBox[{"R", " = ", 
     RowBox[{
      UnderscriptBox["\[CirclePlus]", 
       RowBox[{"D", "\[Element]", 
@@ -3676,7 +3673,7 @@ Cell[TextData[{
  Cell[BoxData[
   FormBox[
    RowBox[{
-    SubscriptBox["R", "0"], "=", 
+    SubscriptBox["R", "0"], " = ", 
     TemplateBox[{},
      "Reals"]}], TraditionalForm]],ExpressionUUID->
   "63960a69-f1c9-e94f-97b2-fd3e46e4c541"],
@@ -3811,7 +3808,7 @@ Cell[BoxData[
  FormBox[
   RowBox[{
    RowBox[{
-    RowBox[{"I", " ", "M"}], "=", 
+    RowBox[{"I", " ", "M"}], " = ", 
     RowBox[{
      UnderscriptBox["\[CirclePlus]", 
       RowBox[{"D", "\[Element]", "\[DoubleStruckCapitalN]"}]], 
@@ -3857,7 +3854,7 @@ Cell[BoxData[
    RowBox[{
     RowBox[{
      RowBox[{"I", " ", "M"}], "\[Intersection]", 
-     SubscriptBox["M", "D"]}], "=", 
+     SubscriptBox["M", "D"]}], " = ", 
     RowBox[{
      RowBox[{
       UnderscriptBox["\[Sum]", 
@@ -3868,7 +3865,7 @@ Cell[BoxData[
         RowBox[{"D", "'"}]], 
        SubscriptBox["M", 
         RowBox[{"D", "-", 
-         RowBox[{"D", "'"}]}]]}]}], "=", 
+         RowBox[{"D", "'"}]}]]}]}], " = ", 
      RowBox[{"Span", 
       RowBox[{
        RowBox[{"{", 
@@ -4122,7 +4119,7 @@ Cell[TextData[{
  "Next, apply the above algorithm with ",
  Cell[BoxData[
   FormBox[
-   RowBox[{"N", "=", "I"}], TraditionalForm]],ExpressionUUID->
+   RowBox[{"N", " = ", "I"}], TraditionalForm]],ExpressionUUID->
   "aa517b3d-19fc-9846-9e8f-99db465cfbdd"],
  ". Let ",
  Cell[BoxData[
@@ -4206,7 +4203,7 @@ Cell[BoxData[
  FormBox[
   RowBox[{
    SubscriptBox["R", 
-    RowBox[{"D", "+", "1"}]], "=", 
+    RowBox[{"D", "+", "1"}]], " = ", 
    RowBox[{
     RowBox[{
      SubscriptBox["I", 
@@ -4221,7 +4218,7 @@ Cell[BoxData[
       SubscriptBox[
        RowBox[{"(", 
         SuperscriptBox["I", "2"], ")"}], 
-       RowBox[{"D", "+", "1"}]]}]}], "=", 
+       RowBox[{"D", "+", "1"}]]}]}], " = ", 
     RowBox[{
      RowBox[{
       SubscriptBox["Span", 
@@ -4283,7 +4280,7 @@ Cell[TextData[{
  ". Thus, ",
  Cell[BoxData[
   FormBox[
-   RowBox[{"R", "=", 
+   RowBox[{"R", " = ", 
     RowBox[{
      TemplateBox[{},
       "Reals"], "[", "L", "]"}]}], TraditionalForm]],ExpressionUUID->
@@ -4407,7 +4404,7 @@ Cell[TextData[{
  Cell[BoxData[
   FormBox[
    RowBox[{
-    RowBox[{"D", "=", "0"}], ",", "1", ",", "2", ",", "...", ",", 
+    RowBox[{"D", " = ", "0"}], ",", "1", ",", "2", ",", "...", ",", 
     SubscriptBox["D", "max"]}], TraditionalForm]],ExpressionUUID->
   "e34c68ca-ce0d-5045-b419-482aaab97e9f"],
  ","
@@ -4424,7 +4421,7 @@ Cell[TextData[{
  Cell[BoxData[
   FormBox[
    RowBox[{
-    RowBox[{"D", "=", "1"}], ",", "2", ",", "...", ",", 
+    RowBox[{"D", " = ", "1"}], ",", "2", ",", "...", ",", 
     SubscriptBox["D", "max"]}], TraditionalForm]],ExpressionUUID->
   "2a337642-6404-f04e-a4e0-291388c779cd"]
 }], "Item",
@@ -4494,7 +4491,7 @@ Cell[TextData[{
   FormBox[
    RowBox[{
     RowBox[{
-     RowBox[{"D", "'"}], "=", "1"}], ",", "2", ",", "...", ",", "D"}], 
+     RowBox[{"D", "'"}], " = ", "1"}], ",", "2", ",", "...", ",", "D"}], 
    TraditionalForm]],ExpressionUUID->"859c95a4-4e48-8b45-b87e-efdc8e7a07cc"]
 }], "Item",
  CellChangeTimes->{{3.9648862312286243`*^9, 3.9648862599405556`*^9}, {
@@ -4597,7 +4594,7 @@ Cell[TextData[{
  Cell[BoxData[
   FormBox[
    RowBox[{
-    SubscriptBox["\[Lambda]", "1"], "=", 
+    SubscriptBox["\[Lambda]", "1"], " = ", 
     SubscriptBox["\[Gamma]", "1"]}], TraditionalForm]],ExpressionUUID->
   "cc74a834-10f0-f144-a9f5-364afb767ed5"],
  " and ",
@@ -4681,7 +4678,7 @@ Cell[TextData[{
  Cell[BoxData[
   FormBox[
    RowBox[{
-    SubscriptBox["\[Lambda]", "1"], "=", 
+    SubscriptBox["\[Lambda]", "1"], " = ", 
     SubscriptBox["\[Gamma]", "1"]}], TraditionalForm]],ExpressionUUID->
   "ceee791f-bf4d-2840-af91-05fac5c44675"],
  " and ",
@@ -4749,7 +4746,7 @@ Cell[BoxData[
      RowBox[{"\[Lambda]", ",", "\[Gamma]"}], ")"}], ":=", 
     RowBox[{
      UnderoverscriptBox["\[Product]", 
-      RowBox[{"j", "=", "1"}], 
+      RowBox[{"j", " = ", "1"}], 
       RowBox[{"d", "-", "1"}]], 
      RowBox[{"CG", "(", 
       RowBox[{
@@ -4842,7 +4839,7 @@ Cell[BoxData[
    RowBox[{
     UnderoverscriptBox["\[CirclePlus]", 
      RowBox[{
-      SubscriptBox["\[Gamma]", "2"], "=", 
+      SubscriptBox["\[Gamma]", "2"], " = ", 
       RowBox[{"\[LeftBracketingBar]", 
        RowBox[{
         SubscriptBox["\[Lambda]", "1"], "-", 
@@ -4975,7 +4972,7 @@ Cell[BoxData[
       SubscriptBox["\[Lambda]", "d"]]}], "\[TildeFullEqual]", 
     RowBox[{
      UnderoverscriptBox["\[CirclePlus]", 
-      RowBox[{"\[Mu]", "=", 
+      RowBox[{"\[Mu]", " = ", 
        RowBox[{"Max", "[", 
         RowBox[{"0", ",", 
          RowBox[{
@@ -5093,7 +5090,7 @@ Cell[TextData[{
  Cell[BoxData[
   FormBox[
    RowBox[{
-    SubscriptBox["\[Gamma]", "d"], "=", "\[Mu]"}], TraditionalForm]],
+    SubscriptBox["\[Gamma]", "d"], " = ", "\[Mu]"}], TraditionalForm]],
   ExpressionUUID->"b3766896-66d1-3946-ba17-cb98a36fd2f6"],
  "."
 }], "Text",
@@ -5211,7 +5208,7 @@ Note that the Clebsch-Gordan coefficient is nonzero iff ",
  Cell[BoxData[
   FormBox[
    RowBox[{
-    SubscriptBox["m", "3"], "=", 
+    SubscriptBox["m", "3"], " = ", 
     RowBox[{
      SubscriptBox["m", "1"], "+", 
      SubscriptBox["m", "2"]}]}], TraditionalForm]],ExpressionUUID->
@@ -5240,11 +5237,11 @@ Cell[BoxData[
   RowBox[{
    RowBox[{
     RowBox[{"CG", "(", 
-     RowBox[{"\[Lambda]", ",", "\[Gamma]"}], ")"}], "=", 
+     RowBox[{"\[Lambda]", ",", "\[Gamma]"}], ")"}], " = ", 
     RowBox[{
      RowBox[{
       UnderoverscriptBox["\[Product]", 
-       RowBox[{"j", "=", "1"}], 
+       RowBox[{"j", " = ", "1"}], 
        RowBox[{"d", "-", "1"}]], 
       RowBox[{"(", GridBox[{
          {
@@ -5376,7 +5373,7 @@ Cell[TextData[{
      RowBox[{"(", 
       RowBox[{"1", ",", "2"}], ")"}], 
      RowBox[{"CG", "(", 
-      RowBox[{"\[Lambda]", ",", "\[Gamma]"}], ")"}]}], "=", 
+      RowBox[{"\[Lambda]", ",", "\[Gamma]"}], ")"}]}], " = ", 
     RowBox[{
      SuperscriptBox[
       RowBox[{"(", 
@@ -5582,8 +5579,7 @@ AdFvon6sANE8HgZr/gLpCatN14FoB6HWJyDaZwqEPpM7MfofkJbxqo0B0QEC
 c5NAtM6elSkguobbrbKk/a3jhckMNSBaYneleCmQroifIQmiL3BoHJoHpB+E
 7APTFcfy/J53vnV0ecMQAKI33JBT7egF2v9gphqI/vPEyg1EPyntdQfRFYWz
 vEH0m6gjPiB6SdgHGcGZbx1P9F+TB9EPep1OeS4GuvecF5h2qBT5i0zH+M8R
-8ALSe65vBdMZnDf0wfSs92AaAEN3pHA=
-  "],
+8ALSe65vBdMZnDf0wfSs92AaAEN3pHA = "],
  Background->None,ExpressionUUID->"916e290f-eade-0c43-ac78-134cb96efb23"]
 }, Open  ]],
 
@@ -5890,7 +5886,7 @@ Cell[BoxData[{
   RowBox[{
    RowBox[{
     SuperscriptBox["\[ScriptCapitalS]", "d"], "(", 
-    RowBox[{"V", "\[CircleTimes]", "W"}], ")"}], "=", 
+    RowBox[{"V", "\[CircleTimes]", "W"}], ")"}], " = ", 
    SuperscriptBox[
     RowBox[{"(", 
      SuperscriptBox[
@@ -6039,7 +6035,7 @@ Cell[BoxData[{
   RowBox[{
    RowBox[{
     SuperscriptBox["\[ScriptCapitalS]", "D"], "(", 
-    SuperscriptBox["X", "*"], ")"}], "=", 
+    SuperscriptBox["X", "*"], ")"}], " = ", 
    RowBox[{
     SuperscriptBox["\[ScriptCapitalS]", "D"], "(", 
     RowBox[{
@@ -6746,7 +6742,7 @@ Cell[BoxData[
  FormBox[
   RowBox[{
    SuperscriptBox["x", 
-    RowBox[{"\[CircleTimes]", "D"}]], "=", 
+    RowBox[{"\[CircleTimes]", "D"}]], " = ", 
    RowBox[{
     UnderscriptBox["\[CirclePlus]", 
      SubscriptBox[
@@ -6808,7 +6804,7 @@ Cell[BoxData[
    RowBox[{
     SubsuperscriptBox["x", "\[Lambda]", 
      RowBox[{"\[CircleTimes]", 
-      SubscriptBox["d", "\[Lambda]"]}]], "=", 
+      SubscriptBox["d", "\[Lambda]"]}]], " = ", 
     RowBox[{
      UnderscriptBox["\[CirclePlus]", 
       SubscriptBox[
@@ -6817,7 +6813,7 @@ Cell[BoxData[
          RowBox[{"\[Lambda]", " ", "l"}]], ")"}], "l"]], 
      RowBox[{
       UnderoverscriptBox["\[CircleTimes]", 
-       RowBox[{"l", "=", "1"}], 
+       RowBox[{"l", " = ", "1"}], 
        SubscriptBox["d", "\[Lambda]"]], 
       RowBox[{
        SubscriptBox["h", 
@@ -6826,7 +6822,7 @@ Cell[BoxData[
           RowBox[{"\[Lambda]", " ", "l"}]]}]], "\[CircleTimes]", 
        RowBox[{
         UnderoverscriptBox["\[CircleTimes]", 
-         RowBox[{"l", "=", "1"}], 
+         RowBox[{"l", " = ", "1"}], 
          SubscriptBox["d", "\[Lambda]"]], 
         SubscriptBox["m", 
          RowBox[{"\[Lambda]", " ", 
@@ -6875,7 +6871,7 @@ Cell[BoxData[
  FormBox[
   RowBox[{
    SuperscriptBox["x", 
-    RowBox[{"\[CircleTimes]", "D"}]], "=", 
+    RowBox[{"\[CircleTimes]", "D"}]], " = ", 
    RowBox[{
     UnderscriptBox["\[CirclePlus]", 
      SubscriptBox[
@@ -6901,7 +6897,7 @@ Cell[BoxData[
              RowBox[{"\[Lambda]", " ", "l"}]], ")"}], "l"]], 
          RowBox[{
           UnderoverscriptBox["\[CircleTimes]", 
-           RowBox[{"l", "=", "1"}], 
+           RowBox[{"l", " = ", "1"}], 
            SubscriptBox["d", "\[Lambda]"]], 
           RowBox[{
            SubscriptBox["h", 
@@ -6910,7 +6906,7 @@ Cell[BoxData[
               RowBox[{"\[Lambda]", " ", "l"}]]}]], "\[CircleTimes]", 
            RowBox[{
             UnderoverscriptBox["\[CircleTimes]", 
-             RowBox[{"l", "=", "1"}], 
+             RowBox[{"l", " = ", "1"}], 
              SubscriptBox["d", "\[Lambda]"]], 
             SubscriptBox["m", 
              RowBox[{"\[Lambda]", " ", 
@@ -6982,13 +6978,13 @@ Cell[TextData[{
 Cell[BoxData[{
  FormBox[
   RowBox[{
-   RowBox[{"p", "(", "x", ")"}], "=", 
+   RowBox[{"p", "(", "x", ")"}], " = ", 
    TemplateBox[{"p", 
      SuperscriptBox["x", 
       RowBox[{"\[CircleTimes]", "D"}]]},
     "BraKet"]}], TraditionalForm], "\[IndentingNewLine]", 
  FormBox[
-  RowBox[{"=", 
+  RowBox[{" = ", 
    RowBox[{
     RowBox[{"(", GridBox[{
        {"D"},
@@ -7038,7 +7034,7 @@ Cell[BoxData[{
                     RowBox[{"\[Lambda]", " ", "l"}]]}]]}]}]}]}]}]},
      "BraKet"]}]}], TraditionalForm], "\[IndentingNewLine]", 
  FormBox[
-  RowBox[{"=", 
+  RowBox[{" = ", 
    RowBox[{
     RowBox[{"(", GridBox[{
        {"D"},
@@ -7084,7 +7080,7 @@ Cell[BoxData[{
           "BraKet"]}], ")"}]}]}]}]}]}], TraditionalForm], "\[IndentingNewLine]", 
  FormBox[
   RowBox[{
-   OverscriptBox["=", "Lemma"], 
+   OverscriptBox[" = ", "Lemma"], 
    RowBox[{
     RowBox[{"(", GridBox[{
        {"D"},
@@ -7299,7 +7295,7 @@ Cell[BoxData[
           RowBox[{"g", "(", "T", ")"}], ")"}], 
         RowBox[{"g", "(", 
           SubscriptBox["U", "k"], ")"}]},
-       "BraKet"]}]}], "=", 
+       "BraKet"]}]}], " = ", 
     TemplateBox[{
       RowBox[{
         SubscriptBox["e", "\[Pi]"], "(", "L", ")"}], 
@@ -7452,21 +7448,21 @@ Cell[BoxData[
    RowBox[{
     RowBox[{
      SubsuperscriptBox["e", "\[Pi]", "*"], "(", 
-     RowBox[{"f", "(", "T", ")"}], ")"}], "=", 
+     RowBox[{"f", "(", "T", ")"}], ")"}], " = ", 
     RowBox[{
      RowBox[{
       SubsuperscriptBox["e", "\[Pi]", "*"], "(", 
       RowBox[{
        SuperscriptBox["\[CapitalPhi]", 
         RowBox[{"\[CircleTimes]", "d"}]], 
-       RowBox[{"g", "(", "T", ")"}]}], ")"}], "=", 
+       RowBox[{"g", "(", "T", ")"}]}], ")"}], " = ", 
      RowBox[{
       RowBox[{
        SuperscriptBox["\[CapitalPhi]", 
         RowBox[{"\[CircleTimes]", "d"}]], 
        RowBox[{
         SubsuperscriptBox["e", "\[Pi]", "*"], "(", 
-        RowBox[{"g", "(", "T", ")"}], ")"}]}], "=", 
+        RowBox[{"g", "(", "T", ")"}], ")"}]}], " = ", 
       RowBox[{
        RowBox[{
         SuperscriptBox["\[CapitalPhi]", 
@@ -7482,7 +7478,7 @@ Cell[BoxData[
               RowBox[{"g", "(", "T", ")"}], ")"}], 
             RowBox[{"g", "(", 
               SubscriptBox["U", "k"], ")"}]},
-           "BraKet"]}]}]}], "=", 
+           "BraKet"]}]}]}], " = ", 
        RowBox[{
         UnderscriptBox["\[Sum]", "k"], 
         RowBox[{
@@ -7689,16 +7685,16 @@ Cell[TextData[{
 
 Cell[BoxData[
  FormBox[
-  RowBox[{"\[CurlyPhi]", "=", 
+  RowBox[{"\[CurlyPhi]", " = ", 
    RowBox[{
     UnderoverscriptBox["\[CirclePlus]", 
-     RowBox[{"d", "=", "0"}], "D"], 
+     RowBox[{"d", " = ", "0"}], "D"], 
     RowBox[{
      UnderoverscriptBox["\[CirclePlus]", 
       RowBox[{
        SubscriptBox["j", "1"], ",", "\[Ellipsis]", ",", 
        RowBox[{
-        SubscriptBox["j", "d"], "=", "1"}]}], 
+        SubscriptBox["j", "d"], " = ", "1"}]}], 
       RowBox[{"dim", " ", 
        SuperscriptBox["X", "*"]}]], 
      RowBox[{
@@ -7726,7 +7722,7 @@ Cell[TextData[{
    SubsuperscriptBox[
     RowBox[{"{", 
      SubsuperscriptBox["e", "j", "*"], "}"}], 
-    RowBox[{"j", "=", "1"}], 
+    RowBox[{"j", " = ", "1"}], 
     RowBox[{"dim", " ", 
      SuperscriptBox["X", "*"]}]], TraditionalForm]],ExpressionUUID->
   "28cdc4d6-d8fe-9648-b044-966caebe63e6"],
@@ -7748,13 +7744,13 @@ Cell[BoxData[
    RowBox[{"\[CurlyPhi]", "(", "x", ")"}], ":=", 
    RowBox[{
     UnderoverscriptBox["\[CirclePlus]", 
-     RowBox[{"d", "=", "0"}], "D"], 
+     RowBox[{"d", " = ", "0"}], "D"], 
     RowBox[{
      UnderoverscriptBox["\[CirclePlus]", 
       RowBox[{
        SubscriptBox["j", "1"], ",", "\[Ellipsis]", ",", 
        RowBox[{
-        SubscriptBox["j", "d"], "=", "1"}]}], 
+        SubscriptBox["j", "d"], " = ", "1"}]}], 
       RowBox[{"dim", " ", 
        SuperscriptBox["X", "*"]}]], 
      RowBox[{
@@ -7850,7 +7846,7 @@ Cell[BoxData[{
        SubscriptBox["\[CurlyPhi]", "i"], "\[CircleTimes]", 
        SubscriptBox["y", "i"]}]}], ")"}], 
     RowBox[{"(", 
-     RowBox[{"g", " ", "x"}], ")"}]}], "=", 
+     RowBox[{"g", " ", "x"}], ")"}]}], " = ", 
    RowBox[{"g", "(", 
     RowBox[{
      RowBox[{"(", 
@@ -7869,7 +7865,7 @@ Cell[BoxData[{
       RowBox[{
        SubscriptBox["\[CurlyPhi]", "i"], "(", 
        RowBox[{"g", " ", "x"}], ")"}], 
-      SubscriptBox["y", "i"]}]}]}], "=", 
+      SubscriptBox["y", "i"]}]}]}], " = ", 
    RowBox[{"g", "(", 
     RowBox[{
      UnderscriptBox["\[Sum]", "i"], 
@@ -7889,7 +7885,7 @@ Cell[BoxData[{
          RowBox[{"-", "1"}]], 
         SubscriptBox["\[CurlyPhi]", "i"]}], ")"}], 
       RowBox[{"(", "x", ")"}], 
-      SubscriptBox["y", "i"]}]}]}], "=", 
+      SubscriptBox["y", "i"]}]}]}], " = ", 
    RowBox[{
     UnderscriptBox["\[Sum]", "i"], 
     RowBox[{
@@ -7909,7 +7905,7 @@ Cell[BoxData[{
         RowBox[{
          SubscriptBox["\[CurlyPhi]", "i"], "\[CircleTimes]", 
          SubscriptBox["y", "i"]}]}]}], ")"}]}], 
-    RowBox[{"(", "x", ")"}]}], "=", 
+    RowBox[{"(", "x", ")"}]}], " = ", 
    RowBox[{
     RowBox[{"(", 
      RowBox[{
@@ -7948,7 +7944,7 @@ Cell[TextData[{
       UnderscriptBox["\[Sum]", "i"], 
       RowBox[{
        SubscriptBox["\[CurlyPhi]", "i"], "\[CircleTimes]", 
-       SubscriptBox["y", "i"]}]}]}], "=", 
+       SubscriptBox["y", "i"]}]}]}], " = ", 
     RowBox[{
      UnderscriptBox["\[Sum]", "i"], 
      RowBox[{
@@ -8036,7 +8032,7 @@ Cell[TextData[{
  ". Moreover, if ",
  Cell[BoxData[
   FormBox[
-   RowBox[{"d", "=", "3"}], TraditionalForm]],
+   RowBox[{"d", " = ", "3"}], TraditionalForm]],
   FormatType->TraditionalForm,ExpressionUUID->
   "4b867b24-e2f1-2547-a93e-8bb523bde910"],
  " and ",
@@ -8050,7 +8046,7 @@ Cell[TextData[{
        SubscriptBox["H", "\[Mu]"], ",", 
        RowBox[{
         SuperscriptBox["\[CapitalLambda]", "d"], "(", 
-        SubscriptBox["H", "\[Lambda]"], ")"}]}], ")"}]}], "=", "1"}], 
+        SubscriptBox["H", "\[Lambda]"], ")"}]}], ")"}]}], " = ", "1"}], 
    TraditionalForm]],ExpressionUUID->"0bb6c5ba-af54-ba4e-ba6f-d6949ac4007b"],
  ", then ",
  Cell[BoxData[
@@ -8129,7 +8125,7 @@ Cell[TextData[{
  ". Moreover, if ",
  Cell[BoxData[
   FormBox[
-   RowBox[{"d", "=", "3"}], TraditionalForm]],
+   RowBox[{"d", " = ", "3"}], TraditionalForm]],
   FormatType->TraditionalForm,ExpressionUUID->
   "47020887-5e8f-9644-91ac-7f4036cfcbfb"],
  " and ",
@@ -8143,7 +8139,7 @@ Cell[TextData[{
        SubscriptBox["H", "\[Mu]"], ",", 
        RowBox[{
         SuperscriptBox["\[ScriptCapitalS]", "d"], "(", 
-        SubscriptBox["H", "\[Lambda]"], ")"}]}], ")"}]}], "=", "1"}], 
+        SubscriptBox["H", "\[Lambda]"], ")"}]}], ")"}]}], " = ", "1"}], 
    TraditionalForm]],ExpressionUUID->"ab4861ef-2d74-804e-bb10-79a9b7fb35d6"],
  ", then ",
  Cell[BoxData[
@@ -8187,7 +8183,7 @@ Cell[CellGroupData[{
 
 Cell[BoxData[{
  RowBox[{
-  RowBox[{"data", "=", 
+  RowBox[{"data", " = ", 
    RowBox[{"Table", "[", 
     RowBox[{
      RowBox[{"IsotypicMultiplicityExteriorPower", "[", 
@@ -8270,7 +8266,7 @@ Cell[BoxData[
    3.970762915993266*^9, {3.9708449215801153`*^9, 3.970844940925861*^9}, 
    3.970926260319208*^9, 3.9741994312498436`*^9},
  CellLabel->
-  "Out[103]=",ExpressionUUID->"bac0d3ab-7cda-4348-b2cc-7efbb08e19ce"]
+  "Out[103] = ",ExpressionUUID->"bac0d3ab-7cda-4348-b2cc-7efbb08e19ce"]
 }, Open  ]]
 }, Open  ]],
 
@@ -8401,7 +8397,7 @@ Cell[BoxData[
         SubscriptBox["v", "1"], "\[CircleTimes]", "\[Ellipsis]", 
         "\[CircleTimes]", 
         SubscriptBox["v", "d"]}]},
-     "BraKet"], "=", 
+     "BraKet"], " = ", 
     RowBox[{
      FractionBox[
       SuperscriptBox[
@@ -8543,19 +8539,19 @@ Cell[BoxData[{
     RowBox[{"SpinListToSpinTree", "[", 
      RowBox[{"{", 
       RowBox[{
-       RowBox[{"SpinListToSpinTree", "/@", "\[Lambda]s"}], ",", "\[Gamma]s"}],
+       RowBox[{"SpinListToSpinTree", " /@ ", "\[Lambda]s"}], ",", "\[Gamma]s"}],
        "}"}], "]"}], ",", "\[IndentingNewLine]", 
     RowBox[{"Fold", "[", 
      RowBox[{
       RowBox[{
        RowBox[{"Tree", "[", 
         RowBox[{
-         RowBox[{"Last", "@", "#2"}], ",", 
+         RowBox[{"Last", " @ ", "#2"}], ",", 
          RowBox[{"{", 
           RowBox[{"#1", ",", 
-           RowBox[{"First", "@", "#2"}]}], "}"}]}], "]"}], "&"}], ",", 
+           RowBox[{"First", " @ ", "#2"}]}], "}"}]}], "]"}], "&"}], ",", 
       RowBox[{"First", "[", "\[Lambda]s", "]"}], ",", 
-      RowBox[{"Rest", "@", 
+      RowBox[{"Rest", " @ ", 
        RowBox[{"Transpose", "[", 
         RowBox[{"{", 
          RowBox[{"\[Lambda]s", ",", "\[Gamma]s"}], "}"}], "]"}]}]}], "]"}]}], 
@@ -8565,8 +8561,8 @@ Cell[BoxData[{
   RowBox[{"With", "[", 
    RowBox[{
     RowBox[{"{", 
-     RowBox[{"\[Lambda]", "=", 
-      RowBox[{"First", "@", "\[Gamma]s"}]}], "}"}], ",", 
+     RowBox[{"\[Lambda]", " = ", 
+      RowBox[{"First", " @ ", "\[Gamma]s"}]}], "}"}], ",", 
     RowBox[{"If", "[", 
      RowBox[{
       RowBox[{
@@ -8595,7 +8591,7 @@ Cell[BoxData[
    RowBox[{"assoc", ",", 
     RowBox[{"Outer", "[", 
      RowBox[{
-      RowBox[{"SpinListToSpinTree", "@*", "List"}], ",", 
+      RowBox[{"SpinListToSpinTree", " @ *", "List"}], ",", 
       RowBox[{"Tuples", "[", 
        RowBox[{"assoc", "[", 
         RowBox[{"[", "\"\<leafPaths\>\"", "]"}], "]"}], "]"}], ",", 
@@ -8647,15 +8643,15 @@ Cell[BoxData[
         RowBox[{"{", "}"}], "]"}]}], "]"}], ";", "\n", "  ", "\n", "  ", 
      RowBox[{
       RowBox[{"{", 
-       RowBox[{"q", ",", "r", ",", "p"}], "}"}], "=", 
+       RowBox[{"q", ",", "r", ",", "p"}], "}"}], " = ", 
       RowBox[{"QRDecomposition", "[", 
        RowBox[{"matrix", ",", 
         RowBox[{"Pivoting", "->", "True"}]}], "]"}]}], ";", "\n", "  ", "\n", 
      "  ", 
-     RowBox[{"r", "=", 
-      RowBox[{"Abs", "@", 
-       RowBox[{"Diagonal", "@", "r"}]}]}], ";", "\n", "  ", 
-     RowBox[{"p", "=", 
+     RowBox[{"r", " = ", 
+      RowBox[{"Abs", " @ ", 
+       RowBox[{"Diagonal", " @ ", "r"}]}]}], ";", "\n", "  ", 
+     RowBox[{"p", " = ", 
       RowBox[{
        RowBox[{"PermutationMatrix", "[", "p", "]"}], 
        "[", "\"\<PermutationList\>\"", "]"}]}], ";", "\n", "  ", "\n", "  ", 
@@ -8668,7 +8664,7 @@ Cell[BoxData[
            RowBox[{
             RowBox[{"10", "^", 
              RowBox[{"-", "10"}]}], "*", 
-            RowBox[{"Max", "@", "r"}]}]}]}]}], "]"}]}], "]"}]}]}], "\n", " ", 
+            RowBox[{"Max", " @ ", "r"}]}]}]}]}], "]"}]}], "]"}]}]}], "\n", " ", 
    "]"}]}]], "Input",ExpressionUUID->"cb2cc4e8-6cf7-1848-82e7-aec6ee1002db"],
 
 Cell[CellGroupData[{
@@ -8687,7 +8683,7 @@ Cell[BoxData[
   RowBox[{
    RowBox[{
     RowBox[{"SchurSS", "::", "usage"}], 
-    "=", "\"\<gives the Schur polynomial corresponding to the integer \
+    " = ", "\"\<gives the Schur polynomial corresponding to the integer \
 partition p in the variables vars.\>\""}], "\n", 
    RowBox[{
     RowBox[{"SchurSS", "[", 
@@ -8703,13 +8699,13 @@ partition p in the variables vars.\>\""}], "\n",
      RowBox[{
       RowBox[{"{", 
        RowBox[{
-        RowBox[{"n", "=", 
-         RowBox[{"Length", "@", "vars"}]}], ",", 
-        RowBox[{"id", "=", 
-         RowBox[{"Range", "@", 
-          RowBox[{"Length", "@", "p"}]}]}]}], "}"}], ",", "\n", "  ", 
+        RowBox[{"n", " = ", 
+         RowBox[{"Length", " @ ", "vars"}]}], ",", 
+        RowBox[{"id", " = ", 
+         RowBox[{"Range", " @ ", 
+          RowBox[{"Length", " @ ", "p"}]}]}]}], "}"}], ",", "\n", "  ", 
       RowBox[{"{", 
-       RowBox[{"elist", "=", 
+       RowBox[{"elist", " = ", 
         RowBox[{"Table", "[", 
          RowBox[{
           RowBox[{"SymmetricPolynomial", "[", 
@@ -8721,23 +8717,23 @@ partition p in the variables vars.\>\""}], "\n",
        RowBox[{"If", "[", 
         RowBox[{
          RowBox[{
-          RowBox[{"First", "@", "p"}], ">", "n"}], ",", 
-         RowBox[{"Return", "@", "0"}]}], "]"}], ";", "\n", "  ", "\n", "  ", 
+          RowBox[{"First", " @ ", "p"}], ">", "n"}], ",", 
+         RowBox[{"Return", " @ ", "0"}]}], "]"}], ";", "\n", "  ", "\n", "  ", 
        RowBox[{"(*", 
         RowBox[{"Det", " ", "is", " ", "the", " ", 
          RowBox[{"bottleneck", ".", " ", "Symbolic"}], " ", "determinant", " ",
           "of", " ", "a", " ", "matrix", " ", "with", " ", "polynomial", " ", 
          "entries"}], "*)"}], "\n", "  ", 
        RowBox[{
-        RowBox[{"Det", "@", 
+        RowBox[{"Det", " @ ", 
          RowBox[{"Outer", "[", "\n", "   ", 
           RowBox[{
            RowBox[{
             RowBox[{"With", "[", 
              RowBox[{
               RowBox[{"{", 
-               RowBox[{"r", "=", 
-                RowBox[{"Plus", "@", "##"}]}], "}"}], ",", 
+               RowBox[{"r", " = ", 
+                RowBox[{"Plus", " @ ", "##"}]}], "}"}], ",", 
               RowBox[{"Which", "[", 
                RowBox[{
                 RowBox[{"r", "==", "0"}], ",", "1", ",", 
@@ -8758,28 +8754,28 @@ Cell[BoxData["\<\"gives the Schur polynomial corresponding to the integer \
 partition p in the variables vars.\"\>"], "Output",
  CellChangeTimes->{3.9814790713399563`*^9, 3.9814791648242607`*^9, 
   3.981479507093479*^9},
- CellLabel->"Out[29]=",ExpressionUUID->"6e2a31eb-e2e0-3d45-8dec-17ae82c98ee9"]
+ CellLabel->"Out[29] = ",ExpressionUUID->"6e2a31eb-e2e0-3d45-8dec-17ae82c98ee9"]
 }, Open  ]],
 
 Cell[CellGroupData[{
 
 Cell[BoxData[{
  RowBox[{
-  RowBox[{"\[Lambda]", "=", "2"}], ";"}], "\[IndentingNewLine]", 
+  RowBox[{"\[Lambda]", " = ", "2"}], ";"}], "\[IndentingNewLine]", 
  RowBox[{
-  RowBox[{"p", "=", 
+  RowBox[{"p", " = ", 
    RowBox[{"{", 
     RowBox[{"2", ",", "2", ",", "1"}], "}"}]}], ";"}], "\[IndentingNewLine]", 
  RowBox[{
   RowBox[{
-   RowBox[{"s1", "=", 
+   RowBox[{"s1", " = ", 
     RowBox[{"SchurS", "[", 
      RowBox[{
-      RowBox[{"ConjugatePartition", "@", "p"}], ",", "q", ",", "\[Lambda]"}], 
+      RowBox[{"ConjugatePartition", " @ ", "p"}], ",", "q", ",", "\[Lambda]"}], 
      "]"}]}], ";"}], "//", "RepeatedTiming"}], "\[IndentingNewLine]", 
  RowBox[{
   RowBox[{
-   RowBox[{"s2", "=", 
+   RowBox[{"s2", " = ", 
     RowBox[{"SchurSS", "[", 
      RowBox[{"p", ",", 
       SuperscriptBox["q", 
@@ -8825,7 +8821,7 @@ Cell[BoxData[
    3.9814795095123997`*^9}, {3.981479551596836*^9, 3.9814795606206245`*^9}, {
    3.981479722428339*^9, 3.9814797475267105`*^9}, 3.981480039285589*^9, 
    3.981480086299608*^9},
- CellLabel->"Out[87]=",ExpressionUUID->"83e3904e-9360-3f4b-9a04-0703f3600834"],
+ CellLabel->"Out[87] = ",ExpressionUUID->"83e3904e-9360-3f4b-9a04-0703f3600834"],
 
 Cell[BoxData[
  RowBox[{"{", 
@@ -8837,7 +8833,7 @@ Cell[BoxData[
    3.9814795095123997`*^9}, {3.981479551596836*^9, 3.9814795606206245`*^9}, {
    3.981479722428339*^9, 3.9814797475267105`*^9}, 3.981480039285589*^9, 
    3.981480087966938*^9},
- CellLabel->"Out[88]=",ExpressionUUID->"8bb72bbe-31ae-294f-8962-09960523ccd1"],
+ CellLabel->"Out[88] = ",ExpressionUUID->"8bb72bbe-31ae-294f-8962-09960523ccd1"],
 
 Cell[BoxData[
  RowBox[{"{", 
@@ -8849,7 +8845,7 @@ Cell[BoxData[
    3.9814795095123997`*^9}, {3.981479551596836*^9, 3.9814795606206245`*^9}, {
    3.981479722428339*^9, 3.9814797475267105`*^9}, 3.981480039285589*^9, 
    3.981480089123455*^9},
- CellLabel->"Out[89]=",ExpressionUUID->"c341beab-2c66-7342-a572-2b540fbc6f5f"],
+ CellLabel->"Out[89] = ",ExpressionUUID->"c341beab-2c66-7342-a572-2b540fbc6f5f"],
 
 Cell[BoxData[
  RowBox[{"{", 
@@ -8861,7 +8857,7 @@ Cell[BoxData[
    3.9814795095123997`*^9}, {3.981479551596836*^9, 3.9814795606206245`*^9}, {
    3.981479722428339*^9, 3.9814797475267105`*^9}, 3.981480039285589*^9, 
    3.9814800903559093`*^9},
- CellLabel->"Out[90]=",ExpressionUUID->"2643b158-15ea-ba44-bad4-4a3a2e13bbef"],
+ CellLabel->"Out[90] = ",ExpressionUUID->"2643b158-15ea-ba44-bad4-4a3a2e13bbef"],
 
 Cell[BoxData[
  RowBox[{"{", 
@@ -8873,7 +8869,7 @@ Cell[BoxData[
    3.9814795095123997`*^9}, {3.981479551596836*^9, 3.9814795606206245`*^9}, {
    3.981479722428339*^9, 3.9814797475267105`*^9}, 3.981480039285589*^9, 
    3.9814800921316223`*^9},
- CellLabel->"Out[91]=",ExpressionUUID->"5029a653-cf56-bc44-8630-8e3e3db37e43"],
+ CellLabel->"Out[91] = ",ExpressionUUID->"5029a653-cf56-bc44-8630-8e3e3db37e43"],
 
 Cell[BoxData[
  RowBox[{"{", 
@@ -8885,7 +8881,7 @@ Cell[BoxData[
    3.9814795095123997`*^9}, {3.981479551596836*^9, 3.9814795606206245`*^9}, {
    3.981479722428339*^9, 3.9814797475267105`*^9}, 3.981480039285589*^9, 
    3.981480093598179*^9},
- CellLabel->"Out[92]=",ExpressionUUID->"8f7c4d94-8d2c-f645-93ce-084f8818070b"],
+ CellLabel->"Out[92] = ",ExpressionUUID->"8f7c4d94-8d2c-f645-93ce-084f8818070b"],
 
 Cell[BoxData["0"], "Output",
  CellChangeTimes->{{3.9814762088465176`*^9, 3.9814763055012302`*^9}, 
@@ -8895,7 +8891,7 @@ Cell[BoxData["0"], "Output",
    3.9814795095123997`*^9}, {3.981479551596836*^9, 3.9814795606206245`*^9}, {
    3.981479722428339*^9, 3.9814797475267105`*^9}, 3.981480039285589*^9, 
    3.981480093598179*^9},
- CellLabel->"Out[93]=",ExpressionUUID->"0c6a6b77-188a-c54a-993f-7ae7721e18e5"]
+ CellLabel->"Out[93] = ",ExpressionUUID->"0c6a6b77-188a-c54a-993f-7ae7721e18e5"]
 }, Open  ]]
 }, Open  ]]
 }, Open  ]]
