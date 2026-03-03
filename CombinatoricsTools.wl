@@ -29,11 +29,11 @@ With[
  {path=Prepend[pathIn, ConstantArray[0, numRows]]},
 
  Table[
-  Join@@Table[
-   ConstantArray[If[e-1==0, None, e-1], path[[e+1, r]]-path[[e, r]]],
-   {e, m}
-  ],
-  {r, numRows}
+ Join@@Table[
+ ConstantArray[If[e-1==0, None, e-1], path[[e+1, r]]-path[[e, r]]],
+ {e, m}
+ ],
+ {r, numRows}
  ]
 ];
 
@@ -194,44 +194,44 @@ SemiStandardYoungTableaux[
 ] :=
 With[
  {
-  mu=ConstantArray[0, First@p],
-  mid=IntegerPartitions[#, {First@p}, Range[0, Length@p]]&/@Most@Accumulate@w,
-  cp=ConjugatePartition@p
+ mu=ConstantArray[0, First@p],
+ mid=IntegerPartitions[#, {First@p}, Range[0, Length@p]]&/@Most@Accumulate@w,
+ cp=ConjugatePartition@p
  },
  {
-  partitionLevels=Join[{{mu}}, mid, {{cp}}]
+ partitionLevels=Join[{{mu}}, mid, {{cp}}]
  },
  {
-  g=
-   Graph[
-    Join@@Table[
-     Join@@Outer[
-      If[Min[#2-#1]>=0 && Min[#1[[;;-2]]-#2[[2;;]]]>=0,
-       DirectedEdge[{#1, lvl-1}, {#2, lvl}],
-       Nothing
-      ]&,
-      partitionLevels[[lvl-1]],
-      partitionLevels[[lvl]],
-      1
-     ],
-     {lvl, 2, Length[partitionLevels]}
-    ]
-   ]
+ g=
+ Graph[
+ Join@@Table[
+ Join@@Outer[
+ If[Min[#2-#1]>=0 && Min[#1[[;;-2]]-#2[[2;;]]]>=0,
+ DirectedEdge[{#1, lvl-1}, {#2, lvl}],
+ Nothing
+ ]&,
+ partitionLevels[[lvl-1]],
+ partitionLevels[[lvl]],
+ 1
+ ],
+ {lvl, 2, Length[partitionLevels]}
+ ]
+ ]
  },
  {
-  ssytPaths=If[
-   Or[
-    !MemberQ[VertexList[g], {mu, 1}],
-    !MemberQ[VertexList[g], {cp, Length[w]+1}]
-   ],
-   {},
-   FindPath[g, {mu, 1}, {cp, Length[w]+1}, Infinity, All]
-  ]
+ ssytPaths=If[
+ Or[
+ !MemberQ[VertexList[g], {mu, 1}],
+ !MemberQ[VertexList[g], {cp, Length[w]+1}]
+ ],
+ {},
+ FindPath[g, {mu, 1}, {cp, Length[w]+1}, Infinity, All]
+ ]
  },
 
  N@Map[
-  Through[{Keys, Values}[Sort@Counts@#]]&/@pathToSSYT[First/@#]&,
-  ssytPaths
+ Through[{Keys, Values}[Sort@Counts@#]]&/@pathToSSYT[First/@#]&,
+ ssytPaths
  ]
 ];
 

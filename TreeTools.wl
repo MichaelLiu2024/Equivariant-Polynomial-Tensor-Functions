@@ -23,12 +23,12 @@ AncestralNestTree[
 TreeReplacePart[
  tree,
  Function[
-  pos,
-  pos :> Tree[
-    TreeExtract[tree, pos, TreeData],
-    Tree[#, None] & /@ f[TreeExtract[tree, Take[pos, #] & /@ Range[0, Length @ pos], TreeData]]
-   ]
-  ] /@ TreePosition[tree, _, "Leaves"]
+ pos,
+ pos :> Tree[
+ TreeExtract[tree, pos, TreeData],
+ Tree[#, None] & /@ f[TreeExtract[tree, Take[pos, #] & /@ Range[0, Length @ pos], TreeData]]
+ ]
+ ] /@ TreePosition[tree, _, "Leaves"]
  ]
 
 

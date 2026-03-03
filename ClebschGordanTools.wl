@@ -32,14 +32,14 @@ ClebschGordanTensor[
 ] :=
 ClebschGordanTensor[\[Lambda]1, \[Lambda]2, \[Lambda]3] =
  Developer`ToPackedArray @ Normal @ SparseArray[
-   Join @@ Table[
-     {1 + \[Lambda]1 + m1, 1 + \[Lambda]2 + m2, 1 + \[Lambda]3 + m1 + m2} -> N @ ClebschGordan[{\[Lambda]1, m1}, {\[Lambda]2, m2}, {\[Lambda]3, m1 + m2}],
-     {m1, -\[Lambda]1, \[Lambda]1},
-     {m2, Max[-\[Lambda]2, -\[Lambda]3 - m1], Min[\[Lambda]2, \[Lambda]3 - m1]}
-    ],
-   {2 \[Lambda]1 + 1, 2 \[Lambda]2 + 1, 2 \[Lambda]3 + 1},
-   0.
-  ]
+ Join @@ Table[
+ {1 + \[Lambda]1 + m1, 1 + \[Lambda]2 + m2, 1 + \[Lambda]3 + m1 + m2} -> N @ ClebschGordan[{\[Lambda]1, m1}, {\[Lambda]2, m2}, {\[Lambda]3, m1 + m2}],
+ {m1, -\[Lambda]1, \[Lambda]1},
+ {m2, Max[-\[Lambda]2, -\[Lambda]3 - m1], Min[\[Lambda]2, \[Lambda]3 - m1]}
+ ],
+ {2 \[Lambda]1 + 1, 2 \[Lambda]2 + 1, 2 \[Lambda]3 + 1},
+ 0.
+ ]
 
 
 ValidPathQ[
@@ -78,8 +78,8 @@ PathBasisTensorProduct[
 ] :=
 SortBy[
  Map[
-  Function[indices, FoldList[indicesToPaths, First[\[Lambda]s], Transpose[{Rest[\[Lambda]s], indices}]]],
-  Position[Fold[IsotypicComponentsTensorProduct, \[Lambda]s], \[Mu]]
+ Function[indices, FoldList[indicesToPaths, First[\[Lambda]s], Transpose[{Rest[\[Lambda]s], indices}]]],
+ Position[Fold[IsotypicComponentsTensorProduct, \[Lambda]s], \[Mu]]
  ],
  FreeQ[Most @ #, 0] &
 ]
@@ -133,10 +133,10 @@ TensorTrainBasisSymmetricPower[
 ]  /;  d >= 4 :=
 Module[
  {
-  interiorPaths,
-  interiorTensorTrains,
-  interiorRandomProbes,
-  syndromeMatrix
+ interiorPaths,
+ interiorTensorTrains,
+ interiorRandomProbes,
+ syndromeMatrix
  },
  interiorPaths = Select[PathBasisTensorProduct[ConstantArray[\[Lambda], d], \[Mu]], EvenQ @ #[[2]] &];
  interiorTensorTrains = ClebschGordanTensorTrain[ConstantArray[\[Lambda], d]] /@ interiorPaths;
@@ -155,46 +155,46 @@ TensorTreeBasisSchurPower[
 With[
  {d = Total @ p},
  Switch[
-  Length @ p,
-  0, <|"interiorTensorTrains" -> {{1}}, "leafObjects" -> {{1}}|>,
-  1, <|"interiorTensorTrains" -> ({1} & /@ #), "leafObjects" -> List /@ #|> & @ TensorTrainBasisExteriorPower[\[Lambda], d, \[Mu]],
-  d, <|"interiorTensorTrains" -> #, "leafObjects" -> (ConstantArray[{1}, d] & /@ #)|> & @ TensorTrainBasisSymmetricPower[\[Lambda], d, \[Mu]],
-  _,
-  Module[
-   {
-    interiorSpins,
-    interiorTensorTrains,
-    leafTensorTrains,
-    leafRandomProbes,
-    interiorRandomProbes,
-    syndromeMatrix,
-    linearIndices,
-    interiorDimensions,
-    leafDimensions,
-    totalDimensions,
-    tempDimensions,
-    interiorSpinsIndices,
-    tensorTrainIndices
-   },
-   interiorSpins = SortBy[ConstrainedIsotypicComponentsExteriorPowers[\[Lambda], p, \[Mu]], FreeQ[#, 0] &];
-   interiorTensorTrains = TensorTrainBasisTensorProduct[#, \[Mu]] & /@ interiorSpins;
-   leafTensorTrains = TensorTrainBasisExteriorPower[\[Lambda], p, #] & /@ interiorSpins;
-   interiorDimensions = Length /@ interiorTensorTrains;
-   leafDimensions = Map[Length, leafTensorTrains, {2}];
-   totalDimensions = MapThread[Prepend, {leafDimensions, interiorDimensions}];
-   tempDimensions = interiorDimensions * MapApply[Times, leafDimensions];
-   leafRandomProbes = RandomReal[1, {Ceiling[1.1 * Total[tempDimensions] / (2 \[Mu] + 1)], First @ p, 2 \[Lambda] + 1}];
-   interiorRandomProbes = Outer[EvaluateAntisymmetrizedTensorTrain, leafTensorTrains, leafRandomProbes, 3, 1];
-   interiorRandomProbes = Transpose[interiorRandomProbes, {1, 3, 4, 2}];
-   syndromeMatrix = MapThread[Function[{interiorTensorTrain, interiorRandomProbe}, Outer[EvaluateTensorTrain, interiorTensorTrain, Tuples /@ interiorRandomProbe, 1, 2]], {interiorTensorTrains, interiorRandomProbes}];
-   syndromeMatrix = Flatten[syndromeMatrix, {{3, 5}, {1, 2, 4}}];
-   linearIndices = PivotColumns @ syndromeMatrix;
-   {interiorSpinsIndices, tensorTrainIndices} = Transpose @ MapApply[{#1, ArrayMultiIndex[#2, totalDimensions[[#1]]]} &, RaggedMultiIndex[linearIndices, tempDimensions]];
-   <|
-    "interiorTensorTrains" -> MapThread[interiorTensorTrains[[#1, First @ #2]] &, {interiorSpinsIndices, tensorTrainIndices}],
-    "leafObjects" -> MapThread[MapThread[Part, {leafTensorTrains[[#1]], Rest @ #2}] &, {interiorSpinsIndices, tensorTrainIndices}]
-   |>
-  ]
+ Length @ p,
+ 0, <|"interiorTensorTrains" -> {{1}}, "leafObjects" -> {{1}}|>,
+ 1, <|"interiorTensorTrains" -> ({1} & /@ #), "leafObjects" -> List /@ #|> & @ TensorTrainBasisExteriorPower[\[Lambda], d, \[Mu]],
+ d, <|"interiorTensorTrains" -> #, "leafObjects" -> (ConstantArray[{1}, d] & /@ #)|> & @ TensorTrainBasisSymmetricPower[\[Lambda], d, \[Mu]],
+ _,
+ Module[
+ {
+ interiorSpins,
+ interiorTensorTrains,
+ leafTensorTrains,
+ leafRandomProbes,
+ interiorRandomProbes,
+ syndromeMatrix,
+ linearIndices,
+ interiorDimensions,
+ leafDimensions,
+ totalDimensions,
+ tempDimensions,
+ interiorSpinsIndices,
+ tensorTrainIndices
+ },
+ interiorSpins = SortBy[ConstrainedIsotypicComponentsExteriorPowers[\[Lambda], p, \[Mu]], FreeQ[#, 0] &];
+ interiorTensorTrains = TensorTrainBasisTensorProduct[#, \[Mu]] & /@ interiorSpins;
+ leafTensorTrains = TensorTrainBasisExteriorPower[\[Lambda], p, #] & /@ interiorSpins;
+ interiorDimensions = Length /@ interiorTensorTrains;
+ leafDimensions = Map[Length, leafTensorTrains, {2}];
+ totalDimensions = MapThread[Prepend, {leafDimensions, interiorDimensions}];
+ tempDimensions = interiorDimensions * MapApply[Times, leafDimensions];
+ leafRandomProbes = RandomReal[1, {Ceiling[1.1 * Total[tempDimensions] / (2 \[Mu] + 1)], First @ p, 2 \[Lambda] + 1}];
+ interiorRandomProbes = Outer[EvaluateAntisymmetrizedTensorTrain, leafTensorTrains, leafRandomProbes, 3, 1];
+ interiorRandomProbes = Transpose[interiorRandomProbes, {1, 3, 4, 2}];
+ syndromeMatrix = MapThread[Function[{interiorTensorTrain, interiorRandomProbe}, Outer[EvaluateTensorTrain, interiorTensorTrain, Tuples /@ interiorRandomProbe, 1, 2]], {interiorTensorTrains, interiorRandomProbes}];
+ syndromeMatrix = Flatten[syndromeMatrix, {{3, 5}, {1, 2, 4}}];
+ linearIndices = PivotColumns @ syndromeMatrix;
+ {interiorSpinsIndices, tensorTrainIndices} = Transpose @ MapApply[{#1, ArrayMultiIndex[#2, totalDimensions[[#1]]]} &, RaggedMultiIndex[linearIndices, tempDimensions]];
+ <|
+ "interiorTensorTrains" -> MapThread[interiorTensorTrains[[#1, First @ #2]] &, {interiorSpinsIndices, tensorTrainIndices}],
+ "leafObjects" -> MapThread[MapThread[Part, {leafTensorTrains[[#1]], Rest @ #2}] &, {interiorSpinsIndices, tensorTrainIndices}]
+ |>
+ ]
  ]
 ]
 
