@@ -21,8 +21,7 @@ SolidHarmonicR[
  y_,
  z_
 ]  /;  Abs[m] <= l :=
-
- N@With[
+N@With[
   {dpower=If[#2==0,1,#1^#2]&,s=Sign[m],am=Abs[m]},
   
   (-1)^((1-s)am/2)Sqrt[(l-am)!/(l+am)!]dpower[x+I s y,am]*
@@ -38,8 +37,6 @@ HarmonicTensorCoordinates[
  \[Lambda]_?PositiveIntegerQ,
  m_Integer
 ] :=
-
-
 HarmonicTensorCoordinates[\[Lambda], m] =
  Total@ReplaceAll[
   CoefficientRules[SolidHarmonicR[\[Lambda],m,x,y,z],{x,y,z}],
@@ -50,7 +47,6 @@ HarmonicTensorCoordinates[\[Lambda], m] =
 SphericalBasisToMonomialBasis[
  sphericalPolynomials_
 ] :=
-
  ReplaceAll[
   sphericalPolynomials,
   Global`x[\[Lambda]_][multiplicity_][m_]:>(HarmonicTensorCoordinates[\[Lambda],m]/.x[indices__]:>Global`x[\[Lambda]][multiplicity][indices])
@@ -60,8 +56,6 @@ SphericalBasisToMonomialBasis[
 IndependentSymmetricIndices[
  \[Lambda]_?NonNegativeIntegerQ
 ] :=
-
-
 Join @@ MapThread[ConstantArray, {Range[3], #}] & /@ WeakCompositions[\[Lambda], 3]
 
 
@@ -69,7 +63,6 @@ SymmetricTensor[
  \[Lambda]_?NonNegativeIntegerQ,
  multiplicity_?NonNegativeIntegerQ
 ] :=
-
  SymmetrizedArray[
   #->Global`x[\[Lambda]][multiplicity][Sequence@@#]&/@IndependentSymmetricIndices[\[Lambda]],
   ConstantArray[3,\[Lambda]],
@@ -82,8 +75,6 @@ generateVariables[
  \[Lambda]_?PositiveIntegerQ,
  m\[Lambda]_?PositiveIntegerQ
 ] :=
-
-
 {Table[Global`x[\[Lambda]][multiplicity][m], {multiplicity, 1, m\[Lambda]}, {m, -\[Lambda], \[Lambda]}]}
 
 
@@ -93,8 +84,7 @@ generateVariables[
 
 UnitTest[
  ] :=
-
- Module[
+Module[
   {
    \[Lambda]s={1,2},m\[Lambda]s={2,2},DMax=4,
    alg,polys,

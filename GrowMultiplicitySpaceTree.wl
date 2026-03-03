@@ -30,9 +30,7 @@ RowKroneckerProduct[
 RowKroneckerProduct[
  m1_List?ArrayQ,
  m2_List?ArrayQ
-] /;
- Length@m1==Length@m2\[And]Depth@m1==4==Depth@m2 :=
-
+] /; Length@m1==Length@m2\[And]Depth@m1==4==Depth@m2 :=
   Flatten[
    MapThread[KroneckerProduct,{m1,m2}],
    {{1,3},{2}}
@@ -49,9 +47,7 @@ generateRandomProbes[
  \[Lambda]s_?DistinctPositiveIntegersQ,
  m\[Lambda]s_?PositiveIntegersQ,
  numProbes_Integer
-] /;
- Length@\[Lambda]s==Length@m\[Lambda]s :=
-
+] /; Length@\[Lambda]s==Length@m\[Lambda]s :=
   MapThread[
    Function[{\[Lambda],m\[Lambda]},RandomReal[1,{numProbes,m\[Lambda],2\[Lambda]+1}]],
    {\[Lambda]s,m\[Lambda]s}
@@ -61,8 +57,7 @@ generateRandomProbes[
 flattenLevels[
  n_?PositiveIntegerQ
 ] :=
-
- With[
+With[
   {maxLvl=5+2*n},
   {{1},{3},Complement[Range@maxLvl,{1,3,maxLvl}],{maxLvl}}
  ];
@@ -77,8 +72,7 @@ Total/@Map[Times@@#[["dimensions"]]&,VectorSpaceBasis,{2}]
 algebraDimensionBound[
  invariantBasis_List
 ] :=
-
- With[
+With[
   {invariantDims=dims[invariantBasis]},
   
   Ceiling[
@@ -98,7 +92,6 @@ moduleDimensionBound[
  invariantBasis_List,
  covariantBasis_List
 ] :=
-
  Ceiling[1.1*Max@ListConvolve[dims[invariantBasis],dims[covariantBasis],1,0]/(2\[Nu]+1)]
 
 
@@ -106,8 +99,7 @@ extract[
  linearIndices_List,
  basis_List
 ] :=
-
- Module[
+Module[
   {leafIndices,finalIndices,fullDimensions,leafDimensions},
   
   fullDimensions=Map[#[["dimensions"]]&,basis,{2}];(*degree; leaf; list of dimensions: interiorTensorTrains; SSYTs,tensorTrees for each \[Lambda]*)
@@ -162,8 +154,7 @@ TensorProductBasis[
   \[Mu]\[Lambda]s_
  }
 ] :=
-
- With[
+With[
   {
    interiorTensorTrains=TensorTrainBasisTensorProduct[\[Mu]\[Lambda]s,\[Nu]],
    leafObjects=MapThread[TensorTreeBasisSchurPower,{\[Lambda]s,\[Pi]\[Lambda]s,\[Mu]\[Lambda]s}],
@@ -184,8 +175,7 @@ EvaluateTensorProductBasis[
  basis_Association,
  inputVectors_List
 ] :=
-
- Module[
+Module[
   {
    interiorVectors,
    outputVectors
@@ -208,10 +198,8 @@ IsotypicDataTree[
  m\[Lambda]s_?PositiveIntegersQ,
  \[Nu]_?NonNegativeIntegerQ,
  DMax_?NonNegativeIntegerQ
-] /;
- Length@\[Lambda]s==Length@m\[Lambda]s :=
-
-  Module[
+] /; Length@\[Lambda]s==Length@m\[Lambda]s :=
+Module[
    {tree},
    
    tree=Tree[{\[Lambda]s,m\[Lambda]s,\[Nu]},Range[0,DMax]];(*D*)
@@ -234,9 +222,7 @@ VectorSpaceBasis[
  m\[Lambda]s_?PositiveIntegersQ,
  \[Nu]_?NonNegativeIntegerQ,
  DMax_?NonNegativeIntegerQ
-] /;
- Length@\[Lambda]s==Length@m\[Lambda]s :=
-
+] /; Length@\[Lambda]s==Length@m\[Lambda]s :=
   Lookup[
    Association[TreeData@#->TreeData/@TreeLeaves@#&/@TreeChildren@IsotypicDataTree[\[Lambda]s,m\[Lambda]s,\[Nu],DMax]],
    Range[0,DMax],
@@ -248,10 +234,8 @@ AlgebraBasis[
  \[Lambda]s_?DistinctPositiveIntegersQ,
  m\[Lambda]s_?PositiveIntegersQ,
  DMax_?NonNegativeIntegerQ
-] /;
- Length@\[Lambda]s==Length@m\[Lambda]s :=
-
-  Module[
+] /; Length@\[Lambda]s==Length@m\[Lambda]s :=
+Module[
    {
     VectorSpaceBasis=VectorSpaceBasis[\[Lambda]s,m\[Lambda]s,0,DMax],
     randomProbes,
@@ -299,10 +283,8 @@ ModuleBasis[
  m\[Lambda]s_?PositiveIntegersQ,
  \[Nu]_?PositiveIntegerQ,
  DMax_?NonNegativeIntegerQ
-] /;
- Length@\[Lambda]s==Length@m\[Lambda]s :=
-
-  Module[
+] /; Length@\[Lambda]s==Length@m\[Lambda]s :=
+Module[
    {
     InvariantVectorSpaceBasis=VectorSpaceBasis[\[Lambda]s,m\[Lambda]s,0,DMax],
     CovariantVectorSpaceBasis=VectorSpaceBasis[\[Lambda]s,m\[Lambda]s,\[Nu],DMax],
@@ -349,7 +331,6 @@ EvaluateBasis[
  VectorSpaceBasis_List,
  inputVectors_List
 ] :=
-
  Map[
   EvaluateTensorProductBasis[#,inputVectors]&,
   VectorSpaceBasis,

@@ -13,8 +13,6 @@ Begin["`Private`"];
 PruneChildlessNodes[
  tree_Tree
 ] :=
-
-
 TreeFold[If[#2 == {}, Nothing, Tree[##]] &, tree]
 
 
@@ -22,8 +20,6 @@ AncestralNestTree[
  f_,
  tree_Tree
 ] :=
-
-
 TreeReplacePart[
  tree,
  Function[
