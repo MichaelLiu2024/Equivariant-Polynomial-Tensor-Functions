@@ -21,8 +21,6 @@ indicesToPaths[
  \[Gamma]_?NonNegativeIntegerQ,
  {\[Lambda]_?NonNegativeIntegerQ, \[Alpha]_?NonNegativeIntegerQ}
 ] :=
-
-
 Abs[\[Gamma] - \[Lambda]] + \[Alpha] - 1
 
 
@@ -32,8 +30,6 @@ ClebschGordanTensor[
  \[Lambda]2_?NonNegativeIntegerQ,
  \[Lambda]3_?NonNegativeIntegerQ
 ] :=
-
-
 ClebschGordanTensor[\[Lambda]1, \[Lambda]2, \[Lambda]3] =
  Developer`ToPackedArray @ Normal @ SparseArray[
    Join @@ Table[
@@ -50,8 +46,6 @@ ValidPathQ[
  \[Lambda]s_?NonNegativeIntegersQ,
  \[Gamma]s_?NonNegativeIntegersQ
 ] :=
-
-
 Length @ \[Lambda]s == Length @ \[Gamma]s \[And]
 First @ \[Lambda]s == First @ \[Gamma]s \[And]
 If[Length @ \[Lambda]s >= 2, Abs[ListConvolve[{1, -1}, \[Gamma]s]] \[VectorLessEqual] Rest[\[Lambda]s] \[VectorLessEqual] ListConvolve[{1, 1}, \[Gamma]s], True]
@@ -63,8 +57,6 @@ ClebschGordanTensorTrain[
 ][
  \[Gamma]s_?NonNegativeIntegersQ
 ] :=
-
-
 ClebschGordanTensorTrain[\[Lambda]s, \[Gamma]s]
 
 
@@ -72,8 +64,6 @@ ClebschGordanTensorTrain[
  \[Lambda]s_?NonNegativeIntegersQ,
  \[Gamma]s_?NonNegativeIntegersQ
 ]  /;  ValidPathQ[\[Lambda]s, \[Gamma]s] :=
-
-
 If[
  Length @ \[Lambda]s == 1,
  {1},
@@ -86,8 +76,6 @@ PathBasisTensorProduct[
  \[Lambda]s_?NonNegativeIntegersQ,
  \[Mu]_?NonNegativeIntegerQ
 ] :=
-
-
 SortBy[
  Map[
   Function[indices, FoldList[indicesToPaths, First[\[Lambda]s], Transpose[{Rest[\[Lambda]s], indices}]]],
@@ -105,8 +93,6 @@ TensorTrainBasisTensorProduct[
  \[Lambda]s_?NonNegativeIntegersQ,
  \[Mu]_?NonNegativeIntegerQ
 ] :=
-
-
 ClebschGordanTensorTrain[\[Lambda]s] /@ PathBasisTensorProduct[\[Lambda]s, \[Mu]]
 
 
@@ -117,8 +103,6 @@ TensorTrainBasisExteriorPower[
  d_?NonNegativeIntegerQ,
  \[Mu]_?NonNegativeIntegerQ
 ]  /;  d <= 3 :=
-
-
 Switch[
  d,
  1, {{1}},
@@ -134,8 +118,6 @@ TensorTrainBasisSymmetricPower[
  d_?NonNegativeIntegerQ,
  \[Mu]_?NonNegativeIntegerQ
 ]  /;  d <= 3 :=
-
-
 Switch[
  d,
  1, {{1}},
@@ -149,8 +131,6 @@ TensorTrainBasisSymmetricPower[
  d_?NonNegativeIntegerQ,
  \[Mu]_?NonNegativeIntegerQ
 ]  /;  d >= 4 :=
-
-
 Module[
  {
   interiorPaths,
@@ -172,8 +152,6 @@ TensorTreeBasisSchurPower[
  p_?IntegerPartitionQ,
  \[Mu]_?NonNegativeIntegerQ
 ] :=
-
-
 With[
  {d = Total @ p},
  Switch[

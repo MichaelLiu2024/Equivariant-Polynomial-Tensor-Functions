@@ -23,8 +23,6 @@ IsotypicComponentTensorProductQ[
  \[Lambda]s_?NonNegativeIntegersQ,
  \[Mu]_?NonNegativeIntegerQ
 ] :=
-
-
 With[
  {m = Max[\[Lambda]s], s = Total[\[Lambda]s]},
  Max[0, 2 m - s] <= \[Mu] <= s
@@ -37,8 +35,6 @@ IsotypicMultiplicityExteriorPower[
  d_?NonNegativeIntegerQ,
  \[Mu]_?NonNegativeIntegerQ
 ] :=
-
-
 Count[#1, _?(Total[#] == \[Mu] &)] - Count[#1, _?(Total[#] == \[Mu] + 1 &)] & @ Subsets[Range[-\[Lambda], \[Lambda]], {d}]
 
 
@@ -48,8 +44,6 @@ IsotypicMultiplicitySchurPower[
  p_?IntegerPartitionQ,
  \[Mu]_?NonNegativeIntegerQ
 ] :=
-
-
 With[
  {q = Unique @ q},
  {poly = SchurS[ConjugatePartition @ p, q, \[Lambda]]},
@@ -67,8 +61,6 @@ IsotypicComponentsTensorProduct[
  \[Lambda]_?NonNegativeIntegerQ,
  \[Mu]_?NonNegativeIntegerQ
 ] :=
-
-
 Range[Abs[\[Lambda] - \[Mu]], \[Lambda] + \[Mu]]
 
 
@@ -78,8 +70,6 @@ IsotypicComponentsTensorPower[
  \[Lambda]_?NonNegativeIntegerQ,
  d_?NonNegativeIntegerQ
 ] :=
-
-
 If[d == 1, {\[Lambda]}, Range[0, \[Lambda] * d]]
 
 
@@ -89,8 +79,6 @@ IsotypicComponentsExteriorPower[
  \[Lambda]_?NonNegativeIntegerQ,
  d_?NonNegativeIntegerQ
 ] :=
-
-
 Select[
  IsotypicComponentsTensorPower[\[Lambda], d],
  IsotypicMultiplicityExteriorPower[\[Lambda], d, #] > 0 &
@@ -102,8 +90,6 @@ IsotypicComponentsSchurPower[
  \[Lambda]s_?NonNegativeIntegersQ,
  \[Pi]\[Lambda]s_?IntegerPartitionsQ
 ] :=
-
-
 MapThread[IsotypicComponentsSchurPower, {\[Lambda]s, \[Pi]\[Lambda]s}]
 
 
@@ -111,8 +97,6 @@ IsotypicComponentsSchurPower[
  \[Lambda]_?NonNegativeIntegerQ,
  p_?IntegerPartitionQ
 ] :=
-
-
 Select[
  IsotypicComponentsTensorPower[\[Lambda], Total @ p],
  IsotypicMultiplicitySchurPower[\[Lambda], p, #] > 0 &
@@ -124,8 +108,6 @@ ConstrainedIsotypicComponentsExteriorPowers[
  p_?IntegerPartitionQ,
  \[Mu]_?NonNegativeIntegerQ
 ] :=
-
-
 Select[
  Tuples @ IsotypicComponentsExteriorPower[\[Lambda], p],
  IsotypicComponentTensorProductQ[#, \[Mu]] &
@@ -137,8 +119,6 @@ ConstrainedIsotypicComponentsSchurPowers[
  \[Pi]\[Lambda]s_?IntegerPartitionsQ,
  \[Mu]_?NonNegativeIntegerQ
 ] :=
-
-
 Select[
  Tuples @ IsotypicComponentsSchurPower[\[Lambda]s, \[Pi]\[Lambda]s],
  IsotypicComponentTensorProductQ[#, \[Mu]] &
