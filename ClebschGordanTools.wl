@@ -61,9 +61,9 @@ If[Length @ \[Lambda]s >= 2, Abs[ListConvolve[{1, -1}, \[Gamma]s]] \[VectorLessE
 
 ClebschGordanTensorTrain::usage = "gives the tensor train representation of the Clebsch-Gordan tensor CG(\[Lambda]s,\[Gamma]s).";
 ClebschGordanTensorTrain[
- \[Lambda]s_List?VectorQ
+ \[Lambda]s_?NonNegativeIntegersQ
 ][
- \[Gamma]s_List?VectorQ
+ \[Gamma]s_?NonNegativeIntegersQ
 ] :=
 
 
@@ -71,8 +71,8 @@ ClebschGordanTensorTrain[\[Lambda]s, \[Gamma]s]
 
 
 ClebschGordanTensorTrain[
- \[Lambda]s_List?VectorQ,
- \[Gamma]s_List?VectorQ
+ \[Lambda]s_?NonNegativeIntegersQ,
+ \[Gamma]s_?NonNegativeIntegersQ
 ]  /;  ValidPathQ[\[Lambda]s, \[Gamma]s] :=
 
 
@@ -85,7 +85,7 @@ If[
 
 PathBasisTensorProduct::usage = "gives a list of all Clebsch-Gordan paths from \[Mu] to the tensor product of the \[Lambda]s.";
 PathBasisTensorProduct[
- \[Lambda]s_List?VectorQ,
+ \[Lambda]s_?NonNegativeIntegersQ,
  \[Mu]_?NonNegativeIntegerQ
 ] :=
 
@@ -104,7 +104,7 @@ SortBy[
 
 
 TensorTrainBasisTensorProduct[
- \[Lambda]s_List?VectorQ,
+ \[Lambda]s_?NonNegativeIntegersQ,
  \[Mu]_?NonNegativeIntegerQ
 ] :=
 
@@ -171,7 +171,7 @@ Module[
 TensorTreeBasisSchurPower::usage = "gives a list of all Clebsch-Gordan paths from \[Mu] to the image of the Young symmetrizer p on \[Lambda].";
 TensorTreeBasisSchurPower[
  \[Lambda]_?NonNegativeIntegerQ,
- p_List?VectorQ,
+ p_?IntegerPartitionQ,
  \[Mu]_?NonNegativeIntegerQ
 ] :=
 
