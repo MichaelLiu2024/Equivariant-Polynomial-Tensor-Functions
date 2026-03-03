@@ -25,6 +25,7 @@ pathToSSYT[
  pathIn_List
 ] :=
 
+
 With[
  {m=Length@pathIn, numRows=Length@First@pathIn},
  {path=Prepend[pathIn, ConstantArray[0, numRows]]},
@@ -43,6 +44,7 @@ MacdonaldN[
  p_?IntegerPartitionQ
 ] :=
 
+
 p . Range[0, Length@p-1]
 
 
@@ -50,12 +52,14 @@ Contents[
  p_?IntegerPartitionQ
 ] :=
 
+
 Flatten@Table[j-i, {i, Length@p}, {j, p[[i]]}]
 
 
 HookLengths[
  p_?IntegerPartitionQ
 ] :=
+
 
 With[
  {cp=ConjugatePartition@p},
@@ -73,13 +77,15 @@ RaggedMultiIndex[
  dimensions_?PositiveIntegersQ
 ] :=
 
+
 {}
 
 
 RaggedMultiIndex[
  linearIndices_?PositiveIntegersQ,
  dimensions_?PositiveIntegersQ
-] /; Max@linearIndices <= Total@dimensions :=
+]  /;  Max@linearIndices <= Total@dimensions :=
+
 
 With[
  {accumulateDimensions=Prepend[Accumulate@dimensions, 0]},
@@ -93,7 +99,8 @@ With[
 ArrayMultiIndex[
  linearIndex_?PositiveIntegerQ,
  dimensions_?PositiveIntegersQ
-] /; linearIndex <= Times@@dimensions :=
+]  /;  linearIndex <= Times@@dimensions :=
+
 
 IntegerDigits[linearIndex-1, MixedRadix@dimensions, Length@dimensions]+1
 
@@ -102,6 +109,7 @@ IntegerDigits[linearIndex-1, MixedRadix@dimensions, Length@dimensions]+1
 PivotColumns[
  matrix_?MatrixQ
 ] :=
+
 
 Flatten@Map[
  Position[#, _?(#!=0&), {1}, 1, Heads->False]&,
@@ -113,6 +121,7 @@ IteratedSum[
  f_,
  ls_List
 ] :=
+
 
 With[
  {vars=Unique@x&/@ls},
@@ -127,6 +136,7 @@ WeakCompositions[
  n_?PositiveIntegerQ
 ] :=
 
+
 Join@@Permutations/@IntegerPartitions[D, {n}, Range[0, D]]
 
 
@@ -137,6 +147,7 @@ ThinPartitions[
  \[Lambda]_?PositiveIntegerQ,
  m_?PositiveIntegerQ
 ] :=
+
 
 IntegerPartitions[d, All, Range[Min[2\[Lambda]+1, m]]]
 
@@ -154,6 +165,7 @@ ConjugatePartition[
  p_?IntegerPartitionQ
 ] :=
 
+
 Total@UnitStep@Outer[Plus, p, -Range@First@p]
 
 
@@ -164,6 +176,7 @@ SchurS[
  \[Lambda]_?NonNegativeIntegerQ
 ] :=
 
+
 1
 
 
@@ -172,6 +185,7 @@ SchurS[
  q_Symbol,
  \[Lambda]_?NonNegativeIntegerQ
 ] :=
+
 
 q^(MacdonaldN@p-\[Lambda]*Total@p)*Times@@((1-q^(2\[Lambda]+1+Contents@p))/(1-q^HookLengths@p))
 
@@ -185,6 +199,7 @@ SemiStandardYoungTableaux[
  n_?PositiveIntegerQ
 ] :=
 
+
 {{}}
 
 
@@ -192,6 +207,7 @@ SemiStandardYoungTableaux[
  p_?IntegerPartitionQ,
  n_?PositiveIntegerQ
 ] :=
+
 
 Join@@SemiStandardYoungTableaux[p]/@WeakCompositions[Tr@p, n]
 
@@ -202,6 +218,7 @@ SemiStandardYoungTableaux[
  w_List?VectorQ
 ] :=
 
+
 SemiStandardYoungTableaux[p, w]
 
 
@@ -209,6 +226,7 @@ SemiStandardYoungTableaux[
  p_?IntegerPartitionQ,
  w_List?VectorQ
 ] :=
+
 
 With[
  {
