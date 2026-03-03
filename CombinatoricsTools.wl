@@ -154,7 +154,7 @@ IntegerPartitions[d, All, Range[Min[2\[Lambda]+1, m]]]
 ConjugatePartition::usage = "gives the integer partition conjugate to p."
 ConjugatePartition[
  {}
-] = 
+] =
 
 {}
 
