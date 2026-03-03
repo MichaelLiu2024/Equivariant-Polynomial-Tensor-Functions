@@ -1,17 +1,14 @@
 (* ::Package:: *)
 
-BeginPackage["CombinatoricsTools`"];
+BeginPackage["CombinatoricsTools`",{"BooleanTools`"}];
 
 
 linearIndicesToRaggedMultiIndices
 linearIndexToArrayMultiIndex
-PositiveIntegerQ
-NonNegativeIntegerQ
 PivotColumns
 IteratedSum
 WeakCompositions
 ThinPartitions
-ConjugateTableau
 ConjugatePartition
 SchurS
 SemiStandardYoungTableaux
@@ -24,7 +21,7 @@ Begin["`Private`"];
 (*Private Functions*)
 
 
-pathToSSYT[pathIn_List]:=
+pathToSSYT[pathIn_List] := 
  With[
   {m=Length@pathIn,numRows=Length@First@pathIn},
   {path=Prepend[pathIn,ConstantArray[0,numRows]]},
@@ -39,15 +36,16 @@ pathToSSYT[pathIn_List]:=
  ];
 
 
-MacdonaldN[p_List?VectorQ]:=p . Range[0,Length@p-1]
+MacdonaldN[p_?IntegerPartitionQ] := p . Range[0,Length@p-1]
 
 
-Contents[p_List?VectorQ]:=Flatten@Table[j-i,{i,Length@p},{j,p[[i]]}]
+Contents[p_?IntegerPartitionQ] := Flatten@Table[j-i,{i,Length@p},{j,p[[i]]}]
 
 
-HookLengths[p_List?VectorQ]:=
+HookLengths[p_?IntegerPartitionQ] := 
  With[
   {cp=ConjugatePartition@p},
+  
   Flatten@Table[p[[i]]+cp[[j]]-i-j+1,{i,Length@p},{j,p[[i]]}]
  ]
 
@@ -56,73 +54,85 @@ HookLengths[p_List?VectorQ]:=
 (*Public Functions*)
 
 
-linearIndicesToRaggedMultiIndices[{},dimensions_List?VectorQ]:={}
-linearIndicesToRaggedMultiIndices[linearIndices_List?VectorQ,dimensions_List?VectorQ]/;Max@linearIndices<=Total@dimensions:=
- With[
-  {accumulateDimensions=Prepend[Accumulate@dimensions,0]},
-  {i=Flatten[FirstPosition[accumulateDimensions,total_/;#<=total]&/@linearIndices]-1},
-  {j=linearIndices-accumulateDimensions[[i]]},
-  
-  Transpose@{i,j}
- ]
+linearIndicesToRaggedMultiIndices[
+ {},
+ dimensions_?PositiveIntegersQ
+] :=
+
+{}
 
 
-linearIndexToArrayMultiIndex[linearIndex_Integer?Positive,dimensions_List?VectorQ]/;linearIndex<=Times@@dimensions:=
- IntegerDigits[linearIndex-1,MixedRadix@dimensions,Length@dimensions]+1
+linearIndicesToRaggedMultiIndices[
+ linearIndices_?PositiveIntegersQ,
+ dimensions_?PositiveIntegersQ
+] /; Max@linearIndices <= Total@dimensions :=
+
+With[
+ {accumulateDimensions=Prepend[Accumulate@dimensions,0]},
+ {i=Flatten[FirstPosition[accumulateDimensions,total_ /; # <= total]&/@linearIndices]-1},
+ {j=linearIndices-accumulateDimensions[[i]]},
+ 
+ Transpose@{i,j}
+]
 
 
-PositiveIntegerQ[n_]:=Positive@n\[And]IntegerQ@n
+linearIndexToArrayMultiIndex[
+ linearIndex_?PositiveIntegerQ,
+ dimensions_?PositiveIntegersQ
+] /; linearIndex <= Times@@dimensions := 
 
-
-NonNegativeIntegerQ[n_]:=NonNegative@n\[And]IntegerQ@n
+IntegerDigits[linearIndex-1,MixedRadix@dimensions,Length@dimensions]+1
 
 
 (*https://resources.wolframcloud.com/FunctionRepository/resources/PivotColumns/*)
-PivotColumns[matrix_?MatrixQ]:=Flatten@Map[Position[#,_?(#!=0&),{1},1,Heads->False]&,RowReduce[matrix,Tolerance->10^-10]]
+PivotColumns[matrix_?MatrixQ] := Flatten@Map[Position[#,_?(#!=0&),{1},1,Heads->False]&,RowReduce[matrix,Tolerance->10^-10]]
 
 
-IteratedSum[f_,ls_List]:=With[{vars=Unique@x&/@ls},Sum[f@@vars,Evaluate[Sequence@@Transpose@{vars,ls}]]]
+IteratedSum[f_,ls_List] := With[{vars=Unique@x&/@ls},Sum[f@@vars,Evaluate[Sequence@@Transpose@{vars,ls}]]]
 
 
 WeakCompositions::usage="gives a list of all weak integer compositions of D into n parts."
 SetAttributes[WeakCompositions,Listable]
-WeakCompositions[D_Integer?NonNegative,n_Integer?Positive]:=Join@@Permutations/@IntegerPartitions[D,{n},Range[0,D]]
+WeakCompositions[
+ D_?NonNegativeIntegerQ,
+ n_?PositiveIntegerQ
+] := 
+
+Join@@Permutations/@IntegerPartitions[D,{n},Range[0,D]]
 
 
 ThinPartitions::usage="gives a list of all integer partitions of d with parts at most Min[2\[Lambda]+1,m]."
 SetAttributes[ThinPartitions,Listable]
-ThinPartitions[d_Integer?NonNegative,\[Lambda]_Integer?Positive,m_Integer?Positive]:=IntegerPartitions[d,All,Range[Min[2\[Lambda]+1,m]]]
+ThinPartitions[
+ d_?NonNegativeIntegerQ,
+ \[Lambda]_?PositiveIntegerQ,
+ m_?PositiveIntegerQ
+] :=
 
-
-StandardYoungTableau::usage="gives the standard Young tableau of shape p filled in English reading order."
-StandardYoungTableau[p_List?VectorQ]:=TakeList[Range@Total@p,p]
-
-
-ConjugateTableau::usage="gives the Young tableau conjugate to t."
-ConjugateTableau[t_List]:=Flatten[t,{2}]
+IntegerPartitions[d,All,Range[Min[2\[Lambda]+1,m]]]
 
 
 (*https://resources.wolframcloud.com/FunctionRepository/resources/ConjugatePartition/*)
 ConjugatePartition::usage="gives the integer partition conjugate to p."
 ConjugatePartition[{}]={}
-ConjugatePartition[p_List?VectorQ]:=Total@UnitStep@Outer[Plus,p,-Range@First@p]
+ConjugatePartition[p_?IntegerPartitionQ] := Total@UnitStep@Outer[Plus,p,-Range@First@p]
 
 
 SchurS::usage="gives the Schur polynomial corresponding to the integer partition p in the variables \!\(\*SuperscriptBox[\(q\), \(-\[Lambda]\)]\),...,\!\(\*SuperscriptBox[\(q\), \(\[Lambda]\)]\)."
-SchurS[{},q_Symbol,\[Lambda]_Integer?NonNegative]:=1
-SchurS[p_List?VectorQ,q_Symbol,\[Lambda]_Integer?NonNegative]:=q^(MacdonaldN@p-\[Lambda]*Total@p)*Times@@((1-q^(2\[Lambda]+1+Contents@p))/(1-q^HookLengths@p))
+SchurS[{},q_Symbol,\[Lambda]_?NonNegativeIntegerQ] := 1
+SchurS[p_?IntegerPartitionQ,q_Symbol,\[Lambda]_?NonNegativeIntegerQ] := q^(MacdonaldN@p-\[Lambda]*Total@p)*Times@@((1-q^(2\[Lambda]+1+Contents@p))/(1-q^HookLengths@p))
 
 
 (*https://github.com/PerAlexandersson/Mathematica-packages*)
 SemiStandardYoungTableaux::usage="gives a list of all semistandard Young tableaux of shape p with largest entry n."
 
-SemiStandardYoungTableaux[{},n_Integer?Positive]:={{}}
+SemiStandardYoungTableaux[{},n_?PositiveIntegerQ] := {{}}
 
-SemiStandardYoungTableaux[p_List?VectorQ,n_Integer?Positive]:=Join@@SemiStandardYoungTableaux[p]/@WeakCompositions[Tr@p,n]
+SemiStandardYoungTableaux[p_?IntegerPartitionQ,n_?PositiveIntegerQ] := Join@@SemiStandardYoungTableaux[p]/@WeakCompositions[Tr@p,n]
 
-SemiStandardYoungTableaux[p_List?VectorQ][w_List?VectorQ]:=SemiStandardYoungTableaux[p,w]
+SemiStandardYoungTableaux[p_?IntegerPartitionQ][w_List?VectorQ] := SemiStandardYoungTableaux[p,w]
 
-SemiStandardYoungTableaux[p_List?VectorQ,w_List?VectorQ]:=
+SemiStandardYoungTableaux[p_?IntegerPartitionQ,w_List?VectorQ] := 
  With[
   {
    mu=ConstantArray[0,First@p],
