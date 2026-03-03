@@ -20,7 +20,7 @@ Begin["`Private`"];
 
 IsotypicComponentTensorProductQ::usage = "gives True if \[Mu] is an isotypic component in the tensor product \!\(\*UnderscriptBox[\(\[CircleTimes]\), \(\[Lambda] \[Element] \[Lambda]s\)]\)\!\(\*SubscriptBox[\(H\), \(\[Lambda]\)]\).";
 IsotypicComponentTensorProductQ[
- \[Lambda]s_List?VectorQ,
+ \[Lambda]s_?NonNegativeIntegersQ,
  \[Mu]_?NonNegativeIntegerQ
 ] :=
 
@@ -99,7 +99,7 @@ Select[
 
 IsotypicComponentsSchurPower::usage = "gives a list of all isotypic components contained in the Schur power \!\(\*SubscriptBox[\(e\), \(p\)]\)\!\(\*SubsuperscriptBox[\(H\), \(\[Lambda]\), \(\[CircleTimes]d\)]\).";
 IsotypicComponentsSchurPower[
- \[Lambda]s_List?VectorQ,
+ \[Lambda]s_?NonNegativeIntegersQ,
  \[Pi]\[Lambda]s_List
 ] :=
 
@@ -133,7 +133,7 @@ Select[
 
 
 ConstrainedIsotypicComponentsSchurPowers[
- \[Lambda]s_List?VectorQ,
+ \[Lambda]s_?NonNegativeIntegersQ,
  \[Pi]\[Lambda]s_List,
  \[Mu]_?NonNegativeIntegerQ
 ] :=
