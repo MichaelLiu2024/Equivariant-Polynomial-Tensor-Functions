@@ -1,6 +1,6 @@
 (* ::Package:: *)
 
-BeginPackage["GrowMultiplicitySpaceTree`",{"TreeTools`","TensorTools`","ClebschGordanTools`","IsotypicDecompositionTools`","CombinatoricsTools`"}];
+BeginPackage["GrowMultiplicitySpaceTree`",{"TreeTools`","TensorTools`","ClebschGordanTools`","IsotypicDecompositionTools`","CombinatoricsTools`","BooleanTools`"}];
 
 
 IsotypicDataTree
@@ -17,13 +17,6 @@ Begin["`Private`"];
 (*Private Functions*)
 
 
-SO3RepresentationQ[\[Lambda]s_List,m\[Lambda]s_List]:=
- VectorQ[\[Lambda]s,Positive]\[And]
- VectorQ[m\[Lambda]s,Positive]\[And]
- Length[\[Lambda]s]==Length[m\[Lambda]s]\[And]
- DuplicateFreeQ[\[Lambda]s]
-
-
 RowKroneckerProduct[m1_List?ArrayQ,{{{}}}]:={{}}
 RowKroneckerProduct[{{{}}},m2_List?ArrayQ]:={{}}
 RowKroneckerProduct[m1_List?ArrayQ,m2_List?ArrayQ]/;
@@ -37,8 +30,8 @@ RowKroneckerProduct[m1_List?ArrayQ,m2_List?ArrayQ]/;
 RowJoin[ms__]:=Join[ms,2]
 
 
-generateRandomProbes[\[Lambda]s_List,m\[Lambda]s_List,numProbes_Integer]/;
- SO3RepresentationQ[\[Lambda]s,m\[Lambda]s]:=
+generateRandomProbes[\[Lambda]s_?DistinctPositiveIntegersQ,m\[Lambda]s_?PositiveIntegersQ,numProbes_Integer]/;
+ Length@\[Lambda]s==Length@m\[Lambda]s:=
   MapThread[
    Function[{\[Lambda],m\[Lambda]},RandomReal[1,{numProbes,m\[Lambda],2\[Lambda]+1}]],
    {\[Lambda]s,m\[Lambda]s}
@@ -71,7 +64,7 @@ algebraDimensionBound[invariantBasis_List]:=
  ]
 
 
-moduleDimensionBound[\[Nu]_Integer?NonNegative,invariantBasis_List,covariantBasis_List]:=
+moduleDimensionBound[\[Nu]_?NonNegativeIntegerQ,invariantBasis_List,covariantBasis_List]:=
  Ceiling[1.1*Max@ListConvolve[dims[invariantBasis],dims[covariantBasis],1,0]/(2\[Nu]+1)]
 
 
@@ -84,13 +77,13 @@ extract[linearIndices_List,basis_List]:=
  
   leafIndices=
    MapThread[
-    linearIndicesToRaggedMultiIndices,
+    RaggedMultiIndex,
     {linearIndices,leafDimensions}
    ];(*degree; linearIndices; {index into leaf, linear index into interiorTensorTrains; SSYTs,tensorTrees for each \[Lambda]}*)
    
   finalIndices=
    MapThread[
-    Function[{lIndices,dims},MapApply[{#1,linearIndexToArrayMultiIndex[#2,dims[[#1]]]}&,lIndices]],
+    Function[{lIndices,dims},MapApply[{#1,ArrayMultiIndex[#2,dims[[#1]]]}&,lIndices]],
     {leafIndices,fullDimensions}
    ];(*degree; linearIndices; {index into leaf, multiindex into interiorTensorTrains; SSYTs,tensorTrees for each \[Lambda]}*)
   
@@ -155,8 +148,8 @@ EvaluateTensorProductBasis[basis_Association,inputVectors_List]:=
 (*Public Functions*)
 
 
-IsotypicDataTree[\[Lambda]s_List,m\[Lambda]s_List,\[Nu]_Integer?NonNegative,DMax_Integer?NonNegative]/;
- SO3RepresentationQ[\[Lambda]s,m\[Lambda]s]:=
+IsotypicDataTree[\[Lambda]s_?DistinctPositiveIntegersQ,m\[Lambda]s_?PositiveIntegersQ,\[Nu]_?NonNegativeIntegerQ,DMax_?NonNegativeIntegerQ]/;
+ Length@\[Lambda]s==Length@m\[Lambda]s:=
   Module[
    {tree},
    
@@ -175,8 +168,8 @@ IsotypicDataTree[\[Lambda]s_List,m\[Lambda]s_List,\[Nu]_Integer?NonNegative,DMax
 
 
 (*degree; leaf; TensorProductBasis*)
-VectorSpaceBasis[\[Lambda]s_List,m\[Lambda]s_List,\[Nu]_Integer?NonNegative,DMax_Integer?NonNegative]/;
- SO3RepresentationQ[\[Lambda]s,m\[Lambda]s]:=
+VectorSpaceBasis[\[Lambda]s_?DistinctPositiveIntegersQ,m\[Lambda]s_?PositiveIntegersQ,\[Nu]_?NonNegativeIntegerQ,DMax_?NonNegativeIntegerQ]/;
+ Length@\[Lambda]s==Length@m\[Lambda]s:=
   Lookup[
    Association[TreeData@#->TreeData/@TreeLeaves@#&/@TreeChildren@IsotypicDataTree[\[Lambda]s,m\[Lambda]s,\[Nu],DMax]],
    Range[0,DMax],
@@ -184,8 +177,8 @@ VectorSpaceBasis[\[Lambda]s_List,m\[Lambda]s_List,\[Nu]_Integer?NonNegative,DMax
   ]
 
 
-AlgebraBasis[\[Lambda]s_List,m\[Lambda]s_List,DMax_Integer?NonNegative]/;
- SO3RepresentationQ[\[Lambda]s,m\[Lambda]s]:=
+AlgebraBasis[\[Lambda]s_?DistinctPositiveIntegersQ,m\[Lambda]s_?PositiveIntegersQ,DMax_?NonNegativeIntegerQ]/;
+ Length@\[Lambda]s==Length@m\[Lambda]s:=
   Module[
    {
     VectorSpaceBasis=VectorSpaceBasis[\[Lambda]s,m\[Lambda]s,0,DMax],
@@ -229,8 +222,8 @@ AlgebraBasis[\[Lambda]s_List,m\[Lambda]s_List,DMax_Integer?NonNegative]/;
   ]
 
 
-ModuleBasis[\[Lambda]s_List,m\[Lambda]s_List,\[Nu]_Integer?Positive,DMax_Integer?NonNegative]/;
- SO3RepresentationQ[\[Lambda]s,m\[Lambda]s]:=
+ModuleBasis[\[Lambda]s_?DistinctPositiveIntegersQ,m\[Lambda]s_?PositiveIntegersQ,\[Nu]_Integer?Positive,DMax_?NonNegativeIntegerQ]/;
+ Length@\[Lambda]s==Length@m\[Lambda]s:=
   Module[
    {
     InvariantVectorSpaceBasis=VectorSpaceBasis[\[Lambda]s,m\[Lambda]s,0,DMax],

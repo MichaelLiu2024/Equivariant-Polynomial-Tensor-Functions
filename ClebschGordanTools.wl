@@ -1,6 +1,6 @@
 (* ::Package:: *)
 
-BeginPackage["ClebschGordanTools`",{"CombinatoricsTools`","IsotypicDecompositionTools`","TensorTools`"}];
+BeginPackage["ClebschGordanTools`",{"CombinatoricsTools`","IsotypicDecompositionTools`","TensorTools`","BooleanTools`"}];
 
 
 TensorTrainBasisTensorProduct
@@ -230,8 +230,8 @@ TensorTreeBasisSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_Int
 
     {interiorSpinsIndices,tensorTrainIndices}=
      Transpose@MapApply[
-      {#1,linearIndexToArrayMultiIndex[#2,totalDimensions[[#1]]]}&,
-      linearIndicesToRaggedMultiIndices[linearIndices,tempDimensions]
+      {#1,ArrayMultiIndex[#2,totalDimensions[[#1]]]}&,
+      RaggedMultiIndex[linearIndices,tempDimensions]
      ];
     
     <|
