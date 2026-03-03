@@ -22,7 +22,10 @@ IsotypicComponentTensorProductQ::usage = "gives True if \[Mu] is an isotypic com
 IsotypicComponentTensorProductQ[
  \[Lambda]s_?NonNegativeIntegersQ,
  \[Mu]_?NonNegativeIntegerQ
-] :=
+] /;
+True
+:=
+
 With[
  {m = Max[\[Lambda]s], s = Total[\[Lambda]s]},
  Max[0, 2 m - s] <= \[Mu] <= s
@@ -34,7 +37,10 @@ IsotypicMultiplicityExteriorPower[
  \[Lambda]_?NonNegativeIntegerQ,
  d_?NonNegativeIntegerQ,
  \[Mu]_?NonNegativeIntegerQ
-] :=
+] /;
+True
+:=
+
 Count[#1, _?(Total[#] == \[Mu] &)] - Count[#1, _?(Total[#] == \[Mu] + 1 &)] & @ Subsets[Range[-\[Lambda], \[Lambda]], {d}]
 
 
@@ -43,7 +49,10 @@ IsotypicMultiplicitySchurPower[
  \[Lambda]_?NonNegativeIntegerQ,
  p_?IntegerPartitionQ,
  \[Mu]_?NonNegativeIntegerQ
-] :=
+] /;
+True
+:=
+
 With[
  {q = Unique @ q},
  {poly = SchurS[ConjugatePartition @ p, q, \[Lambda]]},
@@ -60,7 +69,10 @@ SetAttributes[IsotypicComponentsTensorProduct, Listable]
 IsotypicComponentsTensorProduct[
  \[Lambda]_?NonNegativeIntegerQ,
  \[Mu]_?NonNegativeIntegerQ
-] :=
+] /;
+True
+:=
+
 Range[Abs[\[Lambda] - \[Mu]], \[Lambda] + \[Mu]]
 
 
@@ -69,7 +81,10 @@ SetAttributes[IsotypicComponentsTensorPower, Listable]
 IsotypicComponentsTensorPower[
  \[Lambda]_?NonNegativeIntegerQ,
  d_?NonNegativeIntegerQ
-] :=
+] /;
+True
+:=
+
 If[d == 1, {\[Lambda]}, Range[0, \[Lambda] * d]]
 
 
@@ -78,7 +93,10 @@ SetAttributes[IsotypicComponentsExteriorPower, Listable]
 IsotypicComponentsExteriorPower[
  \[Lambda]_?NonNegativeIntegerQ,
  d_?NonNegativeIntegerQ
-] :=
+] /;
+True
+:=
+
 Select[
  IsotypicComponentsTensorPower[\[Lambda], d],
  IsotypicMultiplicityExteriorPower[\[Lambda], d, #] > 0 &
@@ -89,14 +107,20 @@ IsotypicComponentsSchurPower::usage = "gives a list of all isotypic components c
 IsotypicComponentsSchurPower[
  \[Lambda]s_?NonNegativeIntegersQ,
  \[Pi]\[Lambda]s_?IntegerPartitionsQ
-] :=
+] /;
+True
+:=
+
 MapThread[IsotypicComponentsSchurPower, {\[Lambda]s, \[Pi]\[Lambda]s}]
 
 
 IsotypicComponentsSchurPower[
  \[Lambda]_?NonNegativeIntegerQ,
  p_?IntegerPartitionQ
-] :=
+] /;
+True
+:=
+
 Select[
  IsotypicComponentsTensorPower[\[Lambda], Total @ p],
  IsotypicMultiplicitySchurPower[\[Lambda], p, #] > 0 &
@@ -107,7 +131,10 @@ ConstrainedIsotypicComponentsExteriorPowers[
  \[Lambda]_?NonNegativeIntegerQ,
  p_?IntegerPartitionQ,
  \[Mu]_?NonNegativeIntegerQ
-] :=
+] /;
+True
+:=
+
 Select[
  Tuples @ IsotypicComponentsExteriorPower[\[Lambda], p],
  IsotypicComponentTensorProductQ[#, \[Mu]] &
@@ -118,7 +145,10 @@ ConstrainedIsotypicComponentsSchurPowers[
  \[Lambda]s_?NonNegativeIntegersQ,
  \[Pi]\[Lambda]s_?IntegerPartitionsQ,
  \[Mu]_?NonNegativeIntegerQ
-] :=
+] /;
+True
+:=
+
 Select[
  Tuples @ IsotypicComponentsSchurPower[\[Lambda]s, \[Pi]\[Lambda]s],
  IsotypicComponentTensorProductQ[#, \[Mu]] &

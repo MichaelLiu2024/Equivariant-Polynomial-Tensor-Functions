@@ -23,36 +23,48 @@ Begin["`Private`"];
 
 pathToSSYT[
  pathIn_List
-] :=
+] /;
+True
+:=
+
 With[
  {m=Length@pathIn, numRows=Length@First@pathIn},
  {path=Prepend[pathIn, ConstantArray[0, numRows]]},
 
  Table[
- Join@@Table[
- ConstantArray[If[e-1==0, None, e-1], path[[e+1, r]]-path[[e, r]]],
- {e, m}
- ],
- {r, numRows}
+  Join@@Table[
+   ConstantArray[If[e-1==0, None, e-1], path[[e+1, r]]-path[[e, r]]],
+   {e, m}
+  ],
+  {r, numRows}
  ]
 ];
 
 
 MacdonaldN[
  p_?IntegerPartitionQ
-] :=
+] /;
+True
+:=
+
 p . Range[0, Length@p-1]
 
 
 Contents[
  p_?IntegerPartitionQ
-] :=
+] /;
+True
+:=
+
 Flatten@Table[j-i, {i, Length@p}, {j, p[[i]]}]
 
 
 HookLengths[
  p_?IntegerPartitionQ
-] :=
+] /;
+True
+:=
+
 With[
  {cp=ConjugatePartition@p},
 
@@ -67,14 +79,20 @@ With[
 RaggedMultiIndex[
  {},
  dimensions_?PositiveIntegersQ
-] :=
+] /;
+True
+:=
+
 {}
 
 
 RaggedMultiIndex[
  linearIndices_?PositiveIntegersQ,
  dimensions_?PositiveIntegersQ
-]  /;  Max@linearIndices <= Total@dimensions :=
+] /;
+Max@linearIndices <= Total@dimensions
+:=
+
 With[
  {accumulateDimensions=Prepend[Accumulate@dimensions, 0]},
  {i=Flatten[FirstPosition[accumulateDimensions, total_ /; # <= total]&/@linearIndices]-1},
@@ -87,14 +105,20 @@ With[
 ArrayMultiIndex[
  linearIndex_?PositiveIntegerQ,
  dimensions_?PositiveIntegersQ
-]  /;  linearIndex <= Times@@dimensions :=
+] /;
+linearIndex <= Times@@dimensions
+:=
+
 IntegerDigits[linearIndex-1, MixedRadix@dimensions, Length@dimensions]+1
 
 
 (*https://resources.wolframcloud.com/FunctionRepository/resources/PivotColumns/*)
 PivotColumns[
  matrix_?MatrixQ
-] :=
+] /;
+True
+:=
+
 Flatten@Map[
  Position[#, _?(#!=0&), {1}, 1, Heads->False]&,
  RowReduce[matrix, Tolerance->10^-10]
@@ -104,7 +128,10 @@ Flatten@Map[
 IteratedSum[
  f_,
  ls_List
-] :=
+] /;
+True
+:=
+
 With[
  {vars=Unique@x&/@ls},
  Sum[f@@vars, Evaluate[Sequence@@Transpose@{vars, ls}]]
@@ -116,7 +143,10 @@ SetAttributes[WeakCompositions, Listable]
 WeakCompositions[
  D_?NonNegativeIntegerQ,
  n_?PositiveIntegerQ
-] :=
+] /;
+True
+:=
+
 Join@@Permutations/@IntegerPartitions[D, {n}, Range[0, D]]
 
 
@@ -126,7 +156,10 @@ ThinPartitions[
  d_?NonNegativeIntegerQ,
  \[Lambda]_?PositiveIntegerQ,
  m_?PositiveIntegerQ
-] :=
+] /;
+True
+:=
+
 IntegerPartitions[d, All, Range[Min[2\[Lambda]+1, m]]]
 
 
@@ -141,7 +174,10 @@ ConjugatePartition[
 
 ConjugatePartition[
  p_?IntegerPartitionQ
-] :=
+] /;
+True
+:=
+
 Total@UnitStep@Outer[Plus, p, -Range@First@p]
 
 
@@ -150,7 +186,10 @@ SchurS[
  {},
  q_Symbol,
  \[Lambda]_?NonNegativeIntegerQ
-] :=
+] /;
+True
+:=
+
 1
 
 
@@ -158,7 +197,10 @@ SchurS[
  p_?IntegerPartitionQ,
  q_Symbol,
  \[Lambda]_?NonNegativeIntegerQ
-] :=
+] /;
+True
+:=
+
 q^(MacdonaldN@p-\[Lambda]*Total@p)*Times@@((1-q^(2\[Lambda]+1+Contents@p))/(1-q^HookLengths@p))
 
 
@@ -169,14 +211,20 @@ SemiStandardYoungTableaux::usage="gives a list of all semistandard Young tableau
 SemiStandardYoungTableaux[
  {},
  n_?PositiveIntegerQ
-] :=
+] /;
+True
+:=
+
 {{}}
 
 
 SemiStandardYoungTableaux[
  p_?IntegerPartitionQ,
  n_?PositiveIntegerQ
-] :=
+] /;
+True
+:=
+
 Join@@SemiStandardYoungTableaux[p]/@WeakCompositions[Tr@p, n]
 
 
@@ -184,54 +232,60 @@ SemiStandardYoungTableaux[
  p_?IntegerPartitionQ
 ][
  w_List?VectorQ
-] :=
+] /;
+True
+:=
+
 SemiStandardYoungTableaux[p, w]
 
 
 SemiStandardYoungTableaux[
  p_?IntegerPartitionQ,
  w_List?VectorQ
-] :=
+] /;
+True
+:=
+
 With[
  {
- mu=ConstantArray[0, First@p],
- mid=IntegerPartitions[#, {First@p}, Range[0, Length@p]]&/@Most@Accumulate@w,
- cp=ConjugatePartition@p
+  mu=ConstantArray[0, First@p],
+  mid=IntegerPartitions[#, {First@p}, Range[0, Length@p]]&/@Most@Accumulate@w,
+  cp=ConjugatePartition@p
  },
  {
- partitionLevels=Join[{{mu}}, mid, {{cp}}]
+  partitionLevels=Join[{{mu}}, mid, {{cp}}]
  },
  {
- g=
- Graph[
- Join@@Table[
- Join@@Outer[
- If[Min[#2-#1]>=0 && Min[#1[[;;-2]]-#2[[2;;]]]>=0,
- DirectedEdge[{#1, lvl-1}, {#2, lvl}],
- Nothing
- ]&,
- partitionLevels[[lvl-1]],
- partitionLevels[[lvl]],
- 1
- ],
- {lvl, 2, Length[partitionLevels]}
- ]
- ]
+  g=
+  Graph[
+   Join@@Table[
+    Join@@Outer[
+     If[Min[#2-#1]>=0 && Min[#1[[;;-2]]-#2[[2;;]]]>=0,
+      DirectedEdge[{#1, lvl-1}, {#2, lvl}],
+      Nothing
+     ]&,
+     partitionLevels[[lvl-1]],
+     partitionLevels[[lvl]],
+     1
+    ],
+    {lvl, 2, Length[partitionLevels]}
+   ]
+  ]
  },
  {
- ssytPaths=If[
- Or[
- !MemberQ[VertexList[g], {mu, 1}],
- !MemberQ[VertexList[g], {cp, Length[w]+1}]
- ],
- {},
- FindPath[g, {mu, 1}, {cp, Length[w]+1}, Infinity, All]
- ]
+  ssytPaths=If[
+   Or[
+    !MemberQ[VertexList[g], {mu, 1}],
+    !MemberQ[VertexList[g], {cp, Length[w]+1}]
+   ],
+   {},
+   FindPath[g, {mu, 1}, {cp, Length[w]+1}, Infinity, All]
+  ]
  },
 
  N@Map[
- Through[{Keys, Values}[Sort@Counts@#]]&/@pathToSSYT[First/@#]&,
- ssytPaths
+  Through[{Keys, Values}[Sort@Counts@#]]&/@pathToSSYT[First/@#]&,
+  ssytPaths
  ]
 ];
 
