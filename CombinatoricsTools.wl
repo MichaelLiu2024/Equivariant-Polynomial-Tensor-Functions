@@ -26,11 +26,11 @@ pathToSSYT[
 ] :=
 
 With[
- {m=Length@pathIn, numRows=Length@First@pathIn},
- {path=Prepend[pathIn, ConstantArray[0, numRows]]},
+ {m = Length @ pathIn, numRows = Length @ First @ pathIn},
+ {path = Prepend[pathIn, ConstantArray[0, numRows]]},
 
  Table[
-  Join@@Table[
+  Join @@ Table[
    ConstantArray[If[e-1==0, None, e-1], path[[e+1, r]]-path[[e, r]]],
    {e, m}
   ],
@@ -43,14 +43,14 @@ MacdonaldN[
  p_?IntegerPartitionQ
 ] :=
 
-p . Range[0, Length@p-1]
+p . Range[0, Length @ p-1]
 
 
 Contents[
  p_?IntegerPartitionQ
 ] :=
 
-Flatten@Table[j-i, {i, Length@p}, {j, p[[i]]}]
+Flatten @ Table[j-i, {i, Length @ p}, {j, p[[i]]}]
 
 
 HookLengths[
@@ -58,9 +58,9 @@ HookLengths[
 ] :=
 
 With[
- {cp=ConjugatePartition@p},
+ {cp = ConjugatePartition @ p},
 
- Flatten@Table[p[[i]]+cp[[j]]-i-j+1, {i, Length@p}, {j, p[[i]]}]
+ Flatten @ Table[p[[i]]+cp[[j]]-i-j+1, {i, Length @ p}, {j, p[[i]]}]
 ]
 
 
@@ -80,14 +80,14 @@ RaggedMultiIndex[
  linearIndices_?PositiveIntegersQ,
  dimensions_?PositiveIntegersQ
 ] /;
-Max@linearIndices <= Total@dimensions :=
+Max @ linearIndices <= Total @ dimensions :=
 
 With[
- {accumulateDimensions=Prepend[Accumulate@dimensions, 0]},
- {i=Flatten[FirstPosition[accumulateDimensions, total_ /; # <= total]&/@linearIndices]-1},
- {j=linearIndices-accumulateDimensions[[i]]},
+ {accumulateDimensions = Prepend[Accumulate @ dimensions, 0]},
+ {i = Flatten[FirstPosition[accumulateDimensions, total_ /; # <= total]& /@ linearIndices]-1},
+ {j = linearIndices-accumulateDimensions[[i]]},
 
- Transpose@{i, j}
+ Transpose @ {i, j}
 ]
 
 
@@ -95,9 +95,9 @@ ArrayMultiIndex[
  linearIndex_?PositiveIntegerQ,
  dimensions_?PositiveIntegersQ
 ] /;
-linearIndex <= Times@@dimensions :=
+linearIndex <= Times @@ dimensions :=
 
-IntegerDigits[linearIndex-1, MixedRadix@dimensions, Length@dimensions]+1
+IntegerDigits[linearIndex-1, MixedRadix @ dimensions, Length @ dimensions]+1
 
 
 (*https://resources.wolframcloud.com/FunctionRepository/resources/PivotColumns/*)
@@ -105,7 +105,7 @@ PivotColumns[
  matrix_?MatrixQ
 ] :=
 
-Flatten@Map[
+Flatten @ Map[
  Position[#, _?(#!=0&), {1}, 1, Heads->False]&,
  RowReduce[matrix, Tolerance->10^-10]
 ]
@@ -117,22 +117,22 @@ IteratedSum[
 ] :=
 
 With[
- {vars=Unique@x&/@ls},
- Sum[f@@vars, Evaluate[Sequence@@Transpose@{vars, ls}]]
+ {vars = Unique @ x& /@ ls},
+ Sum[f @@ vars, Evaluate[Sequence @@ Transpose @ {vars, ls}]]
 ]
 
 
-WeakCompositions::usage="gives a list of all weak integer compositions of D into n parts."
+WeakCompositions::usage = "gives a list of all weak integer compositions of D into n parts."
 SetAttributes[WeakCompositions, Listable]
 WeakCompositions[
  D_?NonNegativeIntegerQ,
  n_?PositiveIntegerQ
 ] :=
 
-Join@@Permutations/@IntegerPartitions[D, {n}, Range[0, D]]
+Join @@ Permutations /@ IntegerPartitions[D, {n}, Range[0, D]]
 
 
-ThinPartitions::usage="gives a list of all integer partitions of d with parts at most Min[2\[Lambda]+1,m]."
+ThinPartitions::usage = "gives a list of all integer partitions of d with parts at most Min[2\[Lambda]+1,m]."
 SetAttributes[ThinPartitions, Listable]
 ThinPartitions[
  d_?NonNegativeIntegerQ,
@@ -144,22 +144,20 @@ IntegerPartitions[d, All, Range[Min[2\[Lambda]+1, m]]]
 
 
 (*https://resources.wolframcloud.com/FunctionRepository/resources/ConjugatePartition/*)
-ConjugatePartition::usage="gives the integer partition conjugate to p."
+ConjugatePartition::usage = "gives the integer partition conjugate to p."
 ConjugatePartition[
  {}
-] =
-
-{}
+] = {}
 
 
 ConjugatePartition[
  p_?IntegerPartitionQ
 ] :=
 
-Total@UnitStep@Outer[Plus, p, -Range@First@p]
+Total @ UnitStep @ Outer[Plus, p, -Range @ First @ p]
 
 
-SchurS::usage="gives the Schur polynomial corresponding to the integer partition p in the variables \!\(\*SuperscriptBox[\(q\), \(-\[Lambda]\)]\),...,\!\(\*SuperscriptBox[\(q\), \(\[Lambda]\)]\)."
+SchurS::usage = "gives the Schur polynomial corresponding to the integer partition p in the variables \!\(\*SuperscriptBox[\(q\), \(-\[Lambda]\)]\),...,\!\(\*SuperscriptBox[\(q\), \(\[Lambda]\)]\)."
 SchurS[
  {},
  q_Symbol,
@@ -175,11 +173,11 @@ SchurS[
  \[Lambda]_?NonNegativeIntegerQ
 ] :=
 
-q^(MacdonaldN@p-\[Lambda]*Total@p)*Times@@((1-q^(2\[Lambda]+1+Contents@p))/(1-q^HookLengths@p))
+q^(MacdonaldN @ p-\[Lambda]*Total @ p)*Times @@ ((1-q^(2\[Lambda]+1+Contents @ p))/(1-q^HookLengths @ p))
 
 
 (*https://github.com/PerAlexandersson/Mathematica-packages*)
-SemiStandardYoungTableaux::usage="gives a list of all semistandard Young tableaux of shape p with largest entry n."
+SemiStandardYoungTableaux::usage = "gives a list of all semistandard Young tableaux of shape p with largest entry n."
 
 
 SemiStandardYoungTableaux[
@@ -195,7 +193,7 @@ SemiStandardYoungTableaux[
  n_?PositiveIntegerQ
 ] :=
 
-Join@@SemiStandardYoungTableaux[p]/@WeakCompositions[Tr@p, n]
+Join @@ SemiStandardYoungTableaux[p] /@ WeakCompositions[Tr @ p, n]
 
 
 SemiStandardYoungTableaux[
@@ -214,18 +212,17 @@ SemiStandardYoungTableaux[
 
 With[
  {
-  mu=ConstantArray[0, First@p],
-  mid=IntegerPartitions[#, {First@p}, Range[0, Length@p]]&/@Most@Accumulate@w,
-  cp=ConjugatePartition@p
+  mu = ConstantArray[0, First @ p],
+  mid = IntegerPartitions[#, {First @ p}, Range[0, Length @ p]]& /@ Most @ Accumulate @ w,
+  cp = ConjugatePartition @ p
  },
  {
-  partitionLevels=Join[{{mu}}, mid, {{cp}}]
+  partitionLevels = Join[{{mu}}, mid, {{cp}}]
  },
  {
-  g=
-  Graph[
-   Join@@Table[
-    Join@@Outer[
+  g = Graph[
+   Join @@ Table[
+    Join @@ Outer[
      If[Min[#2-#1]>=0 && Min[#1[[;;-2]]-#2[[2;;]]]>=0,
       DirectedEdge[{#1, lvl-1}, {#2, lvl}],
       Nothing
@@ -239,7 +236,7 @@ With[
   ]
  },
  {
-  ssytPaths=If[
+  ssytPaths = If[
    Or[
     !MemberQ[VertexList[g], {mu, 1}],
     !MemberQ[VertexList[g], {cp, Length[w]+1}]
@@ -249,8 +246,8 @@ With[
   ]
  },
 
- N@Map[
-  Through[{Keys, Values}[Sort@Counts@#]]&/@pathToSSYT[First/@#]&,
+ N @ Map[
+  Through[{Keys, Values}[Sort @ Counts @ #]]& /@ pathToSSYT[First /@ #]&,
   ssytPaths
  ]
 ];

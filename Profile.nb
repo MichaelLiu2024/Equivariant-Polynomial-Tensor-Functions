@@ -3,7 +3,7 @@
 (*** Wolfram Notebook File ***)
 (* http://www.wolfram.com/nb *)
 
-(* CreatedBy='Wolfram 14.2' *)
+(* CreatedBy = 'Wolfram 14.2' *)
 
 (*CacheID: 234*)
 (* Internal cache information:
@@ -90,7 +90,7 @@ Cell[BoxData[{
      RowBox[{"DeleteDirectory", "::", "nodir"}], "}"}]}], "]"}], 
   ";"}], "\n", 
  RowBox[{
-  RowBox[{"tmp", "=", 
+  RowBox[{"tmp", " = ", 
    RowBox[{"CreateDirectory", "[", 
     RowBox[{"FileNameJoin", "[", 
      RowBox[{"{", 
@@ -102,7 +102,7 @@ Cell[BoxData[{
 
 Cell[BoxData[
  RowBox[{
-  RowBox[{"file", "=", 
+  RowBox[{"file", " = ", 
    RowBox[{
    "File", "[", \
 "\"\<C:\\\\Users\\\\micha\\\\OneDrive\\\\Desktop\\\\Oden\\\\Notes\\\\\
@@ -234,17 +234,17 @@ f049cb040264"],
 
 Cell[BoxData[{
  RowBox[{
-  RowBox[{"\[Lambda]s", "=", 
+  RowBox[{"\[Lambda]s", " = ", 
    RowBox[{"{", 
     RowBox[{"2", ",", "3"}], "}"}]}], ";"}], "\[IndentingNewLine]", 
  RowBox[{
-  RowBox[{"m\[Lambda]s", "=", 
+  RowBox[{"m\[Lambda]s", " = ", 
    RowBox[{"{", 
     RowBox[{"2", ",", "1"}], "}"}]}], ";"}], "\[IndentingNewLine]", 
  RowBox[{
-  RowBox[{"\[Nu]", "=", "0"}], ";"}], "\n", 
+  RowBox[{"\[Nu]", " = ", "0"}], ";"}], "\n", 
  RowBox[{
-  RowBox[{"DMax", "=", "5"}], ";"}]}], "Input",
+  RowBox[{"DMax", " = ", "5"}], ";"}]}], "Input",
  CellChangeTimes->{{3.9811200845240784`*^9, 3.9811200846084747`*^9}, {
   3.981206476118946*^9, 3.9812064928486843`*^9}, {3.9812066911849747`*^9, 
   3.9812067015035496`*^9}, {3.9812073648962326`*^9, 3.9812073655640507`*^9}, {
@@ -258,7 +258,7 @@ Cell[BoxData[{
 
 Cell[BoxData[
  RowBox[{
-  RowBox[{"tree", "=", 
+  RowBox[{"tree", " = ", 
    RowBox[{"IsotypicDataTree", "[", 
     RowBox[{"\[Lambda]s", ",", "m\[Lambda]s", ",", "\[Nu]", ",", "DMax"}], 
     "]"}]}], ";"}]], "Input",
@@ -268,10 +268,10 @@ Cell[BoxData[
 
 Cell[BoxData[
  RowBox[{
-  RowBox[{"bases", "=", 
-   RowBox[{"TreeData", "@", 
-    RowBox[{"Last", "@", 
-     RowBox[{"TreeLeaves", "@", "tree"}]}]}]}], ";"}]], "Input",
+  RowBox[{"bases", " = ", 
+   RowBox[{"TreeData", " @ ", 
+    RowBox[{"Last", " @ ", 
+     RowBox[{"TreeLeaves", " @ ", "tree"}]}]}]}], ";"}]], "Input",
  CellChangeTimes->{{3.9814624802492943`*^9, 3.98146248855686*^9}, {
    3.9814626426632767`*^9, 3.981462658649164*^9}, 3.9814649668208885`*^9, {
    3.981466895277817*^9, 3.981466903226074*^9}, 3.98146792145092*^9},
@@ -304,7 +304,7 @@ Cell[BoxData[
 
 Cell[BoxData[
  RowBox[{
-  RowBox[{"probes", "=", 
+  RowBox[{"probes", " = ", 
    RowBox[{"generateRandomProbes", "[", 
     RowBox[{"\[Lambda]s", ",", "m\[Lambda]s", ",", "100"}], "]"}]}], 
   ";"}]], "Input",
@@ -317,9 +317,9 @@ Cell[BoxData[
  RowBox[{
   RowBox[{
    RowBox[{"{", 
-    RowBox[{"res", ",", "profileData"}], "}"}], "=", 
+    RowBox[{"res", ",", "profileData"}], "}"}], " = ", 
    RowBox[{"ProfileEvaluate", "[", 
-    RowBox[{"Transpose", "@", 
+    RowBox[{"Transpose", " @ ", 
      RowBox[{"MapThread", "[", 
       RowBox[{"EvaluateYoungSymmetrizedTensorTree", ",", 
        RowBox[{"{", 
@@ -361,7 +361,7 @@ In[87]:=",ExpressionUUID->"44b07d47-0ad6-9643-a2b6-79b75976df7e"]
 
 Cell[BoxData[
  RowBox[{
-  RowBox[{"reportData", "=", 
+  RowBox[{"reportData", " = ", 
    RowBox[{"ProfileReport", "[", 
     RowBox[{"ProfileProcess", "[", "profileData", "]"}], "]"}]}], 
   ";"}]], "Input",
@@ -378,17 +378,17 @@ Cell["Profile", "Section",
 
 Cell[BoxData[{
  RowBox[{
-  RowBox[{"\[Lambda]s", "=", 
+  RowBox[{"\[Lambda]s", " = ", 
    RowBox[{"{", 
     RowBox[{"2", ",", "3"}], "}"}]}], ";"}], "\[IndentingNewLine]", 
  RowBox[{
-  RowBox[{"m\[Lambda]s", "=", 
+  RowBox[{"m\[Lambda]s", " = ", 
    RowBox[{"{", 
     RowBox[{"2", ",", "1"}], "}"}]}], ";"}], "\[IndentingNewLine]", 
  RowBox[{
-  RowBox[{"\[Nu]", "=", "0"}], ";"}], "\n", 
+  RowBox[{"\[Nu]", " = ", "0"}], ";"}], "\n", 
  RowBox[{
-  RowBox[{"DMax", "=", "5"}], ";"}]}], "Input",
+  RowBox[{"DMax", " = ", "5"}], ";"}]}], "Input",
  CellChangeTimes->{{3.9811200845240784`*^9, 3.9811200846084747`*^9}, {
    3.981206476118946*^9, 3.9812064928486843`*^9}, {3.9812066911849747`*^9, 
    3.9812067015035496`*^9}, {3.9812073648962326`*^9, 
@@ -404,7 +404,7 @@ Cell[BoxData[
  RowBox[{
   RowBox[{
    RowBox[{"{", 
-    RowBox[{"res", ",", "profileData"}], "}"}], "=", 
+    RowBox[{"res", ",", "profileData"}], "}"}], " = ", 
    RowBox[{"ProfileEvaluate", "[", 
     RowBox[{"AlgebraBasis", "[", 
      RowBox[{"\[Lambda]s", ",", "m\[Lambda]s", ",", "DMax"}], "]"}], "]"}]}], 
@@ -424,7 +424,7 @@ Cell[BoxData[
 
 Cell[BoxData[
  RowBox[{
-  RowBox[{"reportData", "=", 
+  RowBox[{"reportData", " = ", 
    RowBox[{"ProfileReport", "[", 
     RowBox[{"ProfileProcess", "[", "profileData", "]"}], "]"}]}], 
   ";"}]], "Input",

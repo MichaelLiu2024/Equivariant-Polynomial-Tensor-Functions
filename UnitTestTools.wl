@@ -23,8 +23,8 @@ SolidHarmonicR[
 ] /;
 Abs[m] <= l :=
 
-N@With[
- {dpower=If[#2==0,1,#1^#2]&,s=Sign[m],am=Abs[m]},
+N @ With[
+ {dpower = If[#2==0,1,#1^#2]&,s = Sign[m],am = Abs[m]},
 
  (-1)^((1-s)am/2)Sqrt[(l-am)!/(l+am)!]dpower[x+I s y,am]*
  Sum[
@@ -40,10 +40,9 @@ HarmonicTensorCoordinates[
  m_Integer
 ] :=
 
-HarmonicTensorCoordinates[\[Lambda], m] =
-Total@ReplaceAll[
+HarmonicTensorCoordinates[\[Lambda], m] = Total @ ReplaceAll[
  CoefficientRules[SolidHarmonicR[\[Lambda],m,x,y,z],{x,y,z}],
- (powers_->coefficients_):>coefficients*x[Sequence@@Join@@MapThread[ConstantArray,{Range[3],powers}]]
+ (powers_->coefficients_):>coefficients*x[Sequence @@ Join @@ MapThread[ConstantArray,{Range[3],powers}]]
 ]
 
 
@@ -70,7 +69,7 @@ SymmetricTensor[
 ] :=
 
 SymmetrizedArray[
- #->Global`x[\[Lambda]][multiplicity][Sequence@@#]&/@IndependentSymmetricIndices[\[Lambda]],
+ #->Global`x[\[Lambda]][multiplicity][Sequence @@ #]& /@ IndependentSymmetricIndices[\[Lambda]],
  ConstantArray[3,\[Lambda]],
  Symmetric
 ]
@@ -95,23 +94,23 @@ UnitTest[
 
 Module[
  {
-  \[Lambda]s={1,2},m\[Lambda]s={2,2},DMax=4,
+  \[Lambda]s = {1,2},m\[Lambda]s = {2,2},DMax = 4,
   alg,polys,
   v1,v2,a1,a2,\[Epsilon],temp
  },
 
- alg=AlgebraBasis[\[Lambda]s,m\[Lambda]s,DMax];
- polys=Chop@FullSimplify@Flatten@SphericalBasisToMonomialBasis@EvaluateBasis[alg,generateVariables[\[Lambda]s,m\[Lambda]s]];
+ alg = AlgebraBasis[\[Lambda]s,m\[Lambda]s,DMax];
+ polys = Chop @ FullSimplify @ Flatten @ SphericalBasisToMonomialBasis @ EvaluateBasis[alg,generateVariables[\[Lambda]s,m\[Lambda]s]];
 
- v1=SymmetricTensor[1,1];
- v2=SymmetricTensor[1,2];
- a1=SymmetricTensor[2,1];
- a2=SymmetricTensor[2,2];
- \[Epsilon]=LeviCivitaTensor[3];
+ v1 = SymmetricTensor[1,1];
+ v2 = SymmetricTensor[1,2];
+ a1 = SymmetricTensor[2,1];
+ a2 = SymmetricTensor[2,2];
+ \[Epsilon] = LeviCivitaTensor[3];
 
- temp=TensorContract[a1 . a2 . \[Epsilon],{1,2}];
+ temp = TensorContract[a1 . a2 . \[Epsilon],{1,2}];
 
- FullSimplify@Chop@FullSimplify[
+ FullSimplify @ Chop @ FullSimplify[
   1/polys*
   {
    1,(*1*)
