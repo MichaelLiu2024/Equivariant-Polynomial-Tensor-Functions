@@ -3,22 +3,29 @@
 BeginPackage["BooleanTools`"];
 
 
+NonZeroQ
+
+
 PositiveIntegerQ
 NonNegativeIntegerQ
 NonPositiveIntegerQ
 NegativeIntegerQ
+
 
 PositiveIntegersQ
 NonNegativeIntegersQ
 NonPositiveIntegersQ
 NegativeIntegersQ
 
+
 DistinctPositiveIntegersQ
 DistinctNonNegativeIntegersQ
 DistinctNonPositiveIntegersQ
 DistinctNegativeIntegersQ
 
+
 IntegerPartitionQ
+
 
 IntegerPartitionsQ
 
@@ -26,102 +33,49 @@ IntegerPartitionsQ
 Begin["`Private`"];
 
 
-PositiveIntegerQ[
- n_
-] :=
-
-Positive @ n \[And] IntegerQ @ n
+NonZeroQ[n_] := n != 0
 
 
-NonNegativeIntegerQ[
- n_
-] :=
-
-NonNegative @ n \[And] IntegerQ @ n
+PositiveIntegerQ[n_] := Positive @ n \[And] IntegerQ @ n
 
 
-NonPositiveIntegerQ[
- n_
-] :=
-
-NonPositive @ n \[And] IntegerQ @ n
+NonNegativeIntegerQ[n_] := NonNegative @ n \[And] IntegerQ @ n
 
 
-NegativeIntegerQ[
- n_
-] :=
-
-Negative @ n \[And] IntegerQ @ n
+NonPositiveIntegerQ[n_] := NonPositive @ n \[And] IntegerQ @ n
 
 
-PositiveIntegersQ[
- ns_
-] :=
-
-VectorQ[ns, PositiveIntegerQ]
+NegativeIntegerQ[n_] := Negative @ n \[And] IntegerQ @ n
 
 
-NonNegativeIntegersQ[
- ns_
-] :=
-
-VectorQ[ns, NonNegativeIntegerQ]
+PositiveIntegersQ[ns_] := VectorQ[ns, PositiveIntegerQ]
 
 
-NonPositiveIntegersQ[
- ns_
-] :=
-
-VectorQ[ns, NonPositiveIntegerQ]
+NonNegativeIntegersQ[ns_] := VectorQ[ns, NonNegativeIntegerQ]
 
 
-NegativeIntegersQ[
- ns_
-] :=
-
-VectorQ[ns, NegativeIntegerQ]
+NonPositiveIntegersQ[ns_] := VectorQ[ns, NonPositiveIntegerQ]
 
 
-DistinctPositiveIntegersQ[
- ns_
-] :=
-
-DuplicateFreeQ @ ns \[And] PositiveIntegersQ @ ns
+NegativeIntegersQ[ns_] := VectorQ[ns, NegativeIntegerQ]
 
 
-DistinctNonNegativeIntegersQ[
- ns_
-] :=
-
-DuplicateFreeQ @ ns \[And] NonNegativeIntegersQ @ ns
+DistinctPositiveIntegersQ[ns_] := DuplicateFreeQ @ ns \[And] PositiveIntegersQ @ ns
 
 
-DistinctNonPositiveIntegersQ[
- ns_
-] :=
-
-DuplicateFreeQ @ ns \[And] NonPositiveIntegersQ @ ns
+DistinctNonNegativeIntegersQ[ns_] := DuplicateFreeQ @ ns \[And] NonNegativeIntegersQ @ ns
 
 
-DistinctNegativeIntegersQ[
- ns_
-] :=
-
-DuplicateFreeQ @ ns \[And] NegativeIntegersQ @ ns
+DistinctNonPositiveIntegersQ[ns_] := DuplicateFreeQ @ ns \[And] NonPositiveIntegersQ @ ns
 
 
-IntegerPartitionQ[
- p_
-] :=
-
-NonNegativeIntegersQ @ p \[And] NonPositiveIntegersQ @ Differences @ p
+DistinctNegativeIntegersQ[ns_] := DuplicateFreeQ @ ns \[And] NegativeIntegersQ @ ns
 
 
-IntegerPartitionsQ[
- ps_
-] :=
+IntegerPartitionQ[p_] := NonNegativeIntegersQ @ p \[And] NonPositiveIntegersQ @ Differences @ p
 
-ListQ @ ps \[And] AllTrue[ps, IntegerPartitionQ]
+
+IntegerPartitionsQ[ps_] := ListQ @ ps \[And] AllTrue[ps, IntegerPartitionQ]
 
 
 End[];
