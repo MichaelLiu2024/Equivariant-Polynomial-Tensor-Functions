@@ -68,9 +68,7 @@ EvaluateAntisymmetrizedTensorTree[tensorTrees_Association,vectors_List]:=
  ]
 
 
-(*check that powers is weakly increasing and numerical*)
-SymmetrizedMonomialCP[powers_List]/;
- VectorQ[powers,Positive]:=
+SymmetrizedMonomialCP[powers_List] :=
   SymmetrizedMonomialCP[powers]=
    With[
     {ds=ReplacePart[powers,1->0]},
@@ -108,10 +106,10 @@ PartiallySymmetrizedMonomialCP[variables_List,SSYT_List]:=
  ]
 
 
+EvaluateYoungSymmetrizedTensorTree[tensorTrees_Association,{{}},variables_List]:=ConstantArray[{{{1}}},Length@variables]
+
+
 EvaluateYoungSymmetrizedTensorTree[tensorTrees_Association,SSYTs_List,variables_List]:=
- If[
-  SSYTs=={{}},
-  ConstantArray[{{{1}}},Length@variables],
   With[
    {
     (*variables; SSYTs; globalCoefficient, localCoefficientsVariables*)
@@ -125,12 +123,19 @@ EvaluateYoungSymmetrizedTensorTree[tensorTrees_Association,SSYTs_List,variables_
    Object:  vector
    *)
    Map[
-    Times@@#[[1]]*IteratedSum[Times@@(First/@{##})*EvaluateAntisymmetrizedTensorTree[tensorTrees,Last/@{##}]&,#[[2]]]&,
+    Times@@#[[1]]*
+     Total[
+      Outer[
+       Times@@(First/@{##})*EvaluateAntisymmetrizedTensorTree[tensorTrees,Last/@{##}]&,
+       Sequence@@#[[2]],
+       1
+      ],
+      Length@#[[2]]
+     ]&,
     CPData,
     {2}
    ]
   ]
- ]
 
 
 End[];

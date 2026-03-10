@@ -17,11 +17,11 @@ Begin["`Private`"];
 
 
 (*helper function that converts the index \[Alpha] to the corresponding spin \[Gamma]*)
-indicesToPaths[\[Gamma]_Integer?NonNegative,{\[Lambda]_Integer?NonNegative,\[Alpha]_Integer?NonNegative}]:=Abs[\[Gamma]-\[Lambda]]+\[Alpha]-1
+indicesToPaths[\[Gamma]_?NonNegativeIntegerQ,{\[Lambda]_?NonNegativeIntegerQ,\[Alpha]_?NonNegativeIntegerQ}]:=Abs[\[Gamma]-\[Lambda]]+\[Alpha]-1
 
 
 ClebschGordanTensor::usage="gives the elementary Clebsch-Gordan tensor coupling \[Lambda]1 and \[Lambda]2 to \[Lambda]3."
-ClebschGordanTensor[\[Lambda]1_Integer?NonNegative,\[Lambda]2_Integer?NonNegative,\[Lambda]3_Integer?NonNegative]:=
+ClebschGordanTensor[\[Lambda]1_?NonNegativeIntegerQ,\[Lambda]2_?NonNegativeIntegerQ,\[Lambda]3_?NonNegativeIntegerQ]:=
  ClebschGordanTensor[\[Lambda]1,\[Lambda]2,\[Lambda]3]=
   Developer`ToPackedArray@Normal@SparseArray[
    Join@@Table[
@@ -34,30 +34,26 @@ ClebschGordanTensor[\[Lambda]1_Integer?NonNegative,\[Lambda]2_Integer?NonNegativ
  ]
 
 
-(*add checking functions ValidPathQ[\[Lambda]1,\[Lambda]2,\[Lambda]3] for above*)
-(**)
-
-
-ValidPathQ[\[Lambda]s_List,\[Gamma]s_List]:=
- VectorQ[\[Lambda]s,NonNegativeIntegerQ]\[And]
- VectorQ[\[Gamma]s,NonNegativeIntegerQ]\[And]
- Length@\[Lambda]s==Length@\[Gamma]s\[And]
- First@\[Lambda]s==First@\[Gamma]s\[And]
- If[Length@\[Lambda]s>=2,Abs[ListConvolve[{1,-1},\[Gamma]s]]\[VectorLessEqual]Rest[\[Lambda]s]\[VectorLessEqual]ListConvolve[{1,1},\[Gamma]s],True]
-
-
 ClebschGordanTensorTrain::usage="gives the tensor train representation of the Clebsch-Gordan tensor CG(\[Lambda]s,\[Gamma]s)."
-ClebschGordanTensorTrain[\[Lambda]s_List?VectorQ][\[Gamma]s_List?VectorQ]:=ClebschGordanTensorTrain[\[Lambda]s,\[Gamma]s]
-ClebschGordanTensorTrain[\[Lambda]s_List?VectorQ,\[Gamma]s_List?VectorQ]/;ValidPathQ[\[Lambda]s,\[Gamma]s]:=
- If[
-  Length@\[Lambda]s==1,
-  {1},
-  MapThread[ClebschGordanTensor,{Most[\[Gamma]s],Rest[\[Lambda]s],Rest[\[Gamma]s]}]
- ]
+
+
+ClebschGordanTensorTrain[\[Lambda]s_?NonNegativeIntegersQ][\[Gamma]s_?NonNegativeIntegersQ]:=ClebschGordanTensorTrain[\[Lambda]s,\[Gamma]s]
+
+
+ClebschGordanTensorTrain[{\[Lambda]_?NonNegativeIntegerQ},{\[Gamma]_?NonNegativeIntegerQ}]:={1}
+
+
+ClebschGordanTensorTrain[
+ \[Lambda]s_?NonNegativeIntegersQ,
+ \[Gamma]s_?NonNegativeIntegersQ
+] /; Length@\[Lambda]s==Length@\[Gamma]s \[And] First@\[Lambda]s==First@\[Gamma]s \[And] If[Length@\[Lambda]s>=2,Abs[ListConvolve[{1,-1},\[Gamma]s]]\[VectorLessEqual]Rest[\[Lambda]s]\[VectorLessEqual]ListConvolve[{1,1},\[Gamma]s],True] :=
+ MapThread[ClebschGordanTensor,{Most[\[Gamma]s],Rest[\[Lambda]s],Rest[\[Gamma]s]}]
 
 
 PathBasisTensorProduct::usage="gives a list of all Clebsch-Gordan paths from \[Mu] to the tensor product of the \[Lambda]s."
-PathBasisTensorProduct[\[Lambda]s_List?VectorQ,\[Mu]_Integer?NonNegative]:=
+
+
+PathBasisTensorProduct[\[Lambda]s_?NonNegativeIntegersQ,\[Mu]_?NonNegativeIntegerQ]:=
  SortBy[
   Map[
    Function[indices,FoldList[indicesToPaths,First[\[Lambda]s],Transpose[{Rest[\[Lambda]s],indices}]]],
@@ -71,7 +67,7 @@ PathBasisTensorProduct[\[Lambda]s_List?VectorQ,\[Mu]_Integer?NonNegative]:=
 (*Public Functions*)
 
 
-TensorTrainBasisTensorProduct[\[Lambda]s_List?VectorQ,\[Mu]_Integer?NonNegative]:=ClebschGordanTensorTrain[\[Lambda]s]/@PathBasisTensorProduct[\[Lambda]s,\[Mu]]
+TensorTrainBasisTensorProduct[\[Lambda]s_?NonNegativeIntegersQ,\[Mu]_?NonNegativeIntegerQ]:=ClebschGordanTensorTrain[\[Lambda]s]/@PathBasisTensorProduct[\[Lambda]s,\[Mu]]
 
 
 (*add input checks below for evenness/oddness of \[Gamma]2!*)
@@ -79,7 +75,7 @@ TensorTrainBasisTensorProduct[\[Lambda]s_List?VectorQ,\[Mu]_Integer?NonNegative]
 
 TensorTrainBasisExteriorPower::usage="gives a list of all Clebsch-Gordan paths from \[Mu] to the d-fold exterior power of \[Lambda]."
 SetAttributes[TensorTrainBasisExteriorPower,Listable]
-TensorTrainBasisExteriorPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegative,\[Mu]_Integer?NonNegative]/;
+TensorTrainBasisExteriorPower[\[Lambda]_?NonNegativeIntegerQ,d_?NonNegativeIntegerQ,\[Mu]_?NonNegativeIntegerQ]/;
  d<=3:=
   Switch[
    d,
@@ -91,8 +87,8 @@ TensorTrainBasisExteriorPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegativ
 
 TensorTrainBasisSymmetricPower::usage="gives a list of all Clebsch-Gordan paths from \[Mu] to the d-fold symmetric power of \[Lambda]."
 SetAttributes[TensorTrainBasisSymmetricPower,Listable]
-TensorTrainBasisSymmetricPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegative,\[Mu]_Integer?NonNegative]/;
- d<=3:=
+TensorTrainBasisSymmetricPower[\[Lambda]_?NonNegativeIntegerQ,d_?NonNegativeIntegerQ,\[Mu]_?NonNegativeIntegerQ]/;
+ d<=3 \[And] {\[Lambda],d,\[Mu]}!={3,3,3}:=
   Switch[
    d,
    1,{{1}},
@@ -101,7 +97,7 @@ TensorTrainBasisSymmetricPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegati
   ]
 
 
-TensorTrainBasisSymmetricPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegative,\[Mu]_Integer?NonNegative]/;d>=4:=
+TensorTrainBasisSymmetricPower[\[Lambda]_?NonNegativeIntegerQ,d_?NonNegativeIntegerQ,\[Mu]_?NonNegativeIntegerQ]/;d>=4\[Or]{\[Lambda],d,\[Mu]}=={3,3,3}:=
  Module[
   {
   interiorPaths,
@@ -118,7 +114,7 @@ TensorTrainBasisSymmetricPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegati
   
   interiorTensorTrains=ClebschGordanTensorTrain[ConstantArray[\[Lambda],d]]/@interiorPaths;
   
-  interiorRandomProbes=RandomReal[1,{Ceiling[1.1*Length@interiorPaths/(2\[Mu]+1)],2\[Lambda]+1}];
+  interiorRandomProbes=Exp[I RandomReal[2\[Pi],{Ceiling[Length@interiorPaths/(2\[Mu]+1)],2\[Lambda]+1}]];
   
   syndromeMatrix=
     Flatten[
@@ -132,16 +128,34 @@ TensorTrainBasisSymmetricPower[\[Lambda]_Integer?NonNegative,d_Integer?NonNegati
 
 (*these expensive functions need to be memoized when we are sure they work, since they are evaluated multiple times*)
 TensorTreeBasisSchurPower::usage="gives a list of all Clebsch-Gordan paths from \[Mu] to the image of the Young symmetrizer p on \[Lambda]."
-TensorTreeBasisSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_Integer?NonNegative]:=
- With[
-  {d=Total@p},
-  Switch[
-   Length@p,
-   0,<|"interiorTensorTrains"->{{1}},"leafObjects"->{{1}}|>,
-   1,<|"interiorTensorTrains"->({1}&/@#),"leafObjects"->List/@#|>&@TensorTrainBasisExteriorPower[\[Lambda],d,\[Mu]],
-   d,<|"interiorTensorTrains"->#,"leafObjects"->(ConstantArray[{1},d]&/@#)|>&@TensorTrainBasisSymmetricPower[\[Lambda],d,\[Mu]],
-   _,
-   Module[
+
+
+TensorTreeBasisSchurPower[
+ \[Lambda]_?NonNegativeIntegerQ,
+ {},
+ \[Mu]_?NonNegativeIntegerQ
+] :=
+ <|"interiorTensorTrains"->{{1}},"leafObjects"->{{1}}|>
+
+
+TensorTreeBasisSchurPower[
+ \[Lambda]_?NonNegativeIntegerQ,
+ {d_?PositiveIntegerQ},
+ \[Mu]_?NonNegativeIntegerQ
+] :=
+ <|"interiorTensorTrains"->({1}&/@#),"leafObjects"->List/@#|>&@TensorTrainBasisExteriorPower[\[Lambda],d,\[Mu]]
+
+
+TensorTreeBasisSchurPower[
+ \[Lambda]_?NonNegativeIntegerQ,
+ p_?IntegerPartitionQ,
+ \[Mu]_?NonNegativeIntegerQ
+] /; First @ p == 1 :=
+ <|"interiorTensorTrains"->#,"leafObjects"->(ConstantArray[{1},Length @ p]&/@#)|>&@TensorTrainBasisSymmetricPower[\[Lambda],Length @ p,\[Mu]]
+
+
+TensorTreeBasisSchurPower[\[Lambda]_?NonNegativeIntegerQ,p_?IntegerPartitionQ,\[Mu]_?NonNegativeIntegerQ]:=
+  Module[
     {
      interiorSpins,
      interiorTensorTrains,
@@ -185,7 +199,7 @@ TensorTreeBasisSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_Int
     tempDimensions=interiorDimensions*MapApply[Times,leafDimensions];
     
     (*random probe; multiplicity; random vector*)
-    leafRandomProbes=RandomReal[1,{Ceiling[1.1*Total[tempDimensions]/(2\[Mu]+1)],First@p,2\[Lambda]+1}];
+    leafRandomProbes=Exp[I RandomReal[2\[Pi],{Ceiling[Total@tempDimensions/(2\[Mu]+1)],First@p,2\[Lambda]+1}]];
     (*
     Level 1: interiorSpins
     Level 2: part of partition
@@ -239,8 +253,6 @@ TensorTreeBasisSchurPower[\[Lambda]_Integer?NonNegative,p_List?VectorQ,\[Mu]_Int
      "leafObjects"->MapThread[MapThread[Part,{leafTensorTrains[[#1]],Rest@#2}]&,{interiorSpinsIndices,tensorTrainIndices}]
     |>
    ]
-  ]
- ]
 
 
 End[];

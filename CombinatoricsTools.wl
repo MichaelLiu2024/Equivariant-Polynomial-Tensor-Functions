@@ -3,14 +3,20 @@
 BeginPackage["CombinatoricsTools`", {"BooleanTools`"}];
 
 
+algebraDimensions
+moduleDimensions
+spaceDimensions
+
+
+RowKroneckerProduct
+RowJoin
+
+
 RaggedMultiIndex
 ArrayMultiIndex
 
 
 PivotColumns (*https://resources.wolframcloud.com/FunctionRepository/resources/PivotColumns/*)
-
-
-IteratedSum
 
 
 WeakCompositions
@@ -27,6 +33,47 @@ Begin["`Private`"];
 
 (* ::Subsubsection:: *)
 (*Public Functions*)
+
+
+spaceDimensions[VectorSpaceBasis_List] :=
+ Total /@ Map[Times @@ #[["dimensions"]]&, VectorSpaceBasis, {2}]
+
+
+algebraDimensions[invariantBasis_List] :=
+ With[
+  {invariantDims = spaceDimensions[invariantBasis]},
+     Table[
+      Sum[
+       invariantDims[[i]]*invariantDims[[d + 1 - i]],
+       {i, Ceiling[d/2], 1, -1}
+      ],
+      {d, 1, Length @ invariantBasis}
+     ]
+ ]
+
+
+moduleDimensions[
+ \[Nu]_?NonNegativeIntegerQ,
+ invariantBasis_List,
+ covariantBasis_List
+] := ListConvolve[spaceDimensions[invariantBasis], spaceDimensions[covariantBasis], 1, 0]/(2 \[Nu] + 1)
+
+
+RowKroneckerProduct[m1_List ? ArrayQ, {{{}}}] := {{}}
+RowKroneckerProduct[{{{}}}, m2_List ? ArrayQ] := {{}}
+
+
+RowKroneckerProduct[
+ m1_?ArrayQ,
+ m2_?ArrayQ
+] /; Length @ m1 == Length @ m2 && Depth @ m1 == 4 == Depth @ m2 :=
+ Flatten[
+  MapThread[KroneckerProduct, {m1, m2}],
+  {{1, 3}, {2}}
+ ]
+
+
+RowJoin[ms__] := Join[ms, 2]
 
 
 RaggedMultiIndex[
@@ -56,17 +103,7 @@ ArrayMultiIndex[
 
 
 PivotColumns[matrix_?MatrixQ] :=
- Position[#, _?NonZeroQ, {1}, 1, Heads -> False] & /@ RowReduce[matrix, Tolerance -> 10^-10] // Flatten
-
-
-IteratedSum[
- f_,
- ls_List
-] := 
- With[
-  {vars = Unique @ x & /@ ls},
-  Sum[f @@ vars, Evaluate[Sequence @@ Transpose @ {vars, ls}]]
- ]
+ Position[#, _?NonZeroQ, {1}, 1, Heads -> False] & /@ RowReduce[matrix, Tolerance -> 10^-12] // Flatten
 
 
 WeakCompositions::usage = "gives a list of all weak integer compositions of D into n parts."
@@ -125,7 +162,7 @@ SchurS[
  q_Symbol,
  \[Lambda]_?NonNegativeIntegerQ
 ] := 
- q^(MacdonaldN @ p-\[Lambda]*Total @ p)*Times @@ ((1-q^(2\[Lambda]+1+Contents @ p))/(1-q^HookLengths @ p))
+ q^(MacdonaldN @ p - \[Lambda] * Total @ p) * Times @@ ((1-q^(2\[Lambda]+1+Contents @ p))/(1-q^HookLengths @ p))
 
 
 SemiStandardYoungTableaux::usage = "gives a list of all semistandard Young tableaux of shape p with largest entry n."
@@ -182,10 +219,13 @@ SemiStandardYoungTableaux[
     ]
   },
   {
+   vertices = VertexList @ g
+  },
+  {
    ssytPaths = If[
     Or[
-     !MemberQ[VertexList[g], {mu, 1}],
-     !MemberQ[VertexList[g], {cp, Length[w]+1}]
+     !MemberQ[vertices, {mu, 1}],
+     !MemberQ[vertices, {cp, Length[w]+1}]
     ],
     {},
     FindPath[g, {mu, 1}, {cp, Length[w]+1}, Infinity, All]
