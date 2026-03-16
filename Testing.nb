@@ -1,0 +1,1097 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Wolfram 14.3' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       154,          7]
+NotebookDataLength[     42848,       1089]
+NotebookOptionsPosition[     36622,        986]
+NotebookOutlinePosition[     37057,       1003]
+CellTagsIndexPosition[     37014,       1000]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+Cell[BoxData["Quit"], "Input",
+ CellChangeTimes->{{3.9822505789907703`*^9, 3.9822505792096004`*^9}},
+ CellLabel->"In[22]:=",ExpressionUUID->"095a3976-b049-1445-884e-346892a808c8"],
+
+Cell[CellGroupData[{
+
+Cell["To do", "Section",
+ CellChangeTimes->{{3.9822505262226143`*^9, 
+  3.9822505314514236`*^9}},ExpressionUUID->"497f80e2-6784-1f4e-bf54-\
+a11682890d3f"],
+
+Cell[BoxData[
+ RowBox[{
+  RowBox[{"SeparableOuter", "[", 
+   RowBox[{"fs_List", ",", "args_List"}], "]"}], ":=", 
+  RowBox[{"Fold", "[", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"Outer", "[", 
+      RowBox[{
+       RowBox[{"#2", "[", 
+        RowBox[{"[", "1", "]"}], "]"}], ",", 
+       RowBox[{"#2", "[", 
+        RowBox[{"[", "2", "]"}], "]"}], ",", "#1"}], "]"}], "&"}], ",", 
+    RowBox[{
+     RowBox[{"(", 
+      RowBox[{"Last", "@", "fs"}], ")"}], "/@", 
+     RowBox[{"(", 
+      RowBox[{"Last", "@", "args"}], ")"}]}], ",", 
+    RowBox[{"Reverse", "@", 
+     RowBox[{"Most", "@", 
+      RowBox[{"Transpose", "@", 
+       RowBox[{"{", 
+        RowBox[{"fs", ",", "args"}], "}"}]}]}]}]}], "]"}]}]], "Input",
+ CellChangeTimes->{{3.981809430732563*^9, 3.981809507480715*^9}, {
+  3.9818096120757847`*^9, 3.981809644578459*^9}, {3.981809860458624*^9, 
+  3.9818099336988964`*^9}},
+ CellLabel->"In[14]:=",ExpressionUUID->"e9e33918-67bf-3244-aeba-840cdc893b83"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Initialization", "Section",
+ CellChangeTimes->{{3.982250521400362*^9, 
+  3.9822505230087986`*^9}},ExpressionUUID->"ec85ada9-d66d-ae4d-8612-\
+3fe5b849548a"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"AppendTo", "[", "\[IndentingNewLine]", 
+   RowBox[{
+   "$Path", ",", 
+    "\[IndentingNewLine]", "\"\<C:\\\\Users\\\\micha\\\\OneDrive\\\\Desktop\\\
+\\Oden\\\\Notes\\\\Equivariant-Polynomial-Tensor-Functions-main\\\\\
+Equivariant-Polynomial-Tensor-Functions-main\>\""}], "\[IndentingNewLine]", 
+   "]"}], ";"}], "\n", 
+ RowBox[{"Needs", "[", "\"\<UnitTestTools`\>\"", "]"}]}], "Input",
+ CellChangeTimes->{{3.973004477861143*^9, 3.9730044898368607`*^9}, {
+   3.980960392995924*^9, 3.980960405537071*^9}, 3.98111779538348*^9, {
+   3.981120110041916*^9, 3.9811201167436104`*^9}, {3.9822505712921333`*^9, 
+   3.9822505714087257`*^9}},
+ CellLabel->"In[1]:=",ExpressionUUID->"80e72094-68e1-a344-b0ef-1d8310acc3f9"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Examples", "Section",
+ CellChangeTimes->{{3.982250536584507*^9, 
+  3.9822505454183655`*^9}},ExpressionUUID->"aeaa2427-4591-3b41-82ee-\
+803c0f0fa4ac"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"\[Lambda]s", "=", 
+   RowBox[{"{", 
+    RowBox[{"1", ",", "3"}], "}"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"m\[Lambda]s", "=", 
+   RowBox[{"{", 
+    RowBox[{"1", ",", "1"}], "}"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"\[Nu]", "=", "0"}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"DMax", "=", "7"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"Benchmark", "[", 
+  RowBox[{"\[Lambda]s", ",", "m\[Lambda]s", ",", "\[Nu]", ",", "DMax"}], 
+  "]"}]}], "Input",
+ CellChangeTimes->{{3.9811200845240784`*^9, 3.9811200846084747`*^9}, {
+   3.981206476118946*^9, 3.9812064928486843`*^9}, {3.9812066911849747`*^9, 
+   3.9812067015035496`*^9}, {3.9812073648962326`*^9, 
+   3.9812073655640507`*^9}, {3.9812075406239376`*^9, 3.981207540709841*^9}, {
+   3.9812078691890907`*^9, 3.9812078692338066`*^9}, {3.981207978798773*^9, 
+   3.9812079789191093`*^9}, {3.981208292680195*^9, 3.981208292759489*^9}, {
+   3.9812092011622543`*^9, 3.981209201344389*^9}, {3.9812107857653484`*^9, 
+   3.981210791106453*^9}, {3.981215415519022*^9, 3.981215415560543*^9}, {
+   3.98121690443762*^9, 3.9812169045492687`*^9}, {3.981228077105055*^9, 
+   3.981228077203247*^9}, {3.9812283503216705`*^9, 3.9812283504152946`*^9}, {
+   3.9812317171873302`*^9, 3.9812317173619537`*^9}, {3.9812317560908184`*^9, 
+   3.981231781148636*^9}, {3.9812358586547794`*^9, 3.9812358596501064`*^9}, {
+   3.981238712109354*^9, 3.981238712307226*^9}, {3.9812390325865383`*^9, 
+   3.981239032667116*^9}, {3.981240985290724*^9, 3.9812409854602375`*^9}, {
+   3.9814773148599625`*^9, 3.981477314924509*^9}, {3.9817341770484505`*^9, 
+   3.9817341771495132`*^9}, {3.981734307531296*^9, 3.981734307606308*^9}, {
+   3.981734483348896*^9, 3.981734483458498*^9}, {3.9818121695243874`*^9, 
+   3.981812169613283*^9}, {3.9818140575646343`*^9, 3.981814057932579*^9}, {
+   3.9818140935475273`*^9, 3.9818141154275494`*^9}, {3.9818147302255497`*^9, 
+   3.981814767542343*^9}, {3.9818152074916134`*^9, 3.9818152075711*^9}, {
+   3.9818164816703396`*^9, 3.981816481827196*^9}, {3.981816655963785*^9, 
+   3.9818166561348248`*^9}, {3.981819395217573*^9, 3.981819395323805*^9}, {
+   3.9818194409997253`*^9, 3.981819441111332*^9}, {3.9818210778995*^9, 
+   3.9818210780115986`*^9}, {3.9818924555795784`*^9, 3.981892474776663*^9}, {
+   3.9819033333758087`*^9, 3.981903333503866*^9}, 3.9819070996005764`*^9, {
+   3.981907178182867*^9, 3.9819071782972393`*^9}, {3.981907505686508*^9, 
+   3.981907505754963*^9}, {3.981975244016016*^9, 3.9819752443408318`*^9}, {
+   3.9821004314265575`*^9, 3.9821004316679*^9}, {3.982155930452873*^9, 
+   3.9821559456383076`*^9}, {3.9821562493839207`*^9, 3.982156249586014*^9}, {
+   3.982156309919018*^9, 3.9821563634936485`*^9}},
+ CellLabel->"In[3]:=",ExpressionUUID->"26d9a6f8-3543-3a4b-ab77-beaa3d8bc605"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Computed number of candidate algebra generators by degree: \
+\"\>", "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{
+    "1", ",", "0", ",", "2", ",", "0", ",", "7", ",", "0", ",", "17", ",", 
+     "3"}], "}"}]}],
+  SequenceForm[
+  "Computed number of candidate algebra generators by degree: ", {1, 0, 2, 0, 
+   7, 0, 17, 3}],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.982156365729578*^9, 3.9821565989263287`*^9, 
+  3.982157008307743*^9, 3.9821572349447384`*^9, 3.9821598637288513`*^9, 
+  3.982161596706087*^9, 3.982236168526499*^9, 3.9822505982479115`*^9},
+ CellLabel->
+  "During evaluation of \
+In[3]:=",ExpressionUUID->"ed2f4b90-c0f6-0c4d-9989-701836628b44"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Actual number of candidate algebra generators by degree: \"\>",
+    "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{
+    "1", ",", "0", ",", "2", ",", "0", ",", "7", ",", "0", ",", "17", ",", 
+     "3"}], "}"}]}],
+  SequenceForm[
+  "Actual number of candidate algebra generators by degree: ", {1, 0, 2, 0, 7,
+    0, 17, 3}],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.982156365729578*^9, 3.9821565989263287`*^9, 
+  3.982157008307743*^9, 3.9821572349447384`*^9, 3.9821598637288513`*^9, 
+  3.982161596706087*^9, 3.982236168526499*^9, 3.9822505989421864`*^9},
+ CellLabel->
+  "During evaluation of \
+In[3]:=",ExpressionUUID->"b9eebe68-3c74-f74f-a3c0-b2004ae41bfa"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Total time to compute candidate algebra generators: \"\>", "\[InvisibleSpace]",
+    "5.8781434`"}],
+  SequenceForm[
+  "Total time to compute candidate algebra generators: ", 5.8781434],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.982156365729578*^9, 3.9821565989263287`*^9, 
+  3.982157008307743*^9, 3.9821572349447384`*^9, 3.9821598637288513`*^9, 
+  3.982161596706087*^9, 3.982236168526499*^9, 3.982250598949648*^9},
+ CellLabel->
+  "During evaluation of \
+In[3]:=",ExpressionUUID->"c2524689-9335-494d-9349-db10ee7a8464"],
+
+Cell[BoxData["\<\"\"\>"], "Print",
+ CellChangeTimes->{3.982156365729578*^9, 3.9821565989263287`*^9, 
+  3.982157008307743*^9, 3.9821572349447384`*^9, 3.9821598637288513`*^9, 
+  3.982161596706087*^9, 3.982236168526499*^9, 3.9822505989516506`*^9},
+ CellLabel->
+  "During evaluation of \
+In[3]:=",ExpressionUUID->"cd1ccba1-e47e-a84f-a505-20d3636d05b3"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Computed number of independent algebra generators by degree: \
+\"\>", "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{
+    "1", ",", "0", ",", "2", ",", "0", ",", "4", ",", "0", ",", "5", ",", 
+     "3"}], "}"}]}],
+  SequenceForm[
+  "Computed number of independent algebra generators by degree: ", {1, 0, 2, 
+   0, 4, 0, 5, 3}],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.982156365729578*^9, 3.9821565989263287`*^9, 
+  3.982157008307743*^9, 3.9821572349447384`*^9, 3.9821598637288513`*^9, 
+  3.982161596706087*^9, 3.982236168526499*^9, 3.9822505989536552`*^9},
+ CellLabel->
+  "During evaluation of \
+In[3]:=",ExpressionUUID->"1766bcc6-a516-f744-991f-137ecd094597"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Actual number of independent algebra generators by degree: \
+\"\>", "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{
+    "0", ",", "0", ",", "0", ",", "0", ",", "0", ",", "0", ",", "0", ",", 
+     "0"}], "}"}]}],
+  SequenceForm[
+  "Actual number of independent algebra generators by degree: ", {0, 0, 0, 0, 
+   0, 0, 0, 0}],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.982156365729578*^9, 3.9821565989263287`*^9, 
+  3.982157008307743*^9, 3.9821572349447384`*^9, 3.9821598637288513`*^9, 
+  3.982161596706087*^9, 3.982236168526499*^9, 3.982250598956663*^9},
+ CellLabel->
+  "During evaluation of \
+In[3]:=",ExpressionUUID->"bacd7971-5cfa-034f-89bf-1d106ea78b6d"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Total time to compute independent algebra generators: \"\>", "\[InvisibleSpace]",
+    "0.2048448`"}],
+  SequenceForm[
+  "Total time to compute independent algebra generators: ", 0.2048448],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.982156365729578*^9, 3.9821565989263287`*^9, 
+  3.982157008307743*^9, 3.9821572349447384`*^9, 3.9821598637288513`*^9, 
+  3.982161596706087*^9, 3.982236168526499*^9, 3.9822505989586697`*^9},
+ CellLabel->
+  "During evaluation of \
+In[3]:=",ExpressionUUID->"32996ba6-e899-6c4f-bc56-2a0a0c582dc8"],
+
+Cell[BoxData["\<\"\"\>"], "Print",
+ CellChangeTimes->{3.982156365729578*^9, 3.9821565989263287`*^9, 
+  3.982157008307743*^9, 3.9821572349447384`*^9, 3.9821598637288513`*^9, 
+  3.982161596706087*^9, 3.982236168526499*^9, 3.9822505989606724`*^9},
+ CellLabel->
+  "During evaluation of \
+In[3]:=",ExpressionUUID->"c36ff477-5681-b64b-9a5c-6ac5dae2f1ed"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"\[Lambda]s", "=", 
+   RowBox[{"{", 
+    RowBox[{"2", ",", "3"}], "}"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"m\[Lambda]s", "=", 
+   RowBox[{"{", 
+    RowBox[{"1", ",", "1"}], "}"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"\[Nu]", "=", "0"}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"DMax", "=", "7"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"Benchmark", "[", 
+  RowBox[{"\[Lambda]s", ",", "m\[Lambda]s", ",", "\[Nu]", ",", "DMax"}], 
+  "]"}]}], "Input",
+ CellChangeTimes->CompressedData["
+1:eJwl0F9IUwEUBvBLbaFgpf0BewgTFadFqCmzMHAUFVNBag/TJg5J0TWzmA+K
+k+gfBK61ta1GXuFCpTRXrLil1B6WTBuhw+SSUS+jHhykOC2qB1ud7/Rw+PGd
+h8PHyW/rOd2+SRCEUhpYO+3Stz1e0Ul9HrYzfq3fQVo1wwOw8Vu7F+7aG/LB
+1BMxCeWs52z9L08aqibushlbR4tvkcaBMdZxu6mKc1cLq4n6TDDc4GfLyovi
+sEa9nw0PVnudZHbnV1YZTn1wkb9X19gNYZvbTYqenP+aHqjvkcKVUXZf3bti
+mKufY8X0o1k/9r5xdmPp6nsovXmowB/fDQv3yeBcL6tc3qwVyVklk12O7miF
+qqbdrNhQcmaEPP7qIDt//exkdmBF5/W1sElHfqGTnI8VsmbhUiVMdNhYTel5
+PVQFL7Cxt2WHZWTpEGvPqSh6QYYWj7LGG89KoP1p9wEoa0/2w0Tz2iCsf70q
+w94T66zVVmV4SZ7rO8IaFtNd0N6oskDTz47IRAB/s7CRP3kzMMNVwMqx8J1J
+9GmNsMmhdetn3P1k7IHSlmA4QQbzQuyy1ub5QipTI354MVCwUDtO/S3NrHnp
+5l94qvqYoCPFj069iUxFt9dBSe3qhuYhN1s5ttMGa+J72H8MTXIr
+  "],
+ CellLabel->"In[9]:=",ExpressionUUID->"a3f77617-f556-f040-899a-338675cd8e85"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Computed number of candidate algebra generators by degree: \
+\"\>", "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{
+    "1", ",", "0", ",", "2", ",", "2", ",", "7", ",", "8", ",", "24", ",", 
+     "31"}], "}"}]}],
+  SequenceForm[
+  "Computed number of candidate algebra generators by degree: ", {1, 0, 2, 2, 
+   7, 8, 24, 31}],
+  Editable->False]], "Print",
+ CellChangeTimes->{{3.982156685140608*^9, 3.982156709162239*^9}, 
+   3.9821570418053303`*^9, 3.9821572412839317`*^9, 3.982161609869911*^9, 
+   3.9822361791743183`*^9},
+ CellLabel->
+  "During evaluation of \
+In[9]:=",ExpressionUUID->"c4996baa-6162-4b4d-802d-6d1eeb4b9cfd"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Actual number of candidate algebra generators by degree: \"\>",
+    "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{
+    "1", ",", "0", ",", "2", ",", "2", ",", "7", ",", "8", ",", "24", ",", 
+     "31"}], "}"}]}],
+  SequenceForm[
+  "Actual number of candidate algebra generators by degree: ", {1, 0, 2, 2, 7,
+    8, 24, 31}],
+  Editable->False]], "Print",
+ CellChangeTimes->{{3.982156685140608*^9, 3.982156709162239*^9}, 
+   3.9821570418053303`*^9, 3.9821572412839317`*^9, 3.982161609869911*^9, 
+   3.9822361796214714`*^9},
+ CellLabel->
+  "During evaluation of \
+In[9]:=",ExpressionUUID->"c0675d86-cd3f-db49-ac76-608153631e6c"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Total time to compute candidate algebra generators: \"\>", "\[InvisibleSpace]",
+    "5.6943649`"}],
+  SequenceForm[
+  "Total time to compute candidate algebra generators: ", 5.6943649],
+  Editable->False]], "Print",
+ CellChangeTimes->{{3.982156685140608*^9, 3.982156709162239*^9}, 
+   3.9821570418053303`*^9, 3.9821572412839317`*^9, 3.982161609869911*^9, 
+   3.9822361796331825`*^9},
+ CellLabel->
+  "During evaluation of \
+In[9]:=",ExpressionUUID->"754e9fd5-079b-0941-b0a3-17aa113640ad"],
+
+Cell[BoxData["\<\"\"\>"], "Print",
+ CellChangeTimes->{{3.982156685140608*^9, 3.982156709162239*^9}, 
+   3.9821570418053303`*^9, 3.9821572412839317`*^9, 3.982161609869911*^9, 
+   3.9822361796331825`*^9},
+ CellLabel->
+  "During evaluation of \
+In[9]:=",ExpressionUUID->"e74fc889-02bb-6645-bf9f-31900ca5e636"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Computed number of independent algebra generators by degree: \
+\"\>", "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{
+    "1", ",", "0", ",", "2", ",", "2", ",", "4", ",", "4", ",", "9", ",", 
+     "9"}], "}"}]}],
+  SequenceForm[
+  "Computed number of independent algebra generators by degree: ", {1, 0, 2, 
+   2, 4, 4, 9, 9}],
+  Editable->False]], "Print",
+ CellChangeTimes->{{3.982156685140608*^9, 3.982156709162239*^9}, 
+   3.9821570418053303`*^9, 3.9821572412839317`*^9, 3.982161609869911*^9, 
+   3.982236179642029*^9},
+ CellLabel->
+  "During evaluation of \
+In[9]:=",ExpressionUUID->"95336eaa-5268-3c41-b7fa-a224eb2726f6"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Actual number of independent algebra generators by degree: \
+\"\>", "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{
+    "1", ",", "0", ",", "2", ",", "2", ",", "4", ",", "4", ",", "9", ",", 
+     "9"}], "}"}]}],
+  SequenceForm[
+  "Actual number of independent algebra generators by degree: ", {1, 0, 2, 2, 
+   4, 4, 9, 9}],
+  Editable->False]], "Print",
+ CellChangeTimes->{{3.982156685140608*^9, 3.982156709162239*^9}, 
+   3.9821570418053303`*^9, 3.9821572412839317`*^9, 3.982161609869911*^9, 
+   3.9822361796437607`*^9},
+ CellLabel->
+  "During evaluation of \
+In[9]:=",ExpressionUUID->"55f6df14-8cef-9246-81da-630e5a5b1361"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Total time to compute independent algebra generators: \"\>", "\[InvisibleSpace]",
+    "0.4689714`"}],
+  SequenceForm[
+  "Total time to compute independent algebra generators: ", 0.4689714],
+  Editable->False]], "Print",
+ CellChangeTimes->{{3.982156685140608*^9, 3.982156709162239*^9}, 
+   3.9821570418053303`*^9, 3.9821572412839317`*^9, 3.982161609869911*^9, 
+   3.982236179647812*^9},
+ CellLabel->
+  "During evaluation of \
+In[9]:=",ExpressionUUID->"13ba934d-abb2-ca4c-ad34-d106b3cfff79"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"\[Lambda]s", "=", 
+   RowBox[{"{", 
+    RowBox[{"1", ",", "2", ",", "3"}], "}"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"m\[Lambda]s", "=", 
+   RowBox[{"{", 
+    RowBox[{"1", ",", "1", ",", "1"}], "}"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"\[Nu]", "=", "0"}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"DMax", "=", "6"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"Benchmark", "[", 
+  RowBox[{"\[Lambda]s", ",", "m\[Lambda]s", ",", "\[Nu]", ",", "DMax"}], 
+  "]"}]}], "Input",
+ CellChangeTimes->CompressedData["
+1:eJwl0F9IU3EUB/BbbWFg5aygHsJExZkVVsqWGLmSiqkgtYdp1xySomumMR+2
+nNgfg8C1trbVyCsMKsW5YsUtpfawYtUIHSYjoyBGPTho4tSoHnT1+54eDh++
+5+Hw5eQ2d55qWctx3F42sPKNXd08Oq/ympxkW/Sa2co0yAd7YN2PFhfcujPg
+hqlHQgKKmU/Jmt/ONJSM3yEzNg4X3mRqe0ZI6636MsrtjaQ87OZhsNZDluwv
+iMIKaTEZ7FW6bMystu9kbDD10c78s7BIrnCbHA6m4JT9l78vvcvkrgyTu6rf
+F8Lt6ilSSD+c9GDvHiNX5q5+gN5XD2Lw57Jm5h7TP9VNxvrWKQTmZGwDmQxn
+N0FJ/TZSqC06PcSserGPnO4/M5Hlm1e53I1kwpqbb2NOR/JJHXexFMZbjaR8
+93k1lPgvkJF3JYdEZO9B0iI7UPCMGZg9TGqvPymClscde6CoOGGG8YbFXljz
+ckGE3ceXSIOxTPOcec5UTmpm0+3QUifRQ/5Xa2jch7/pydBqzluYYc8jxUjw
+9gT6NIXIxMCS4QvuftZ2Qu96fzDO9OcEyKTC6PzGjL0e8sAuX95M5Rjrr28g
+dXM3/sKTymOciil8sql5Ziq8uRp6pfYOqBtwkKUjW4ywIrqDVJZ/NUOT8+gl
+2CVb7YPJs2suw8wqvh/yR5bJf8HXigY=
+  "],
+ CellLabel->"In[14]:=",ExpressionUUID->"7de095ae-f763-1d43-9b35-1e53d3cd5b5e"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Computed number of candidate algebra generators by degree: \
+\"\>", "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{
+    "1", ",", "0", ",", "3", ",", "4", ",", "18", ",", "27", ",", "93"}], 
+    "}"}]}],
+  SequenceForm[
+  "Computed number of candidate algebra generators by degree: ", {1, 0, 3, 4, 
+   18, 27, 93}],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.9821568628318233`*^9, 3.982157047551058*^9, 
+  3.9821572473306293`*^9, 3.9822361847460613`*^9},
+ CellLabel->
+  "During evaluation of \
+In[14]:=",ExpressionUUID->"988de827-78f0-5546-8915-120997407866"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Actual number of candidate algebra generators by degree: \"\>",
+    "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{
+    "1", ",", "0", ",", "3", ",", "4", ",", "18", ",", "27", ",", "93"}], 
+    "}"}]}],
+  SequenceForm[
+  "Actual number of candidate algebra generators by degree: ", {1, 0, 3, 4, 
+   18, 27, 93}],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.9821568628318233`*^9, 3.982157047551058*^9, 
+  3.9821572473306293`*^9, 3.9822361850855045`*^9},
+ CellLabel->
+  "During evaluation of \
+In[14]:=",ExpressionUUID->"5e32ffa2-a007-aa47-bcac-43a6da99c058"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Total time to compute candidate algebra generators: \"\>", "\[InvisibleSpace]",
+    "1.7790031`"}],
+  SequenceForm[
+  "Total time to compute candidate algebra generators: ", 1.7790031],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.9821568628318233`*^9, 3.982157047551058*^9, 
+  3.9821572473306293`*^9, 3.9822361851012745`*^9},
+ CellLabel->
+  "During evaluation of \
+In[14]:=",ExpressionUUID->"fe3fa27b-7c04-6b42-87b4-7c6231040e5b"],
+
+Cell[BoxData["\<\"\"\>"], "Print",
+ CellChangeTimes->{3.9821568628318233`*^9, 3.982157047551058*^9, 
+  3.9821572473306293`*^9, 3.9822361851012745`*^9},
+ CellLabel->
+  "During evaluation of \
+In[14]:=",ExpressionUUID->"93e27ced-58e4-5147-a721-81b73be6caf6"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Computed number of independent algebra generators by degree: \
+\"\>", "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{
+    "1", ",", "0", ",", "3", ",", "4", ",", "12", ",", "15", ",", "37"}], 
+    "}"}]}],
+  SequenceForm[
+  "Computed number of independent algebra generators by degree: ", {1, 0, 3, 
+   4, 12, 15, 37}],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.9821568628318233`*^9, 3.982157047551058*^9, 
+  3.9821572473306293`*^9, 3.9822361851012745`*^9},
+ CellLabel->
+  "During evaluation of \
+In[14]:=",ExpressionUUID->"19bc9d1a-1c19-f841-976f-08869a42f929"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Actual number of independent algebra generators by degree: \
+\"\>", "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{
+    "1", ",", "0", ",", "3", ",", "4", ",", "12", ",", "15", ",", "37"}], 
+    "}"}]}],
+  SequenceForm[
+  "Actual number of independent algebra generators by degree: ", {1, 0, 3, 4, 
+   12, 15, 37}],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.9821568628318233`*^9, 3.982157047551058*^9, 
+  3.9821572473306293`*^9, 3.9822361851012745`*^9},
+ CellLabel->
+  "During evaluation of \
+In[14]:=",ExpressionUUID->"ca68cc0f-618a-e347-a732-1efbc06f401d"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Total time to compute independent algebra generators: \"\>", "\[InvisibleSpace]",
+    "3.0860006`"}],
+  SequenceForm[
+  "Total time to compute independent algebra generators: ", 3.0860006],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.9821568628318233`*^9, 3.982157047551058*^9, 
+  3.9821572473306293`*^9, 3.982236185117037*^9},
+ CellLabel->
+  "During evaluation of \
+In[14]:=",ExpressionUUID->"c4c07ae9-ac2c-cb48-a7ca-db41cff88c5c"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"\[Lambda]s", "=", 
+   RowBox[{"{", 
+    RowBox[{"2", ",", "3"}], "}"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"m\[Lambda]s", "=", 
+   RowBox[{"{", 
+    RowBox[{"2", ",", "1"}], "}"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"\[Nu]", "=", "4"}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"DMax", "=", "6"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"Benchmark", "[", 
+  RowBox[{"\[Lambda]s", ",", "m\[Lambda]s", ",", "\[Nu]", ",", "DMax"}], 
+  "]"}]}], "Input",
+ CellChangeTimes->CompressedData["
+1:eJwl0F9IUwEUBvCLTjEoUzHwJUxU3NRkZTKLBEdRMhVE9zBtoogTnSuNiShO
+zD9B0FrTbTr0CgNTcc6YcnNiI2asGqJicsnQl2EPDnQ4LaoHXZ5zejj8+M7D
+4eOk1LWUqyIYhhHBoIWfjLK6maDU1mEiGzf6O/WgRjjWhZYdqMxo4lWnBQ3N
+sQGUu7hAlvwxhVGBa5iMuTSV8QpUdE2T+teVeZSbqkmh16JE3aVWUnwjfQO9
+G5VFurvzzQYwrvEHyY+FvhnBv0fH5CkTOzgIsqb4/yonokZApneKvFa8moEm
+ydZJNjy5ZsW9ZZY83e/7itpW3vDor5/yrVHQsd5G8j2REhZc4y+Qh96EGlRQ
+eYVkS0UV4+D95Rxyc+DRUpw9KDVbqsmAPiXNAG760sha5ukt1N+gJYWZzTJU
+4HhC+r6Ib3OYbbmkLv5m+jvQuV1AKp7Pi1Dd28fZKCd52In6q4670ZL3Rxza
+9uCE1Gjz5ItgfccdUr4dbkJ1ZQI1qvzd4HHZ8W9q0nOW/BmNMaaSnM89tIR9
+ajxk4OWJZhfv7ihaUFu0w+0HHclO8lCiNe2B/MdxK9pqT90qnIX+6iqydv/F
+P7Qo/x4jBdnvBpkSDHkvF6P+oKsdfXb9A3kONYNsGQ==
+  "],
+ CellLabel->"In[19]:=",ExpressionUUID->"e0987476-2ec8-3f49-b090-61b0845e06a6"],
+
+Cell[BoxData["$Aborted"], "Output",
+ CellChangeTimes->{3.982236187779169*^9},
+ CellLabel->"Out[23]=",ExpressionUUID->"a3037974-1a67-f946-81f0-c38fa787082a"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"\[Lambda]s", "=", 
+   RowBox[{"{", "2", "}"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"m\[Lambda]s", "=", 
+   RowBox[{"{", "2", "}"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"\[Nu]", "=", "0"}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"DMax", "=", "5"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"Benchmark", "[", 
+  RowBox[{"\[Lambda]s", ",", "m\[Lambda]s", ",", "\[Nu]", ",", "DMax"}], 
+  "]"}]}], "Input",
+ CellChangeTimes->CompressedData["
+1:eJwl0F9IUwEUBvBLzTCw0ijoRUxUnFlilszCYKOomApSe5g2/yApulYWk1Cc
+9D+E1ppty6FXGFRGc8WMW5MasWLVChWTS0YRDEMc5HBaVA+2Ot/p4fDjOw+H
+j5Pd1H6keZUgCIU0UP3Krm26H9d4Oh1s6+SlLitpUg52w+pvzU64KdPvgokH
+YgxKaY/Yyl+OJFQEbrGp64bzr5P67nus9UZNKee2OlYZdhlgsMrNFu/Mm4Tl
+KYVssKfMaSPTW7+y8mDig538vbjErgjr+/pI0ZHxX8PtlH5SuDDMbq14lw+3
+aCdYMXl33I29a4Rdmb/4Hnpe3JHhj++66QHSN9HByudWq0RyXF7LLoQ3NkBF
+zWZWrCo4OkQeeFrETl0+NpbujWucrjo2Zs3OtZFTkVy2UTizG0ZbzKxy2wkt
+VPhOsZE3xXskZM8u1pJRkveY9M/sY/VXRgug5eHJ7VBSHeqC0dqlHlj5bFGC
+HQeXWZO5VPeEPN65l9XNJNugpVphhIafLaGAF38zsqE/Wa9hqj2HlSLBm2Po
+0xBiY9eWTZ9x95O+HXrW+IJR0pflZxdUZscsKb8ccsPT3pxp9Qj1N9ayjfO9
+f+Hhsv2ChhQ/2rQGMhHeUAGj8cBZeH7Hc1Y9p7sKe9/G2PLR2S/10FIyB/8B
+6kB+LA==
+  "],
+ CellLabel->"In[35]:=",ExpressionUUID->"3b99ab70-556c-c343-963b-9db15c6cbc01"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Computed number of candidate algebra generators by degree: \
+\"\>", "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{"1", ",", "0", ",", "3", ",", "4", ",", "7", ",", "12"}], "}"}]}],
+  SequenceForm[
+  "Computed number of candidate algebra generators by degree: ", {1, 0, 3, 4, 
+   7, 12}],
+  Editable->False]], "Print",
+ CellChangeTimes->{{3.9821616868671722`*^9, 3.9821617060290775`*^9}, 
+   3.982236190800459*^9, 3.982246657696863*^9},
+ CellLabel->
+  "During evaluation of \
+In[35]:=",ExpressionUUID->"aa743c6d-4bf1-c94a-a8d5-96b87d4cab89"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Actual number of candidate algebra generators by degree: \"\>",
+    "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{"1", ",", "0", ",", "3", ",", "4", ",", "7", ",", "12"}], "}"}]}],
+  SequenceForm[
+  "Actual number of candidate algebra generators by degree: ", {1, 0, 3, 4, 7,
+    12}],
+  Editable->False]], "Print",
+ CellChangeTimes->{{3.9821616868671722`*^9, 3.9821617060290775`*^9}, 
+   3.982236190800459*^9, 3.982246657726492*^9},
+ CellLabel->
+  "During evaluation of \
+In[35]:=",ExpressionUUID->"b50dde7f-436c-844e-9911-0309d5a09c87"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Total time to compute candidate algebra generators: \"\>", "\[InvisibleSpace]",
+    "0.1272015`"}],
+  SequenceForm[
+  "Total time to compute candidate algebra generators: ", 0.1272015],
+  Editable->False]], "Print",
+ CellChangeTimes->{{3.9821616868671722`*^9, 3.9821617060290775`*^9}, 
+   3.982236190800459*^9, 3.9822466577453938`*^9},
+ CellLabel->
+  "During evaluation of \
+In[35]:=",ExpressionUUID->"21704a30-c7ce-0a4c-b7f4-8516f2de1f8f"],
+
+Cell[BoxData["\<\"\"\>"], "Print",
+ CellChangeTimes->{{3.9821616868671722`*^9, 3.9821617060290775`*^9}, 
+   3.982236190800459*^9, 3.9822466577453938`*^9},
+ CellLabel->
+  "During evaluation of \
+In[35]:=",ExpressionUUID->"1fc9492c-02bc-5f4e-8679-ef9201fb5eb4"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Computed number of independent algebra generators by degree: \
+\"\>", "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{"1", ",", "0", ",", "3", ",", "4", ",", "1", ",", "0"}], "}"}]}],
+  SequenceForm[
+  "Computed number of independent algebra generators by degree: ", {1, 0, 3, 
+   4, 1, 0}],
+  Editable->False]], "Print",
+ CellChangeTimes->{{3.9821616868671722`*^9, 3.9821617060290775`*^9}, 
+   3.982236190800459*^9, 3.9822466577453938`*^9},
+ CellLabel->
+  "During evaluation of \
+In[35]:=",ExpressionUUID->"3afb40ba-8cb8-5f4d-84bc-82b70c2c11bc"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Actual number of independent algebra generators by degree: \
+\"\>", "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{"1", ",", "0", ",", "3", ",", "4", ",", "1", ",", "0"}], "}"}]}],
+  SequenceForm[
+  "Actual number of independent algebra generators by degree: ", {1, 0, 3, 4, 
+   1, 0}],
+  Editable->False]], "Print",
+ CellChangeTimes->{{3.9821616868671722`*^9, 3.9821617060290775`*^9}, 
+   3.982236190800459*^9, 3.982246657749449*^9},
+ CellLabel->
+  "During evaluation of \
+In[35]:=",ExpressionUUID->"2e75d997-9cff-b04e-9de2-9736fa0de243"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Total time to compute independent algebra generators: \"\>", "\[InvisibleSpace]",
+    "0.1951156`"}],
+  SequenceForm[
+  "Total time to compute independent algebra generators: ", 0.1951156],
+  Editable->False]], "Print",
+ CellChangeTimes->{{3.9821616868671722`*^9, 3.9821617060290775`*^9}, 
+   3.982236190800459*^9, 3.982246657749449*^9},
+ CellLabel->
+  "During evaluation of \
+In[35]:=",ExpressionUUID->"57abd775-67ce-c345-8713-e8b853fba5f3"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"\[Lambda]s", "=", 
+   RowBox[{"{", "4", "}"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"m\[Lambda]s", "=", 
+   RowBox[{"{", "1", "}"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"\[Nu]", "=", "0"}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"DMax", "=", "6"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{"Benchmark", "[", 
+  RowBox[{"\[Lambda]s", ",", "m\[Lambda]s", ",", "\[Nu]", ",", "DMax"}], 
+  "]"}]}], "Input",
+ CellChangeTimes->CompressedData["
+1:eJwl0F9IUwEUBvBLzVjQH42CXsJExZkVVsosDDaKiqkwag/TZoqk6FxZTEJx
+0v8QWmu2rUZeYVAazRkzVpMasWLVChWTS0YRXIxwkMNpUT3Y6nynh8OP7zwc
+Pk5OQ9vhxmWCIBTRQM1Lp67hflLr63CxzRMXO+2kRdXXBfXfGt1w/aagB6aG
+xQQMrXrIVv5ypaEifJNVrh4suEYau+6x9uvVpZxballVzGOCkSovW7wjfwKW
+ZxSxke4yt4PMbP7CSn2p907y9/wCuySs6e0lRVfWf013Mm6RwvlBdnPF2wK4
+UTfOiumBMS/2niF2afbCO+h7fleCP74bpm6TgfF2Vjq7XC2SY9JKdi62rg4q
+qjewYlXhkX5y/5Pt7OSlo6OZ/qTW7allE/acPAc5Gc9j64XTJVBusrKqLa06
+qAicZOOvi3eHkH27WFvWzvxHZHB6L2u8PFIIbQ9ObIUh9cFOKNcsdMPKp/Mh
+2H5gkbVYSw2PyeMde1jDdLoF2vQKMzT9bIqG/fibmY3+yX4Flc5cNhSP3BhF
+n7oom7i6aPmEux+NbdC3IhCRyUB2kJ1TW10zpPSi3wtP+XOnNEPU31zD1s/2
+/IWHyvYJWlL84NCZyFRsbQWUk+Ez8Ny2Z6zmq+EK7HmTYMtHZj4fI/UDShn+
+A+rqfjo=
+  "],
+ CellLabel->"In[9]:=",ExpressionUUID->"640a71c5-77e5-a640-9bf9-213b5bfe5550"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Computed number of candidate algebra generators by degree: \
+\"\>", "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{"1", ",", "0", ",", "1", ",", "1", ",", "2", ",", "2", ",", "4"}],
+     "}"}]}],
+  SequenceForm[
+  "Computed number of candidate algebra generators by degree: ", {1, 0, 1, 1, 
+   2, 2, 4}],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.9822486831981106`*^9},
+ CellLabel->
+  "During evaluation of \
+In[9]:=",ExpressionUUID->"3e2df65e-0e77-cd4b-99f8-696ee14c5adf"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Actual number of candidate algebra generators by degree: \"\>",
+    "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{"1", ",", "0", ",", "1", ",", "1", ",", "2", ",", "2", ",", "4"}],
+     "}"}]}],
+  SequenceForm[
+  "Actual number of candidate algebra generators by degree: ", {1, 0, 1, 1, 2,
+    2, 4}],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.982248683469803*^9},
+ CellLabel->
+  "During evaluation of \
+In[9]:=",ExpressionUUID->"e407bd86-951d-5646-ae4f-7cea04aa0f59"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Total time to compute candidate algebra generators: \"\>", "\[InvisibleSpace]",
+    "1.6961449`"}],
+  SequenceForm[
+  "Total time to compute candidate algebra generators: ", 1.6961449],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.982248683469803*^9},
+ CellLabel->
+  "During evaluation of \
+In[9]:=",ExpressionUUID->"1e32362e-83af-394b-bd5c-5261a3bb2ba0"],
+
+Cell[BoxData["\<\"\"\>"], "Print",
+ CellChangeTimes->{3.982248683469803*^9},
+ CellLabel->
+  "During evaluation of \
+In[9]:=",ExpressionUUID->"e4ecfcd4-25ae-1b45-85dc-c9a1469d5669"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Computed number of independent algebra generators by degree: \
+\"\>", "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{"1", ",", "0", ",", "1", ",", "1", ",", "1", ",", "1", ",", "1"}],
+     "}"}]}],
+  SequenceForm[
+  "Computed number of independent algebra generators by degree: ", {1, 0, 1, 
+   1, 1, 1, 1}],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.982248683469803*^9},
+ CellLabel->
+  "During evaluation of \
+In[9]:=",ExpressionUUID->"5fa868a1-a443-9a44-bba1-5a59c954d8ae"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Actual number of independent algebra generators by degree: \
+\"\>", "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{"1", ",", "0", ",", "1", ",", "1", ",", "1", ",", "1", ",", "1"}],
+     "}"}]}],
+  SequenceForm[
+  "Actual number of independent algebra generators by degree: ", {1, 0, 1, 1, 
+   1, 1, 1}],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.982248683469803*^9},
+ CellLabel->
+  "During evaluation of \
+In[9]:=",ExpressionUUID->"6f7eb8d6-a1b9-ce47-bd85-58e281c0a57c"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Total time to compute independent algebra generators: \"\>", "\[InvisibleSpace]",
+    "0.0147186`"}],
+  SequenceForm[
+  "Total time to compute independent algebra generators: ", 0.0147186],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.982248683469803*^9},
+ CellLabel->
+  "During evaluation of \
+In[9]:=",ExpressionUUID->"786026bb-43c1-b84a-b977-d5d18f39f2aa"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"\[Lambda]s", "=", 
+   RowBox[{"{", 
+    RowBox[{"2", ",", "4"}], "}"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"m\[Lambda]s", "=", 
+   RowBox[{"{", 
+    RowBox[{"2", ",", "1"}], "}"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"\[Nu]", "=", "0"}], ";"}], "\n", 
+ RowBox[{
+  RowBox[{"DMax", "=", "6"}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"Benchmark", "[", 
+   RowBox[{"\[Lambda]s", ",", "m\[Lambda]s", ",", "\[Nu]", ",", "DMax"}], 
+   "]"}], ";"}]}], "Input",
+ CellChangeTimes->{{3.9822368955930176`*^9, 3.9822369022630787`*^9}, {
+  3.9822464823160954`*^9, 3.9822464824003944`*^9}, {3.9822466196100254`*^9, 
+  3.9822466197269096`*^9}, {3.982247235392353*^9, 3.982247244281643*^9}, {
+  3.982248440906746*^9, 3.98224844111635*^9}},
+ CellLabel->"In[4]:=",ExpressionUUID->"49cde4a8-443c-8b40-8baf-6effc7b1729c"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Computed number of candidate algebra generators by degree: \
+\"\>", "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{
+    "1", ",", "0", ",", "4", ",", "10", ",", "26", ",", "73", ",", "196"}], 
+    "}"}]}],
+  SequenceForm[
+  "Computed number of candidate algebra generators by degree: ", {1, 0, 4, 10,
+    26, 73, 196}],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.982247246700573*^9, 3.9822484711686764`*^9},
+ CellLabel->
+  "During evaluation of \
+In[4]:=",ExpressionUUID->"71ccd902-05d3-ab4c-bf26-42f74ce3a031"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Actual number of candidate algebra generators by degree: \"\>",
+    "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{
+    "1", ",", "0", ",", "4", ",", "10", ",", "26", ",", "73", ",", "196"}], 
+    "}"}]}],
+  SequenceForm[
+  "Actual number of candidate algebra generators by degree: ", {1, 0, 4, 10, 
+   26, 73, 196}],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.982247246700573*^9, 3.9822484720176888`*^9},
+ CellLabel->
+  "During evaluation of \
+In[4]:=",ExpressionUUID->"11b590c1-1bcf-ee46-94e6-e8a14fb6674e"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Total time to compute candidate algebra generators: \"\>", "\[InvisibleSpace]",
+    "9.7522647`"}],
+  SequenceForm[
+  "Total time to compute candidate algebra generators: ", 9.7522647],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.982247246700573*^9, 3.9822484720176888`*^9},
+ CellLabel->
+  "During evaluation of \
+In[4]:=",ExpressionUUID->"91c1dc46-7878-3f48-8720-20c70d2f3ea1"],
+
+Cell[BoxData["\<\"\"\>"], "Print",
+ CellChangeTimes->{3.982247246700573*^9, 3.9822484720176888`*^9},
+ CellLabel->
+  "During evaluation of \
+In[4]:=",ExpressionUUID->"5f324cb6-1884-6d42-88e0-bf7fbf448e3a"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Computed number of independent algebra generators by degree: \
+\"\>", "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{
+    "1", ",", "0", ",", "4", ",", "10", ",", "16", ",", "33", ",", "57"}], 
+    "}"}]}],
+  SequenceForm[
+  "Computed number of independent algebra generators by degree: ", {1, 0, 4, 
+   10, 16, 33, 57}],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.982247246700573*^9, 3.982248472033575*^9},
+ CellLabel->
+  "During evaluation of \
+In[4]:=",ExpressionUUID->"6d011ee4-56cf-c749-9b31-ae7baca18445"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Actual number of independent algebra generators by degree: \
+\"\>", "\[InvisibleSpace]", 
+   RowBox[{"{", 
+    RowBox[{
+    "0", ",", "4", ",", "10", ",", "16", ",", "33", ",", "57", ",", "76"}], 
+    "}"}]}],
+  SequenceForm[
+  "Actual number of independent algebra generators by degree: ", {0, 4, 10, 
+   16, 33, 57, 76}],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.982247246700573*^9, 3.982248472033575*^9},
+ CellLabel->
+  "During evaluation of \
+In[4]:=",ExpressionUUID->"15f5b1ca-a1d6-f049-bcf9-ce682759cad3"],
+
+Cell[BoxData[
+ InterpretationBox[
+  RowBox[{"\<\"Total time to compute independent algebra generators: \"\>", "\[InvisibleSpace]",
+    "15.1877506`"}],
+  SequenceForm[
+  "Total time to compute independent algebra generators: ", 15.1877506],
+  Editable->False]], "Print",
+ CellChangeTimes->{3.982247246700573*^9, 3.982248472033575*^9},
+ CellLabel->
+  "During evaluation of \
+In[4]:=",ExpressionUUID->"61b7f932-c5a5-fc49-843e-29623ece8eed"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{1152, 579.6},
+WindowMargins->{{
+  Automatic, -5.399999999999864}, {-5.399999999999977, Automatic}},
+FrontEndVersion->"14.3 for Microsoft Windows (64-bit) (July 8, 2025)",
+StyleDefinitions->"Default.nb",
+ExpressionUUID->"cd0b7263-4071-8d46-92ba-e4c894ca3ed8"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[554, 20, 179, 2, 28, "Input",ExpressionUUID->"095a3976-b049-1445-884e-346892a808c8"],
+Cell[CellGroupData[{
+Cell[758, 26, 154, 3, 66, "Section",ExpressionUUID->"497f80e2-6784-1f4e-bf54-a11682890d3f"],
+Cell[915, 31, 958, 26, 28, "Input",ExpressionUUID->"e9e33918-67bf-3244-aeba-840cdc893b83"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[1910, 62, 161, 3, 66, "Section",ExpressionUUID->"ec85ada9-d66d-ae4d-8612-3fe5b849548a"],
+Cell[2074, 67, 744, 14, 104, "Input",ExpressionUUID->"80e72094-68e1-a344-b0ef-1d8310acc3f9"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[2855, 86, 155, 3, 66, "Section",ExpressionUUID->"aeaa2427-4591-3b41-82ee-803c0f0fa4ac"],
+Cell[CellGroupData[{
+Cell[3035, 93, 2812, 46, 104, "Input",ExpressionUUID->"26d9a6f8-3543-3a4b-ab77-beaa3d8bc605"],
+Cell[CellGroupData[{
+Cell[5872, 143, 722, 17, 22, "Print",ExpressionUUID->"ed2f4b90-c0f6-0c4d-9989-701836628b44"],
+Cell[6597, 162, 720, 17, 22, "Print",ExpressionUUID->"b9eebe68-3c74-f74f-a3c0-b2004ae41bfa"],
+Cell[7320, 181, 576, 12, 22, "Print",ExpressionUUID->"c2524689-9335-494d-9349-db10ee7a8464"],
+Cell[7899, 195, 348, 6, 22, "Print",ExpressionUUID->"cd1ccba1-e47e-a84f-a505-20d3636d05b3"],
+Cell[8250, 203, 724, 17, 22, "Print",ExpressionUUID->"1766bcc6-a516-f744-991f-137ecd094597"],
+Cell[8977, 222, 718, 17, 22, "Print",ExpressionUUID->"bacd7971-5cfa-034f-89bf-1d106ea78b6d"],
+Cell[9698, 241, 582, 12, 22, "Print",ExpressionUUID->"32996ba6-e899-6c4f-bc56-2a0a0c582dc8"],
+Cell[10283, 255, 348, 6, 22, "Print",ExpressionUUID->"c36ff477-5681-b64b-9a5c-6ac5dae2f1ed"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[10680, 267, 1299, 29, 104, "Input",ExpressionUUID->"a3f77617-f556-f040-899a-338675cd8e85"],
+Cell[CellGroupData[{
+Cell[12004, 300, 682, 17, 22, "Print",ExpressionUUID->"c4996baa-6162-4b4d-802d-6d1eeb4b9cfd"],
+Cell[12689, 319, 680, 17, 22, "Print",ExpressionUUID->"c0675d86-cd3f-db49-ac76-608153631e6c"],
+Cell[13372, 338, 536, 12, 22, "Print",ExpressionUUID->"754e9fd5-079b-0941-b0a3-17aa113640ad"],
+Cell[13911, 352, 306, 6, 22, "Print",ExpressionUUID->"e74fc889-02bb-6645-bf9f-31900ca5e636"],
+Cell[14220, 360, 680, 17, 22, "Print",ExpressionUUID->"95336eaa-5268-3c41-b7fa-a224eb2726f6"],
+Cell[14903, 379, 678, 17, 22, "Print",ExpressionUUID->"55f6df14-8cef-9246-81da-630e5a5b1361"],
+Cell[15584, 398, 538, 12, 22, "Print",ExpressionUUID->"13ba934d-abb2-ca4c-ad34-d106b3cfff79"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[16171, 416, 1361, 30, 104, "Input",ExpressionUUID->"7de095ae-f763-1d43-9b35-1e53d3cd5b5e"],
+Cell[CellGroupData[{
+Cell[17557, 450, 620, 16, 22, "Print",ExpressionUUID->"988de827-78f0-5546-8915-120997407866"],
+Cell[18180, 468, 618, 16, 22, "Print",ExpressionUUID->"5e32ffa2-a007-aa47-bcac-43a6da99c058"],
+Cell[18801, 486, 486, 11, 22, "Print",ExpressionUUID->"fe3fa27b-7c04-6b42-87b4-7c6231040e5b"],
+Cell[19290, 499, 256, 5, 22, "Print",ExpressionUUID->"93e27ced-58e4-5147-a721-81b73be6caf6"],
+Cell[19549, 506, 624, 16, 22, "Print",ExpressionUUID->"19bc9d1a-1c19-f841-976f-08869a42f929"],
+Cell[20176, 524, 620, 16, 22, "Print",ExpressionUUID->"ca68cc0f-618a-e347-a732-1efbc06f401d"],
+Cell[20799, 542, 488, 11, 22, "Print",ExpressionUUID->"c4c07ae9-ac2c-cb48-a7ca-db41cff88c5c"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[21336, 559, 1292, 29, 104, "Input",ExpressionUUID->"e0987476-2ec8-3f49-b090-61b0845e06a6"],
+Cell[22631, 590, 156, 2, 32, "Output",ExpressionUUID->"a3037974-1a67-f946-81f0-c38fa787082a"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[22824, 597, 1267, 28, 104, "Input",ExpressionUUID->"3b99ab70-556c-c343-963b-9db15c6cbc01"],
+Cell[CellGroupData[{
+Cell[24116, 629, 594, 14, 22, "Print",ExpressionUUID->"aa743c6d-4bf1-c94a-a8d5-96b87d4cab89"],
+Cell[24713, 645, 592, 14, 22, "Print",ExpressionUUID->"b50dde7f-436c-844e-9911-0309d5a09c87"],
+Cell[25308, 661, 489, 11, 22, "Print",ExpressionUUID->"21704a30-c7ce-0a4c-b7f4-8516f2de1f8f"],
+Cell[25800, 674, 259, 5, 22, "Print",ExpressionUUID->"1fc9492c-02bc-5f4e-8679-ef9201fb5eb4"],
+Cell[26062, 681, 598, 14, 22, "Print",ExpressionUUID->"3afb40ba-8cb8-5f4d-84bc-82b70c2c11bc"],
+Cell[26663, 697, 592, 14, 22, "Print",ExpressionUUID->"2e75d997-9cff-b04e-9de2-9736fa0de243"],
+Cell[27258, 713, 491, 11, 22, "Print",ExpressionUUID->"57abd775-67ce-c345-8713-e8b853fba5f3"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[27798, 730, 1266, 28, 104, "Input",ExpressionUUID->"640a71c5-77e5-a640-9bf9-213b5bfe5550"],
+Cell[CellGroupData[{
+Cell[29089, 762, 535, 14, 22, "Print",ExpressionUUID->"3e2df65e-0e77-cd4b-99f8-696ee14c5adf"],
+Cell[29627, 778, 531, 14, 22, "Print",ExpressionUUID->"e407bd86-951d-5646-ae4f-7cea04aa0f59"],
+Cell[30161, 794, 410, 10, 22, "Print",ExpressionUUID->"1e32362e-83af-394b-bd5c-5261a3bb2ba0"],
+Cell[30574, 806, 180, 4, 22, "Print",ExpressionUUID->"e4ecfcd4-25ae-1b45-85dc-c9a1469d5669"],
+Cell[30757, 812, 537, 14, 22, "Print",ExpressionUUID->"5fa868a1-a443-9a44-bba1-5a59c954d8ae"],
+Cell[31297, 828, 533, 14, 22, "Print",ExpressionUUID->"6f7eb8d6-a1b9-ce47-bd85-58e281c0a57c"],
+Cell[31833, 844, 414, 10, 22, "Print",ExpressionUUID->"786026bb-43c1-b84a-b977-d5d18f39f2aa"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[32296, 860, 883, 21, 104, "Input",ExpressionUUID->"49cde4a8-443c-8b40-8baf-6effc7b1729c"],
+Cell[CellGroupData[{
+Cell[33204, 885, 572, 15, 22, "Print",ExpressionUUID->"71ccd902-05d3-ab4c-bf26-42f74ce3a031"],
+Cell[33779, 902, 570, 15, 22, "Print",ExpressionUUID->"11b590c1-1bcf-ee46-94e6-e8a14fb6674e"],
+Cell[34352, 919, 434, 10, 22, "Print",ExpressionUUID->"91c1dc46-7878-3f48-8720-20c70d2f3ea1"],
+Cell[34789, 931, 204, 4, 22, "Print",ExpressionUUID->"5f324cb6-1884-6d42-88e0-bf7fbf448e3a"],
+Cell[34996, 937, 572, 15, 22, "Print",ExpressionUUID->"6d011ee4-56cf-c749-9b31-ae7baca18445"],
+Cell[35571, 954, 570, 15, 22, "Print",ExpressionUUID->"15f5b1ca-a1d6-f049-bcf9-ce682759cad3"],
+Cell[36144, 971, 438, 10, 22, "Print",ExpressionUUID->"61b7f932-c5a5-fc49-843e-29623ece8eed"]
+}, Open  ]]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+

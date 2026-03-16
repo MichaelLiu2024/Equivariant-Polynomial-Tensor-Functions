@@ -74,9 +74,13 @@ TensorTrainBasisTensorProduct[\[Lambda]s_?NonNegativeIntegersQ,\[Mu]_?NonNegativ
 
 
 TensorTrainBasisExteriorPower::usage="gives a list of all Clebsch-Gordan paths from \[Mu] to the d-fold exterior power of \[Lambda]."
+
+
 SetAttributes[TensorTrainBasisExteriorPower,Listable]
+
+
 TensorTrainBasisExteriorPower[\[Lambda]_?NonNegativeIntegerQ,d_?NonNegativeIntegerQ,\[Mu]_?NonNegativeIntegerQ]/;
- d<=3:=
+ d<=3 \[And] \[Lambda]<=3:=
   Switch[
    d,
    1,{{1}},
@@ -85,10 +89,43 @@ TensorTrainBasisExteriorPower[\[Lambda]_?NonNegativeIntegerQ,d_?NonNegativeInteg
   ]
 
 
+TensorTrainBasisExteriorPower[\[Lambda]_?NonNegativeIntegerQ,d_?PositiveIntegerQ,\[Mu]_?NonNegativeIntegerQ] /; d > 3 \[Or] \[Lambda]>3:=
+ Module[
+  {
+   interiorPaths,
+   interiorTensorTrains,
+   interiorRandomProbes,
+   syndromeMatrix
+  },
+  Print["yo"];
+  interiorPaths =
+   Select[
+    PathBasisTensorProduct[ConstantArray[\[Lambda], d], \[Mu]],
+    OddQ @ #[[2]] &(*ensures that the original tensor is not Symmetric[{1,2}]*)
+   ];
+  
+  interiorTensorTrains = ClebschGordanTensorTrain[ConstantArray[\[Lambda], d]] /@ interiorPaths;
+  
+  interiorRandomProbes = Exp[I RandomReal[2 \[Pi], {Ceiling[Length @ interiorPaths/(2 \[Mu] + 1)], d, 2 \[Lambda] + 1}]];
+  
+  syndromeMatrix =
+   Flatten[
+    Outer[EvaluateAntisymmetrizedTensorTrain, interiorTensorTrains, interiorRandomProbes, 1],
+    {{2, 3}, {1}}
+   ];
+  
+  interiorTensorTrains[[PivotColumns @ syndromeMatrix]]
+ ]
+
+
 TensorTrainBasisSymmetricPower::usage="gives a list of all Clebsch-Gordan paths from \[Mu] to the d-fold symmetric power of \[Lambda]."
+
+
 SetAttributes[TensorTrainBasisSymmetricPower,Listable]
+
+
 TensorTrainBasisSymmetricPower[\[Lambda]_?NonNegativeIntegerQ,d_?NonNegativeIntegerQ,\[Mu]_?NonNegativeIntegerQ]/;
- d<=3 \[And] {\[Lambda],d,\[Mu]}!={3,3,3}:=
+ d<=3 \[And] \[Lambda]<=3 \[And] {\[Lambda],d,\[Mu]}!={3,3,3}:=
   Switch[
    d,
    1,{{1}},
@@ -97,7 +134,7 @@ TensorTrainBasisSymmetricPower[\[Lambda]_?NonNegativeIntegerQ,d_?NonNegativeInte
   ]
 
 
-TensorTrainBasisSymmetricPower[\[Lambda]_?NonNegativeIntegerQ,d_?NonNegativeIntegerQ,\[Mu]_?NonNegativeIntegerQ]/;d>=4\[Or]{\[Lambda],d,\[Mu]}=={3,3,3}:=
+TensorTrainBasisSymmetricPower[\[Lambda]_?NonNegativeIntegerQ,d_?NonNegativeIntegerQ,\[Mu]_?NonNegativeIntegerQ]/; d > 3 \[Or] \[Lambda]>3 \[Or] {\[Lambda],d,\[Mu]}=={3,3,3}:=
  Module[
   {
   interiorPaths,
@@ -135,14 +172,22 @@ TensorTreeBasisSchurPower[
  {},
  \[Mu]_?NonNegativeIntegerQ
 ] :=
- <|"interiorTensorTrains"->{{1}},"leafObjects"->{{1}}|>
+ <|"interiorTensorTrains"->{{1}},"leafObjects"->{{{1}}}|>
+
+
+TensorTreeBasisSchurPower[
+ \[Lambda]_?NonNegativeIntegerQ,
+ {1},
+ \[Mu]_?NonNegativeIntegerQ
+] /; \[Lambda] == \[Mu] :=
+ <|"interiorTensorTrains"->{{1}},"leafObjects"->{{{1}}}|>
 
 
 TensorTreeBasisSchurPower[
  \[Lambda]_?NonNegativeIntegerQ,
  {d_?PositiveIntegerQ},
  \[Mu]_?NonNegativeIntegerQ
-] :=
+] /; d > 1 :=
  <|"interiorTensorTrains"->({1}&/@#),"leafObjects"->List/@#|>&@TensorTrainBasisExteriorPower[\[Lambda],d,\[Mu]]
 
 

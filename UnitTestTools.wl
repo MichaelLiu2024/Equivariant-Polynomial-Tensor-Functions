@@ -68,6 +68,117 @@ UnitTest[] :=
  ]
 
 
+HilbertSeries[
+ \[Lambda]s_?DistinctPositiveIntegersQ,
+ m\[Lambda]s_?PositiveIntegersQ,
+ \[Nu]_?NonNegativeIntegerQ,
+ DMax_?NonNegativeIntegerQ
+ ] := 
+  CoefficientList[
+   SeriesCoefficient[
+    Normal@Series[((1-y)(1-y^-1))/2*Total@(y^Range[-\[Nu],\[Nu]])/Times@@Join@@((1-t y^Range[-\[Lambda]s,\[Lambda]s])^m\[Lambda]s),{t,0,DMax}],
+    {y,0,0}
+   ],
+   t
+  ]
+
+
+MinimalIntegrityBasisSize[
+ {1},
+ {1},
+ 0,
+ DMax_?NonNegativeIntegerQ
+] := Take[{1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},DMax+1]
+
+
+MinimalIntegrityBasisSize[
+ {1},
+ {2},
+ 0,
+ DMax_?NonNegativeIntegerQ
+] := Take[{1,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},DMax+1]
+
+
+MinimalIntegrityBasisSize[
+ {1},
+ {3},
+ 0,
+ DMax_?NonNegativeIntegerQ
+] := Take[{1,0,6,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0},DMax+1]
+
+
+MinimalIntegrityBasisSize[
+ {2},
+ {2},
+ 0,
+ DMax_?NonNegativeIntegerQ
+] := Take[{1,0,3,4,1,0},DMax+1]
+
+
+MinimalIntegrityBasisSize[
+ {4},
+ {1},
+ 0,
+ DMax_?NonNegativeIntegerQ
+] := Take[{1,0,1,1,1,1,1,1,1,1,1,0},DMax+1]
+
+
+MinimalIntegrityBasisSize[
+ {1,3},
+ {1,1},
+ 0,
+ DMax_?NonNegativeIntegerQ
+] := Take[{1,0,2,0,4,0,5,3,1,7,1,2,0,1,0,1},DMax+1]
+
+
+MinimalIntegrityBasisSize[
+ {2,3},
+ {1,1},
+ 0,
+ DMax_?NonNegativeIntegerQ
+] := Take[{1,0,2,2,4,4,9,9,8,5,3,2,1,1,1},DMax+1]
+
+
+MinimalIntegrityBasisSize[
+ {1,2,3},
+ {1,1,1},
+ 0,
+ DMax_?NonNegativeIntegerQ
+] := Take[{1,0,3,4,12,15,37,42,38,22,9,6,3,2,1,1},DMax+1]
+
+
+MinimalIntegrityBasisSize[
+ {2,3},
+ {2,1},
+ 0,
+ DMax_?NonNegativeIntegerQ
+] := Take[{1,0,4,7,14,26,52,68},DMax+1]
+
+
+MinimalIntegrityBasisSize[
+ {2,3},
+ {2,1},
+ 4,
+ DMax_?NonNegativeIntegerQ
+] := Take[{0,0,6,21,63,147,264,284},DMax+1]
+
+
+MinimalIntegrityBasisSize[
+ {2,4},
+ {2,1},
+ 0,
+ DMax_?NonNegativeIntegerQ
+] := Take[{{1,0,0,0,0},{0,0,0,0,0},{1,1,1,0,0},{1,1,2,2,1},{1,0,1,4,6},{1,0,0,7,18},{1,0,0,10,36},{1,0,0,11,53},{1,0,0,10,45},{1,0,0,5,10},{1,0,0,2,2},{0,0,0,1,3}} . {1,2,1,2,1},DMax+1]
+
+
+MinimalIntegrityBasisSize[
+ \[Lambda]s_?DistinctPositiveIntegersQ,
+ m\[Lambda]s_?PositiveIntegersQ,
+ \[Nu]_?NonNegativeIntegerQ,
+ DMax_?NonNegativeIntegerQ
+] := ConstantArray[0,DMax+1]
+
+
 Benchmark[
  \[Lambda]s_?DistinctPositiveIntegersQ,
  m\[Lambda]s_?PositiveIntegersQ,
@@ -83,24 +194,34 @@ Benchmark[
   
   invariantIsotypicDataTree = AbsoluteTiming @ IsotypicDataTree[\[Lambda]s,m\[Lambda]s,0,DMax];
   
-  covariantIsotypicDataTree = AbsoluteTiming @ IsotypicDataTree[\[Lambda]s,m\[Lambda]s,\[Nu],DMax];
+  If[\[Nu]!=0,covariantIsotypicDataTree = AbsoluteTiming @ IsotypicDataTree[\[Lambda]s,m\[Lambda]s,\[Nu],DMax]];
   
   invariantVectorSpaceBasis = VectorSpaceBasis @ Last @ invariantIsotypicDataTree;
   
-  covariantVectorSpaceBasis = VectorSpaceBasis @ Last @ covariantIsotypicDataTree;
+  If[\[Nu]!=0,covariantVectorSpaceBasis = VectorSpaceBasis @ Last @ covariantIsotypicDataTree];
   
   invariantAlgebraBasis = AbsoluteTiming @ AlgebraBasis @ Last @ invariantIsotypicDataTree;
   
-  covariantAlgebraBasis = AbsoluteTiming @ ModuleBasis[Last @ invariantIsotypicDataTree, Last @ covariantIsotypicDataTree];
+  If[\[Nu]!=0,covariantAlgebraBasis = AbsoluteTiming @ ModuleBasis[Last @ invariantIsotypicDataTree, Last @ covariantIsotypicDataTree]];
   
-  Print["Number of candidate algebra generators by degree: ", spaceDimensions @ invariantVectorSpaceBasis];
-  Print["Number of candidate module generators by degree: ", spaceDimensions @ covariantVectorSpaceBasis];
-  Print["Number of independent algebra generators by degree: ", Length /@ Last @ invariantAlgebraBasis];
-  Print["Number of independent module generators by degree: ", Length /@ Last @ covariantAlgebraBasis];
+  Print["Computed number of candidate algebra generators by degree: ", spaceDimensions @ invariantVectorSpaceBasis];
+  Print["Actual number of candidate algebra generators by degree: ", HilbertSeries[\[Lambda]s,m\[Lambda]s,0,DMax]];
   Print["Total time to compute candidate algebra generators: ", First @ invariantIsotypicDataTree];
+  Print[];
+  
+  If[\[Nu]!=0,Print["Computed number of candidate module generators by degree: ", spaceDimensions @ covariantVectorSpaceBasis];
+  Print["Actual number of candidate module generators by degree: ", HilbertSeries[\[Lambda]s,m\[Lambda]s,\[Nu],DMax]];
   Print["Total time to compute candidate module generators: ", First @ covariantIsotypicDataTree];
+  Print[]];
+  
+  Print["Computed number of independent algebra generators by degree: ", Length /@ Last @ invariantAlgebraBasis];
+  Print["Actual number of independent algebra generators by degree: ", MinimalIntegrityBasisSize[\[Lambda]s,m\[Lambda]s,0,DMax]];
   Print["Total time to compute independent algebra generators: ", First @ invariantAlgebraBasis];
-  Print["Total time to compute independent module generators: ", First @ covariantAlgebraBasis];
+  Print[];
+  
+  If[\[Nu]!=0,Print["Computed number of independent module generators by degree: ", Length /@ Last @ covariantAlgebraBasis];
+  Print["Actual number of independent module generators by degree: ", MinimalIntegrityBasisSize[\[Lambda]s,m\[Lambda]s,\[Nu],DMax]];
+  Print["Total time to compute independent module generators: ", First @ covariantAlgebraBasis]];
  ]
 
 
