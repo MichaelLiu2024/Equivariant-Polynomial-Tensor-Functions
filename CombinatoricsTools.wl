@@ -3,8 +3,6 @@
 BeginPackage["CombinatoricsTools`", {"BooleanTools`"}];
 
 
-algebraDimensions
-moduleDimensions
 spaceDimensions
 
 
@@ -35,28 +33,7 @@ Begin["`Private`"];
 (*Public Functions*)
 
 
-spaceDimensions[VectorSpaceBasis_List] :=
- Total /@ Map[Times @@ #[["dimensions"]]&, VectorSpaceBasis, {2}]
-
-
-algebraDimensions[invariantBasis_List] :=
- With[
-  {invariantDims = spaceDimensions[invariantBasis]},
-     Table[
-      Sum[
-       invariantDims[[i]]*invariantDims[[d + 1 - i]],
-       {i, Ceiling[d/2], 1, -1}
-      ],
-      {d, 1, Length @ invariantBasis}
-     ]
- ]
-
-
-moduleDimensions[
- \[Nu]_?NonNegativeIntegerQ,
- invariantBasis_List,
- covariantBasis_List
-] := ListConvolve[spaceDimensions[invariantBasis], spaceDimensions[covariantBasis], 1, 0]/(2 \[Nu] + 1)
+spaceDimensions[VectorSpaceBasis_List] := Total /@ Map[Times @@ #[["dimensions"]]&, VectorSpaceBasis, {2}]
 
 
 RowKroneckerProduct[m1_List ? ArrayQ, {{{}}}] := {{}}

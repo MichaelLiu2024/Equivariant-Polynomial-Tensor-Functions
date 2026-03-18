@@ -89,7 +89,7 @@ AlgebraBasis[invariantIsotypicDataTree_Tree] :=
    generateRandomProbes[
     MetaData["\[Lambda]s"],
     MetaData["m\[Lambda]s"],
-    Max@algebraDimensions@vectorSpaceBasis
+    Max@spaceDimensions@vectorSpaceBasis
    ];
 
   levels = flattenLevels[Length @ MetaData["\[Lambda]s"]];
@@ -147,7 +147,7 @@ ModuleBasis[invariantIsotypicDataTree_Tree,covariantIsotypicDataTree_Tree] :=
    generateRandomProbes[
     MetaData["\[Lambda]s"],
     MetaData["m\[Lambda]s"],
-    Ceiling@Max@moduleDimensions[MetaData["\[Nu]"], invariantVectorSpaceBasis, covariantVectorSpaceBasis]
+    Ceiling[Max @ spaceDimensions @ covariantVectorSpaceBasis/(2*MetaData["\[Nu]"]+1)]
    ];
 
   levels = flattenLevels[Length @ MetaData["\[Lambda]s"]];

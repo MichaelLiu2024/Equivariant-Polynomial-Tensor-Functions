@@ -106,7 +106,7 @@ TensorTrainBasisExteriorPower[\[Lambda]_?NonNegativeIntegerQ,d_?PositiveIntegerQ
   
   interiorTensorTrains = ClebschGordanTensorTrain[ConstantArray[\[Lambda], d]] /@ interiorPaths;
   
-  interiorRandomProbes = Exp[I RandomReal[2 \[Pi], {Ceiling[Length @ interiorPaths/(2 \[Mu] + 1)], d, 2 \[Lambda] + 1}]];
+  interiorRandomProbes = Exp[I RandomReal[2 \[Pi], {Ceiling[IsotypicMultiplicityExteriorPower[\[Lambda],d,\[Mu]]/(2\[Mu]+1)+1], d, 2 \[Lambda] + 1}]];
   
   syndromeMatrix =
    Flatten[
@@ -151,7 +151,7 @@ TensorTrainBasisSymmetricPower[\[Lambda]_?NonNegativeIntegerQ,d_?NonNegativeInte
   
   interiorTensorTrains=ClebschGordanTensorTrain[ConstantArray[\[Lambda],d]]/@interiorPaths;
   
-  interiorRandomProbes=Exp[I RandomReal[2\[Pi],{Ceiling[Length@interiorPaths/(2\[Mu]+1)],2\[Lambda]+1}]];
+  interiorRandomProbes=Exp[I RandomReal[2\[Pi],{Ceiling[IsotypicMultiplicitySymmetricPower[\[Lambda],d,\[Mu]]/(2\[Mu]+1)+1],2\[Lambda]+1}]];
   
   syndromeMatrix=
     Flatten[
@@ -238,13 +238,8 @@ TensorTreeBasisSchurPower[\[Lambda]_?NonNegativeIntegerQ,p_?IntegerPartitionQ,\[
     *)
     leafTensorTrains=TensorTrainBasisExteriorPower[\[Lambda],p,#]&/@interiorSpins;
     
-    interiorDimensions=Length/@interiorTensorTrains;
-    leafDimensions=Map[Length,leafTensorTrains,{2}];
-    totalDimensions=MapThread[Prepend,{leafDimensions,interiorDimensions}];
-    tempDimensions=interiorDimensions*MapApply[Times,leafDimensions];
-    
     (*random probe; multiplicity; random vector*)
-    leafRandomProbes=Exp[I RandomReal[2\[Pi],{Ceiling[Total@tempDimensions/(2\[Mu]+1)],First@p,2\[Lambda]+1}]];
+    leafRandomProbes=Exp[I RandomReal[2\[Pi],{Ceiling[IsotypicMultiplicitySchurPower[\[Lambda],p,\[Mu]]/(2\[Mu]+1)+1],First@p,2\[Lambda]+1}]];
     (*
     Level 1: interiorSpins
     Level 2: part of partition
@@ -286,6 +281,11 @@ TensorTreeBasisSchurPower[\[Lambda]_?NonNegativeIntegerQ,p_?IntegerPartitionQ,\[
     (*prioritize paths with 0 to include in the basis*)
     (*perm=OrderingBy[Flatten[interiorTensorTrains,1],FreeQ[Most@#,0]&];
     linearIndices=perm[[PivotColumns@syndromeMatrix[[All,perm]]]];*)
+
+    interiorDimensions=Length/@interiorTensorTrains;
+    leafDimensions=Map[Length,leafTensorTrains,{2}];
+    totalDimensions=MapThread[Prepend,{leafDimensions,interiorDimensions}];
+    tempDimensions=interiorDimensions*MapApply[Times,leafDimensions];
 
     {interiorSpinsIndices,tensorTrainIndices}=
      Transpose@MapApply[

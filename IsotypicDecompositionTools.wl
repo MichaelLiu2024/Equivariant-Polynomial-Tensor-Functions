@@ -9,10 +9,17 @@ BeginPackage[
 ];
 
 
+IsotypicMultiplicitySymmetricPower
+IsotypicMultiplicityExteriorPower
+IsotypicMultiplicitySchurPower
+
+
 IsotypicComponentsTensorProduct
 IsotypicComponentsTensorPower
 IsotypicComponentsExteriorPower
 IsotypicComponentsSchurPower
+
+
 ConstrainedIsotypicComponentsExteriorPowers
 ConstrainedIsotypicComponentsSchurPowers
 
@@ -34,8 +41,10 @@ IsotypicComponentTensorProductQ[\[Lambda]s_List?VectorQ,\[Mu]_?NonNegativeIntege
 
 WeightMultiplicitySymmetricPower[\[Lambda]_?NonNegativeIntegerQ,d_?NonNegativeIntegerQ,\[Mu]_?NonNegativeIntegerQ]:=
  Length @ IntegerPartitions[d \[Lambda] - \[Mu], d, Range[2 \[Lambda]]]
- 
-(*SeriesCoefficient[QBinomial[d+2\[Lambda], d, q], {q, 0, d \[Lambda] - \[Mu]}]*)
+
+
+(* ::Subsubsection:: *)
+(*Public Functions*)
 
 
 IsotypicMultiplicitySymmetricPower::usage="gives the isotypic multiplicity of \[Mu] in the symmetric power \!\(\*SuperscriptBox[\(S\), \(d\)]\)\!\(\*SubscriptBox[\(H\), \(\[Lambda]\)]\)."
@@ -59,10 +68,6 @@ IsotypicMultiplicitySchurPower[\[Lambda]_?NonNegativeIntegerQ,p_?IntegerPartitio
   
   SeriesCoefficient[poly,{q,0,\[Mu]}]-SeriesCoefficient[poly,{q,0,\[Mu]+1}]
  ]
-
-
-(* ::Subsubsection:: *)
-(*Public Functions*)
 
 
 IsotypicComponentsTensorProduct::usage="gives a list of all isotypic components contained in the tensor product \!\(\*SubscriptBox[\(H\), \(\[Lambda]\)]\)\[CircleTimes]\!\(\*SubscriptBox[\(H\), \(\[Mu]\)]\)."
