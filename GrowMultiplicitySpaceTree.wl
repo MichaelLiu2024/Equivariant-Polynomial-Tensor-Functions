@@ -44,16 +44,16 @@ IsotypicDataTree[
   tree = Tree[{\[Lambda]s, m\[Lambda]s, \[Nu]}, Range[0, DMax]];
 
   (*d\[Lambda]s*)
-  tree = NestTree[WeakCompositions[#, Length[\[Lambda]s]]&, tree];
+  tree = NestTree[WeakCompositions[#, Length[\[Lambda]s]] &, tree];
 
   (*\[Pi]\[Lambda]s*)
-  tree = NestTree[Tuples @ ThinPartitions[#, \[Lambda]s, m\[Lambda]s]&, tree];
+  tree = NestTree[Tuples @ ThinPartitions[#, \[Lambda]s, m\[Lambda]s] &, tree];
 
   (*\[Mu]\[Lambda]s*)
   tree =
    PruneChildlessNodes @
     NestTree[
-     ConstrainedIsotypicComponentsSchurPowers[\[Lambda]s, #, \[Nu]]&,
+     ConstrainedIsotypicComponentsSchurPowers[\[Lambda]s, #, \[Nu]] &,
      tree
     ];
 
@@ -89,7 +89,7 @@ AlgebraBasis[invariantIsotypicDataTree_Tree] :=
    generateRandomProbes[
     MetaData["\[Lambda]s"],
     MetaData["m\[Lambda]s"],
-    Max@spaceDimensions@vectorSpaceBasis
+    Max @ spaceDimensions @ vectorSpaceBasis
    ];
 
   levels = flattenLevels[Length @ MetaData["\[Lambda]s"]];
@@ -106,7 +106,7 @@ AlgebraBasis[invariantIsotypicDataTree_Tree] :=
     RowJoin @@
      Table[
       RowKroneckerProduct[invariantSyndromes[[i]], invariantSyndromes[[d + 1 - i]]],
-      {i, Ceiling[d/2], 1, -1}
+      {i, Ceiling[d / 2], 1, -1}
      ],
     {d, 1, MetaData["DMax"] + 1}
    ];
@@ -117,7 +117,7 @@ AlgebraBasis[invariantIsotypicDataTree_Tree] :=
   (*indices into invariantSyndromes*)
   linearIndices =
    MapThread[
-    DeleteCases[#1, i_ /; i <= #2] - #2&,
+    DeleteCases[#1, i_ /; i <= #2] - #2 &,
     {
      linearIndices,
      Last @* Dimensions /@ productSyndromes -
@@ -129,7 +129,10 @@ AlgebraBasis[invariantIsotypicDataTree_Tree] :=
  ]
 
 
-ModuleBasis[invariantIsotypicDataTree_Tree,covariantIsotypicDataTree_Tree] :=
+ModuleBasis[
+ invariantIsotypicDataTree_Tree,
+ covariantIsotypicDataTree_Tree
+] :=
  Module[
   {
    invariantVectorSpaceBasis = VectorSpaceBasis @ invariantIsotypicDataTree,
@@ -147,7 +150,7 @@ ModuleBasis[invariantIsotypicDataTree_Tree,covariantIsotypicDataTree_Tree] :=
    generateRandomProbes[
     MetaData["\[Lambda]s"],
     MetaData["m\[Lambda]s"],
-    Ceiling[Max @ spaceDimensions @ covariantVectorSpaceBasis/(2*MetaData["\[Nu]"]+1)]
+    Ceiling[Max @ spaceDimensions @ covariantVectorSpaceBasis / (2 * MetaData["\[Nu]"] + 1)]
    ];
 
   levels = flattenLevels[Length @ MetaData["\[Lambda]s"]];
@@ -173,7 +176,7 @@ ModuleBasis[invariantIsotypicDataTree_Tree,covariantIsotypicDataTree_Tree] :=
   (*indices into covariantSyndromes*)
   linearIndices =
    MapThread[
-    DeleteCases[#1, i_ /; i <= #2] - #2&,
+    DeleteCases[#1, i_ /; i <= #2] - #2 &,
     {
      linearIndices,
      Last @* Dimensions /@ productSyndromes -
@@ -185,9 +188,12 @@ ModuleBasis[invariantIsotypicDataTree_Tree,covariantIsotypicDataTree_Tree] :=
  ]
 
 
-EvaluateBasis[VectorSpaceBasis_List, inputVectors_List] :=
+EvaluateBasis[
+ VectorSpaceBasis_List,
+ inputVectors_List
+] :=
  Map[
-  EvaluateTensorProductBasis[#, inputVectors]&,
+  EvaluateTensorProductBasis[#, inputVectors] &,
   VectorSpaceBasis,
   {2}
  ]
@@ -199,7 +205,7 @@ EvaluateBasis[VectorSpaceBasis_List, inputVectors_List] :=
 
 MetaData[IsotypicDataTree_Tree] :=
  AssociationThread[
-  {"\[Lambda]s","m\[Lambda]s","\[Nu]","DMax"},
+  {"\[Lambda]s", "m\[Lambda]s", "\[Nu]", "DMax"},
   Join[
    TreeData @ IsotypicDataTree,
    {TreeData /@ TreeChildren @ IsotypicDataTree // Last}
@@ -220,17 +226,20 @@ generateRandomProbes[
 
 flattenLevels[n_?PositiveIntegerQ] :=
  With[
-  {maxLvl = 5 + 2*n},
+  {maxLvl = 5 + 2 * n},
   {{1}, {3}, Complement[Range @ maxLvl, {1, 3, maxLvl}], {maxLvl}}
  ]
 
 
-extract[linearIndices_List, basis_List] :=
+extract[
+ linearIndices_List,
+ basis_List
+] :=
  Module[
   {leafIndices, finalIndices, fullDimensions, leafDimensions},
 
   fullDimensions =
-   Map[#[["dimensions"]]&, basis, {2}];
+   Map[#[["dimensions"]] &, basis, {2}];
   (*degree; leaf; list of dimensions: interiorTensorTrains; SSYTs,tensorTrees for each \[Lambda]*)
 
   leafDimensions = Apply[Times, fullDimensions, {2}];
@@ -244,7 +253,7 @@ extract[linearIndices_List, basis_List] :=
 
   finalIndices =
    MapThread[
-    Function[{lIndices, dims}, MapApply[{#1, ArrayMultiIndex[#2, dims[[#1]]]}&, lIndices]],
+    Function[{lIndices, dims}, MapApply[{#1, ArrayMultiIndex[#2, dims[[#1]]]} &, lIndices]],
     {leafIndices, fullDimensions}
    ];
   (*degree; linearIndices; {index into leaf, multiindex into interiorTensorTrains; SSYTs,tensorTrees for each \[Lambda]}*)
@@ -272,7 +281,7 @@ extract[linearIndices_List, basis_List] :=
          ],
          {TensorProductBases[[#1]][["leafObjects"]], Rest[#2][[2 ;; ;; 2]]}
         ]
-      |>&,
+      |> &,
      indices
     ]
    ],
@@ -308,7 +317,7 @@ TensorProductBasis[
        Transpose[
         {
          Length /@ SSYT\[Lambda]s,
-         Length @ #[["leafObjects"]]& /@ leafObjects
+         Length @ #[["leafObjects"]] & /@ leafObjects
         }
        ]
       }
@@ -318,7 +327,10 @@ TensorProductBasis[
  ]
 
 
-EvaluateTensorProductBasis[basis_Association, inputVectors_List] :=
+EvaluateTensorProductBasis[
+ basis_Association,
+ inputVectors_List
+] :=
  Module[
   {interiorVectors, outputVectors},
 
@@ -333,12 +345,12 @@ EvaluateTensorProductBasis[basis_Association, inputVectors_List] :=
   (*inputVectors; interiorTensorTrains; SSYTs, tensorTrees for each \[Lambda]; outputVectors*)
   outputVectors =
    Outer[
-     EvaluateTensorTrain[#1, List @ ##2]&,
+     EvaluateTensorTrain[#1, {##2}] &,
      basis[["interiorTensorTrains"]],
      Sequence @@ #,
      1,
      Sequence @@ ConstantArray[2, Length @ inputVectors]
-    ]& /@ interiorVectors
+   ] & /@ interiorVectors
  ]
 
 End[];
