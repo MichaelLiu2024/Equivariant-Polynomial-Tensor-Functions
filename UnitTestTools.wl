@@ -68,21 +68,6 @@ UnitTest[] :=
  ]
 
 
-HilbertSeries[
- \[Lambda]s_?DistinctPositiveIntegersQ,
- m\[Lambda]s_?PositiveIntegersQ,
- \[Nu]_?NonNegativeIntegerQ,
- DMax_?NonNegativeIntegerQ
- ] :=
-  CoefficientList[
-   SeriesCoefficient[
-    Normal @ Series[((1 - y)(1 - y^-1)) / 2 * Total @ (y^Range[-\[Nu], \[Nu]]) / Times @@ Join @@ ((1 - t y^Range[-\[Lambda]s, \[Lambda]s])^m\[Lambda]s), {t, 0, DMax}],
-    {y, 0, 0}
-   ],
-   t
-  ]
-
-
 MinimalIntegrityBasisSize[
  {1},
  {1},
@@ -189,7 +174,7 @@ Benchmark[
   {
    invariantIsotypicDataTree, covariantIsotypicDataTree,
    invariantVectorSpaceBasis, covariantVectorSpaceBasis,
-   invariantAlgebraBasis, covariantAlgebraBasis
+   invariantAlgebraBasis, covariantModuleBasis
   },
   
   invariantIsotypicDataTree = AbsoluteTiming @ IsotypicDataTree[\[Lambda]s, m\[Lambda]s, 0, DMax];
@@ -202,7 +187,7 @@ Benchmark[
   
   invariantAlgebraBasis = AbsoluteTiming @ AlgebraBasis @ Last @ invariantIsotypicDataTree;
   
-  If[\[Nu] != 0, covariantAlgebraBasis = AbsoluteTiming @ ModuleBasis[Last @ invariantIsotypicDataTree, Last @ covariantIsotypicDataTree]];
+  If[\[Nu] != 0, covariantModuleBasis = AbsoluteTiming @ ModuleBasis[Last @ invariantIsotypicDataTree, Last @ covariantIsotypicDataTree]];
   
   Print["Computed number of candidate algebra generators by degree: ", spaceDimensions @ invariantVectorSpaceBasis];
   Print["Actual number of candidate algebra generators by degree: ", HilbertSeries[\[Lambda]s, m\[Lambda]s, 0, DMax]];
@@ -219,9 +204,9 @@ Benchmark[
   Print["Total time to compute independent algebra generators: ", First @ invariantAlgebraBasis];
   Print[];
   
-  If[\[Nu] != 0, Print["Computed number of independent module generators by degree: ", Length /@ Last @ covariantAlgebraBasis];
+  If[\[Nu] != 0, Print["Computed number of independent module generators by degree: ", Length /@ Last @ covariantModuleBasis];
   Print["Actual number of independent module generators by degree: ", MinimalIntegrityBasisSize[\[Lambda]s, m\[Lambda]s, \[Nu], DMax]];
-  Print["Total time to compute independent module generators: ", First @ covariantAlgebraBasis]];
+  Print["Total time to compute independent module generators: ", First @ covariantModuleBasis]];
  ]
 
 

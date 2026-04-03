@@ -113,15 +113,15 @@ AntisymmetrizationData[d_?PositiveIntegerQ] :=
   ]
 
 
-SymmetrizedMonomialCP[powers_List] :=
-  SymmetrizedMonomialCP[powers] =
-   With[
-    {ds = ReplacePart[powers, 1 -> 0.], d = Total @ powers},
-    {\[Zeta]s = Exp[(2\[Pi] * I) / (ds + 1)]},
-    {grid = Tuples[\[Zeta]s^Range[0, ds]]},
-    
-    MapApply[Times, grid]^(1 / d) * grid
-   ]
+SymmetrizedMonomialCP[powers_?PositiveIntegersQ] :=
+ SymmetrizedMonomialCP[powers] =
+  With[
+   {ds = N@ReplacePart[powers, 1 -> 0], d = Total @ powers},
+   {\[Zeta]s = Exp[(2\[Pi] * I) / (ds + 1)]},
+   {grid = Tuples[\[Zeta]s^Range[0, ds]]},
+   
+   Developer`ToPackedArray[MapApply[Times, grid]^(1 / d) * grid]
+  ]
 
 
 PartiallySymmetrizedMonomialCP[

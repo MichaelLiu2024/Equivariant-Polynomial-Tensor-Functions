@@ -3,6 +3,9 @@
 BeginPackage["CombinatoricsTools`", {"BooleanTools`"}];
 
 
+HilbertSeries
+
+
 spaceDimensions
 
 
@@ -32,6 +35,21 @@ Begin["`Private`"];
 
 (* ::Subsubsection:: *)
 (*Public Functions*)
+
+
+HilbertSeries[
+ \[Lambda]s_?DistinctPositiveIntegersQ,
+ m\[Lambda]s_?NonNegativeIntegersQ,
+ \[Nu]_?NonNegativeIntegerQ,
+ DMax_?NonNegativeIntegerQ
+ ] :=
+  CoefficientList[
+   SeriesCoefficient[
+    Normal @ Series[((1 - y)(1 - y^-1)) / 2 * Total @ (y^Range[-\[Nu], \[Nu]]) / Times @@ Join @@ ((1 - t y^Range[-\[Lambda]s, \[Lambda]s])^m\[Lambda]s), {t, 0, DMax}],
+    {y, 0, 0}
+   ],
+   t
+  ]
 
 
 spaceDimensions[VectorSpaceBasis_List] := Total /@ Map[Times @@ #[["dimensions"]] &, VectorSpaceBasis, {2}]
@@ -161,11 +179,14 @@ SemiStandardYoungTableaux[
 ] := {{}}
 
 
+toCounts[SSYT_] := Transpose[Through[{Keys, Values}[KeySort @ Counts @ #]] & /@ SSYT];
+
+
 SemiStandardYoungTableaux[
  p_?IntegerPartitionQ,
  m_?PositiveIntegerQ
 ] :=
- N @ Transpose[Through[{Keys, Values}[Sort @ Counts @ #]] & /@ #] & /@ ConjugateTableau /@ With[
+ With[
   {v = Array[x, Total @ p]},
   {rows = TakeList[v, p]},
   {
@@ -179,7 +200,7 @@ SemiStandardYoungTableaux[
     ]
   },
   
-  TakeList[#, p] & /@ SolveValues[constraints, v, Integers]
+  toCounts @ ConjugateTableau @ TakeList[#, p] & /@ SolveValues[constraints, v, Integers]
  ]
 
 
