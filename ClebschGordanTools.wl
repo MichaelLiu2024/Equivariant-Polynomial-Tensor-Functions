@@ -3,6 +3,7 @@
 BeginPackage["ClebschGordanTools`", {"CombinatoricsTools`", "IsotypicDecompositionTools`", "TensorTools`", "BooleanTools`"}];
 
 
+ClebschGordanTensor
 TensorTrainBasisTensorProduct
 TensorTrainBasisExteriorPower
 TensorTrainBasisSymmetricPower
@@ -24,7 +25,15 @@ indicesToPaths[
  Abs[\[Gamma] - \[Lambda]] + \[Alpha] - 1
 
 
-ClebschGordanTensor::usage = "gives the elementary Clebsch-Gordan tensor coupling \[Lambda]1 and \[Lambda]2 to \[Lambda]3."
+ClebschGordanTensorCache =
+ File[
+  "C:\\Users\\micha\\OneDrive\\Desktop\\Oden\\Notes\\Equivariant-Polynomial-Tensor-Functions-main\\Equivariant-Polynomial-Tensor-Functions-main\\ClebschGordanTensorCache.wl"
+ ];
+
+
+Get[ClebschGordanTensorCache]
+
+
 ClebschGordanTensor[
  \[Lambda]1_?NonNegativeIntegerQ,
  \[Lambda]2_?NonNegativeIntegerQ,
@@ -32,7 +41,7 @@ ClebschGordanTensor[
 ] :=
  ClebschGordanTensor[\[Lambda]1, \[Lambda]2, \[Lambda]3] =
   Developer`ToPackedArray @ Normal @ N @ SparseArray[
-   Join @@ Table[
+   Flatten @ Table[
     {1 + \[Lambda]1 + m1, 1 + \[Lambda]2 + m2, 1 + \[Lambda]3 + m1 + m2} -> ClebschGordan[{\[Lambda]1, m1}, {\[Lambda]2, m2}, {\[Lambda]3, m1 + m2}],
     {m1, -\[Lambda]1, \[Lambda]1},
     {m2, Max[-\[Lambda]2, -\[Lambda]3 - m1], Min[\[Lambda]2, \[Lambda]3 - m1]}
@@ -89,9 +98,6 @@ TensorTrainBasisTensorProduct[
  ClebschGordanTensorTrain[\[Lambda]s] /@ PathBasisTensorProduct[\[Lambda]s, \[Mu]]
 
 
-(*add input checks below for evenness/oddness of \[Gamma]2!*)
-
-
 TensorTrainBasisExteriorPower::usage = "gives a list of all Clebsch-Gordan paths from \[Mu] to the d-fold exterior power of \[Lambda]."
 
 
@@ -103,7 +109,7 @@ TensorTrainBasisExteriorPower[
  d_?NonNegativeIntegerQ,
  \[Mu]_?NonNegativeIntegerQ
 ] /;
- d <= 3 \[And] \[Lambda] <= 3 :=
+ d <= 3 \[And] \[Lambda] <= 3 \[And] IsotypicMultiplicityExteriorPower[\[Lambda], d, \[Mu]] > 0 :=
   Switch[
    d,
    1, {{1}},
@@ -156,7 +162,7 @@ TensorTrainBasisSymmetricPower[
  d_?NonNegativeIntegerQ,
  \[Mu]_?NonNegativeIntegerQ
 ] /;
- d <= 3 \[And] \[Lambda] <= 3 \[And] {\[Lambda], d, \[Mu]} != {3, 3, 3} :=
+ d <= 3 \[And] \[Lambda] <= 3 \[And] {\[Lambda], d, \[Mu]} != {3, 3, 3} \[And] IsotypicMultiplicitySymmetricPower[\[Lambda], d, \[Mu]] > 0:=
   Switch[
    d,
    1, {{1}},

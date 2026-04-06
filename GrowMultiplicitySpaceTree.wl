@@ -41,7 +41,7 @@ IsotypicDataTree[
   {tree},
 
   (*D*)
-  tree = Tree[{\[Lambda]s, m\[Lambda]s, \[Nu]}, Range[0, DMax]];
+  tree = Tree[{\[Lambda]s, m\[Lambda]s, \[Nu], DMax}, Range[0, DMax]];
 
   (*d\[Lambda]s*)
   tree = NestTree[WeakCompositions[#, Length[\[Lambda]s]] &, tree];
@@ -67,7 +67,7 @@ VectorSpaceBasis[IsotypicDataTree_Tree] :=
   Association[
    TreeData @ # -> TreeData /@ TreeLeaves @ # & /@ TreeChildren @ IsotypicDataTree
   ],
-  Range[0, MetaData[IsotypicDataTree][["DMax"]]],
+  Range[0, Last @ TreeData @ IsotypicDataTree],
   {}
  ]
 
@@ -75,30 +75,35 @@ VectorSpaceBasis[IsotypicDataTree_Tree] :=
 AlgebraBasis[invariantIsotypicDataTree_Tree] :=
  Module[
   {
-   vectorSpaceBasis = VectorSpaceBasis @ invariantIsotypicDataTree,
-   MetaData = MetaData @ invariantIsotypicDataTree,
+   \[Lambda]s, m\[Lambda]s, \[Nu], DMax,
+   vectorSpaceBasis,
    randomProbes,
-   levels,
    invariantSyndromes,
    productSyndromes,
    linearIndices
   },
+  
+  {\[Lambda]s, m\[Lambda]s, \[Nu], DMax} = TreeData @ invariantIsotypicDataTree;
+  
+  vectorSpaceBasis = VectorSpaceBasis @ invariantIsotypicDataTree;
 
   (*\[Lambda]; random probe; multiplicity; random vector*)
   randomProbes =
    generateRandomProbes[
-    MetaData["\[Lambda]s"],
-    MetaData["m\[Lambda]s"],
+    \[Lambda]s,
+    m\[Lambda]s,
     Max @ spaceDimensions @ vectorSpaceBasis
    ];
-
-  levels = flattenLevels[Length @ MetaData["\[Lambda]s"]];
 
   (*degree; leaf; random probe; interiorTensorTrains; SSYTs, tensorTrees for each \[Lambda]; output vector*)
   invariantSyndromes = EvaluateBasis[vectorSpaceBasis, randomProbes];
 
   (*degree; random probe; leaf, interiorTensorTrains, SSYTs, tensorTrees for each \[Lambda]; output vector*)
-  invariantSyndromes = Flatten[invariantSyndromes, levels];
+  invariantSyndromes = Flatten[invariantSyndromes, flattenLevels[Length @ \[Lambda]s]];
+
+
+  (*NEW CODE SHOULD START HERE*)
+
 
   (*degree; random probe; columns*)
   productSyndromes =
@@ -108,13 +113,13 @@ AlgebraBasis[invariantIsotypicDataTree_Tree] :=
       RowKroneckerProduct[invariantSyndromes[[i]], invariantSyndromes[[d + 1 - i]]],
       {i, Ceiling[d / 2], 1, -1}
      ],
-    {d, 1, MetaData["DMax"] + 1}
+    {d, 1, DMax + 1}
    ];
 
-  (*indices into productSyndromes*)
+  (*degree; indices into productSyndromes*)
   linearIndices = PivotColumns /@ productSyndromes;
 
-  (*indices into invariantSyndromes*)
+  (*degree; indices into invariantSyndromes*)
   linearIndices =
    MapThread[
     DeleteCases[#1, i_ /; i <= #2] - #2 &,
@@ -135,9 +140,9 @@ ModuleBasis[
 ] :=
  Module[
   {
-   invariantVectorSpaceBasis = VectorSpaceBasis @ invariantIsotypicDataTree,
-   covariantVectorSpaceBasis = VectorSpaceBasis @ covariantIsotypicDataTree,
-   MetaData = MetaData @ covariantIsotypicDataTree,
+   \[Lambda]s, m\[Lambda]s, \[Nu], DMax,
+   invariantVectorSpaceBasis,
+   covariantVectorSpaceBasis,
    randomProbes,
    levels,
    invariantSyndromes,
@@ -146,14 +151,20 @@ ModuleBasis[
    linearIndices
   },
 
+  {\[Lambda]s, m\[Lambda]s, \[Nu], DMax} = TreeData @ covariantIsotypicDataTree;
+
+  invariantVectorSpaceBasis = VectorSpaceBasis @ invariantIsotypicDataTree;
+  
+  covariantVectorSpaceBasis = VectorSpaceBasis @ covariantIsotypicDataTree;
+
   randomProbes =
    generateRandomProbes[
-    MetaData["\[Lambda]s"],
-    MetaData["m\[Lambda]s"],
-    Ceiling[Max @ spaceDimensions @ covariantVectorSpaceBasis / (2 * MetaData["\[Nu]"] + 1)]
+    \[Lambda]s,
+    m\[Lambda]s,
+    Ceiling[Max @ spaceDimensions @ covariantVectorSpaceBasis / (2 \[Nu] + 1)]
    ];
 
-  levels = flattenLevels[Length @ MetaData["\[Lambda]s"]];
+  levels = flattenLevels[Length @ \[Lambda]s];
 
   invariantSyndromes = EvaluateBasis[invariantVectorSpaceBasis, randomProbes];
   invariantSyndromes = Flatten[invariantSyndromes, levels];
@@ -201,16 +212,6 @@ EvaluateBasis[
 
 (* ::Subsubsection:: *)
 (*Private Functions*)
-
-
-MetaData[IsotypicDataTree_Tree] :=
- AssociationThread[
-  {"\[Lambda]s", "m\[Lambda]s", "\[Nu]", "DMax"},
-  Join[
-   TreeData @ IsotypicDataTree,
-   {TreeData /@ TreeChildren @ IsotypicDataTree // Last}
-  ]
- ]
 
 
 generateRandomProbes[

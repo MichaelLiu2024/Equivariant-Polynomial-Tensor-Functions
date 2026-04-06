@@ -32,7 +32,7 @@ EvaluateAntisymmetrizedTensorTrain[
 
 EvaluateSymmetrizedTensorTrain[
  {1},
- vector_List?VectorQ
+ vector_List
 ] :=
  vector
 
