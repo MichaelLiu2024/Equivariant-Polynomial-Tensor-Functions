@@ -33,7 +33,7 @@ IntegerPartitionsQ
 Begin["`Private`"];
 
 
-NonZeroQ[n_] := n != 0
+NonZeroQ[n_] := n =!= 0
 
 
 PositiveIntegerQ[n_] := Positive @ n \[And] IntegerQ @ n

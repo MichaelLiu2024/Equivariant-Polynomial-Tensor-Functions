@@ -42,16 +42,8 @@ IsotypicComponentTensorProductQ[
  ]
 
 
-WeightMultiplicitySymmetricPower[
- \[Lambda]_?NonNegativeIntegerQ,
- d_?NonNegativeIntegerQ,
- \[Mu]_?NonNegativeIntegerQ
-] :=
- Length @ IntegerPartitions[d \[Lambda] - \[Mu], d, Range[2 \[Lambda]]]
-
-
 (* ::Subsubsection:: *)
-(*Public Functions*)
+(*IsotypicMultiplicitySymmetricPower*)
 
 
 IsotypicMultiplicitySymmetricPower::usage = "gives the isotypic multiplicity of \[Mu] in the symmetric power \!\(\*SuperscriptBox[\(S\), \(d\)]\)\!\(\*SubscriptBox[\(H\), \(\[Lambda]\)]\)."
@@ -65,6 +57,18 @@ IsotypicMultiplicitySymmetricPower[
  WeightMultiplicitySymmetricPower[\[Lambda], d, \[Mu]] - WeightMultiplicitySymmetricPower[\[Lambda], d, \[Mu] + 1]
 
 
+WeightMultiplicitySymmetricPower[
+ \[Lambda]_?NonNegativeIntegerQ,
+ d_?NonNegativeIntegerQ,
+ \[Mu]_?NonNegativeIntegerQ
+] :=
+ Length @ IntegerPartitions[d \[Lambda] - \[Mu], d, Range[2 \[Lambda]]]
+
+
+(* ::Subsubsection:: *)
+(*IsotypicMultiplicityExteriorPower*)
+
+
 IsotypicMultiplicityExteriorPower::usage = "gives the isotypic multiplicity of \[Mu] in the exterior power \!\(\*SuperscriptBox[\(\[CapitalLambda]\), \(d\)]\)\!\(\*SubscriptBox[\(H\), \(\[Lambda]\)]\)."
 
 
@@ -73,10 +77,24 @@ IsotypicMultiplicityExteriorPower[
  d_?NonNegativeIntegerQ,
  \[Mu]_?NonNegativeIntegerQ
 ] :=
- Count[#, _?(Total[#] == \[Mu] & )] - Count[#, _?(Total[#] == \[Mu] + 1 & )] & @ Subsets[Range[-\[Lambda], \[Lambda]], {d}]
+ WeightMultiplicityExteriorPower[\[Lambda], d, \[Mu]] - WeightMultiplicityExteriorPower[\[Lambda], d, \[Mu] + 1]
+
+
+WeightMultiplicityExteriorPower[
+ \[Lambda]_?NonNegativeIntegerQ,
+ d_?NonNegativeIntegerQ,
+ \[Mu]_?NonNegativeIntegerQ
+] :=
+ Count[Subsets[Range[-\[Lambda], \[Lambda]], {d}], _?(Total[#] == \[Mu] &)]
+
+
+(* ::Subsubsection:: *)
+(*IsotypicMultiplicitySchurPower*)
 
 
 IsotypicMultiplicitySchurPower::usage = "gives the isotypic multiplicity of \[Mu] in the Schur power \!\(\*SubscriptBox[\(e\), \(p\)]\)\!\(\*SubsuperscriptBox[\(H\), \(\[Lambda]\), \(\[CircleTimes]d\)]\)."
+
+
 IsotypicMultiplicitySchurPower[
  \[Lambda]_?NonNegativeIntegerQ,
  p_?IntegerPartitionQ,
@@ -90,7 +108,11 @@ IsotypicMultiplicitySchurPower[
 
 
 IsotypicComponentsTensorProduct::usage = "gives a list of all isotypic components contained in the tensor product \!\(\*SubscriptBox[\(H\), \(\[Lambda]\)]\)\[CircleTimes]\!\(\*SubscriptBox[\(H\), \(\[Mu]\)]\)."
+
+
 SetAttributes[IsotypicComponentsTensorProduct, Listable]
+
+
 IsotypicComponentsTensorProduct[
  \[Lambda]_?NonNegativeIntegerQ,
  \[Mu]_?NonNegativeIntegerQ
@@ -102,7 +124,11 @@ IsotypicComponentsTensorProduct[
 
 
 IsotypicComponentsTensorPower::usage = "gives a list of all isotypic components contained in the tensor power \!\(\*SubsuperscriptBox[\(H\), \(\[Lambda]\), \(\[CircleTimes]d\)]\)."
+
+
 SetAttributes[IsotypicComponentsTensorPower, Listable]
+
+
 IsotypicComponentsTensorPower[
  \[Lambda]_?NonNegativeIntegerQ,
  d_?NonNegativeIntegerQ
@@ -115,7 +141,11 @@ IsotypicComponentsTensorPower[
 
 
 IsotypicComponentsExteriorPower::usage = "gives a list of all isotypic components contained in exterior power \!\(\*SuperscriptBox[\(\[CapitalLambda]\), \(d\)]\)\!\(\*SubscriptBox[\(H\), \(\[Lambda]\)]\)."
+
+
 SetAttributes[IsotypicComponentsExteriorPower, Listable]
+
+
 IsotypicComponentsExteriorPower[
  \[Lambda]_?NonNegativeIntegerQ,
  d_?NonNegativeIntegerQ
@@ -127,11 +157,15 @@ IsotypicComponentsExteriorPower[
 
 
 IsotypicComponentsSchurPower::usage = "gives a list of all isotypic components contained in the Schur power \!\(\*SubscriptBox[\(e\), \(p\)]\)\!\(\*SubsuperscriptBox[\(H\), \(\[Lambda]\), \(\[CircleTimes]d\)]\)."
+
+
 IsotypicComponentsSchurPower[
  \[Lambda]s_List?VectorQ,
  \[Pi]\[Lambda]s_List
 ] :=
  MapThread[IsotypicComponentsSchurPower, {\[Lambda]s, \[Pi]\[Lambda]s}]
+
+
 IsotypicComponentsSchurPower[
  \[Lambda]_?NonNegativeIntegerQ,
  p_?IntegerPartitionQ

@@ -3,14 +3,17 @@
 BeginPackage["CombinatoricsTools`", {"BooleanTools`"}];
 
 
+FirstUnitPrime
+
+
 HilbertSeries
 
 
 spaceDimensions
+tpDimensions
 
 
 RowKroneckerProduct
-RowJoin
 
 
 RaggedMultiIndex
@@ -37,47 +40,47 @@ Begin["`Private`"];
 (*Public Functions*)
 
 
+FirstUnitPrime[m_?PositiveIntegerQ] :=
+  NestWhile[# + If[OddQ[m] && m > 1, 2 m, m] &, 1, Not @* PrimeQ]
+
+
 HilbertSeries[
  \[Lambda]s_?DistinctPositiveIntegersQ,
  m\[Lambda]s_?NonNegativeIntegersQ,
  \[Nu]_?NonNegativeIntegerQ,
  DMax_?NonNegativeIntegerQ
- ] :=
-  CoefficientList[
-   SeriesCoefficient[
-    Normal @ Series[((1 - y)(1 - y^-1)) / 2 * Total @ (y^Range[-\[Nu], \[Nu]]) / Times @@ Join @@ ((1 - t y^Range[-\[Lambda]s, \[Lambda]s])^m\[Lambda]s), {t, 0, DMax}],
-    {y, 0, 0}
-   ],
-   t
-  ]
-
-
-spaceDimensions[VectorSpaceBasis_List] := Total /@ Map[Times @@ #[["dimensions"]] &, VectorSpaceBasis, {2}]
-
-
-RowKroneckerProduct[
- m1_List ? ArrayQ,
- {{{}}}
 ] :=
- {{}}
-RowKroneckerProduct[
- {{{}}},
- m2_List ? ArrayQ
-] :=
- {{}}
+ Rest @ CoefficientList[
+  SeriesCoefficient[
+   Normal @ Series[((1 - y)(1 - y^-1)) / 2 * Total @ (y^Range[-\[Nu], \[Nu]]) / Times @@ Join @@ ((1 - t y^Range[-\[Lambda]s, \[Lambda]s])^m\[Lambda]s), {t, 0, DMax}],
+   {y, 0, 0}
+  ],
+  t
+ ]
+
+
+spaceDimensions[VectorSpaceBasis_List] := Total /@ Map[Times @@ tpDimensions @ # &, VectorSpaceBasis, {2}]
+
+
+tpDimensions[basis_Association] :=
+ Flatten[
+      {
+       Length @ basis[["interiorTensorTrains"]],
+       Reverse @ Flatten @ Transpose[
+        {
+         Length /@ basis[["leafTensorTrees"]],
+         Length /@ basis[["SSYT\[Lambda]s"]]
+        }
+       ]
+      }
+     ]
 
 
 RowKroneckerProduct[
  m1_?ArrayQ,
  m2_?ArrayQ
 ] /; Length @ m1 == Length @ m2 && Depth @ m1 == 4 == Depth @ m2 :=
- Flatten[
-  MapThread[KroneckerProduct, {m1, m2}],
-  {{1, 3}, {2}}
- ]
-
-
-RowJoin[ms__] := Join[ms, 2]
+ MapThread[KroneckerProduct, {m1, m2}]
 
 
 RaggedMultiIndex[
@@ -106,8 +109,8 @@ ArrayMultiIndex[
  IntegerDigits[linearIndex - 1, MixedRadix @ dimensions, Length @ dimensions] + 1
 
 
-PivotColumns[matrix_?MatrixQ] :=
- Position[#, _?NonZeroQ, {1}, 1, Heads -> False] & /@ RowReduce[matrix, Tolerance -> 10^-12] // Flatten
+PivotColumns[matrix_?MatrixQ, char_?NonNegativeIntegerQ] :=
+ Flatten[Position[#, 1, {1}, 1, Heads -> False] & /@ RowReduce[matrix, If[char == 0, Tolerance -> 10^-12 * Norm @ matrix, Modulus -> char]]] 
 
 
 WeakCompositions::usage = "gives a list of all weak integer compositions of D into n parts."

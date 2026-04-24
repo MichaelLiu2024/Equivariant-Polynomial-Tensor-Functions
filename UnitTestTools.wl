@@ -21,18 +21,30 @@ Begin["`Private`"];
 (*Public Functions*)
 
 
+SetAttributes[generateVariables, Listable]
+generateVariables[
+ \[Lambda]_Integer?Positive,
+ m\[Lambda]_Integer?Positive
+] :=
+ {Table[Global`x[\[Lambda]][multiplicity][m], {multiplicity, 1, m\[Lambda]}, {m, -\[Lambda], \[Lambda]}]}
+
+
 UnitTest[] :=
  Module[
   {
    \[Lambda]s = {1, 2}, m\[Lambda]s = {2, 2}, \[Nu] = 0, DMax = 4,
-   tree,
-   alg, polys,
+   tree, alg, polys,
    v1, v2, a1, a2, \[Epsilon], temp
   },
   
   tree = IsotypicDataTree[\[Lambda]s, m\[Lambda]s, \[Nu], DMax];
   alg = AlgebraBasis[tree];
-  polys = Chop @ FullSimplify @ Flatten @ SphericalBasisToMonomialBasis @ EvaluateBasis[alg, generateVariables[\[Lambda]s, m\[Lambda]s]];
+  polys =
+   Chop @ FullSimplify @ Flatten @ SphericalBasisToMonomialBasis @ Map[
+    EvaluateTensorProductBasis[#, generateVariables[\[Lambda]s, m\[Lambda]s]] &,
+    alg,
+    {2}
+   ];
   
   v1 = SymmetricTensor[1, 1];
   v2 = SymmetricTensor[1, 2];
@@ -68,92 +80,22 @@ UnitTest[] :=
  ]
 
 
-MinimalIntegrityBasisSize[
- {1},
- {1},
- 0,
- DMax_?NonNegativeIntegerQ
-] := Take[{1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, DMax + 1]
-
-
-MinimalIntegrityBasisSize[
- {1},
- {2},
- 0,
- DMax_?NonNegativeIntegerQ
-] := Take[{1, 0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, DMax + 1]
-
-
-MinimalIntegrityBasisSize[
- {1},
- {3},
- 0,
- DMax_?NonNegativeIntegerQ
-] := Take[{1, 0, 6, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}, DMax + 1]
-
-
-MinimalIntegrityBasisSize[
- {2},
- {2},
- 0,
- DMax_?NonNegativeIntegerQ
-] := Take[{1, 0, 3, 4, 1, 0}, DMax + 1]
-
-
-MinimalIntegrityBasisSize[
- {4},
- {1},
- 0,
- DMax_?NonNegativeIntegerQ
-] := Take[{1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0}, DMax + 1]
-
-
-MinimalIntegrityBasisSize[
- {1, 3},
- {1, 1},
- 0,
- DMax_?NonNegativeIntegerQ
-] := Take[{1, 0, 2, 0, 4, 0, 5, 3, 1, 7, 1, 2, 0, 1, 0, 1}, DMax + 1]
-
-
-MinimalIntegrityBasisSize[
- {2, 3},
- {1, 1},
- 0,
- DMax_?NonNegativeIntegerQ
-] := Take[{1, 0, 2, 2, 4, 4, 9, 9, 8, 5, 3, 2, 1, 1, 1}, DMax + 1]
-
-
-MinimalIntegrityBasisSize[
- {1, 2, 3},
- {1, 1, 1},
- 0,
- DMax_?NonNegativeIntegerQ
-] := Take[{1, 0, 3, 4, 12, 15, 37, 42, 38, 22, 9, 6, 3, 2, 1, 1}, DMax + 1]
-
-
-MinimalIntegrityBasisSize[
- {2, 3},
- {2, 1},
- 0,
- DMax_?NonNegativeIntegerQ
-] := Take[{1, 0, 4, 7, 14, 26, 52, 68}, DMax + 1]
-
-
-MinimalIntegrityBasisSize[
- {2, 3},
- {2, 1},
- 4,
- DMax_?NonNegativeIntegerQ
-] := Take[{0, 0, 6, 21, 63, 147, 264, 284}, DMax + 1]
-
-
-MinimalIntegrityBasisSize[
- {2, 4},
- {2, 1},
- 0,
- DMax_?NonNegativeIntegerQ
-] := Take[{{1, 0, 0, 0, 0}, {0, 0, 0, 0, 0}, {1, 1, 1, 0, 0}, {1, 1, 2, 2, 1}, {1, 0, 1, 4, 6}, {1, 0, 0, 7, 18}, {1, 0, 0, 10, 36}, {1, 0, 0, 11, 53}, {1, 0, 0, 10, 45}, {1, 0, 0, 5, 10}, {1, 0, 0, 2, 2}, {0, 0, 0, 1, 3}} . {1, 2, 1, 2, 1}, DMax + 1]
+MinimalIntegrityBasisSizeData =
+<|
+ {{1}, {1}, 0} -> {0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+ {{1}, {2}, 0} -> {0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+ {{1}, {3}, 0} -> {0, 6, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+ {{2}, {2}, 0} -> {0, 3, 4, 1, 0},
+ {{4}, {1}, 0} -> {0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
+ {{1, 3}, {1, 1}, 0} -> {0, 2, 0, 4, 0, 5, 3, 1, 7, 1, 2, 0, 1, 0, 1},
+ {{2, 3}, {1, 1}, 0} -> {0, 2, 2, 4, 4, 9, 9, 8, 5, 3, 2, 1, 1, 1},
+ {{1, 2, 3}, {1, 1, 1}, 0} -> {0, 3, 4, 12, 15, 37, 42, 38, 22, 9, 6, 3, 2, 1, 1},
+ {{2, 3}, {2, 1}, 0} -> {0, 4, 7, 14, 26, 52, 68},
+ {{2, 3}, {2, 1}, 4} -> {0, 6, 21, 63, 147, 264, 284},
+ {{2, 3}, {2, 1}, 5} -> {0, 2, 14, 62, 180, 378, 556},
+ {{2, 3}, {2, 1}, 6} -> {0, 1, 13, 55, 168, 402, 671},
+ {{2, 4}, {2, 1}, 0} -> {0, 4, 10, 16, 33, 57, 76, 66, 21, 7, 5}
+|>;
 
 
 MinimalIntegrityBasisSize[
@@ -161,14 +103,15 @@ MinimalIntegrityBasisSize[
  m\[Lambda]s_?PositiveIntegersQ,
  \[Nu]_?NonNegativeIntegerQ,
  DMax_?NonNegativeIntegerQ
-] := ConstantArray[0, DMax + 1]
+] := Take[First @ Lookup[MinimalIntegrityBasisSizeData, {{\[Lambda]s, m\[Lambda]s, \[Nu]}}, ConstantArray[0, DMax]], DMax]
 
 
 Benchmark[
  \[Lambda]s_?DistinctPositiveIntegersQ,
  m\[Lambda]s_?PositiveIntegersQ,
  \[Nu]_?NonNegativeIntegerQ,
- DMax_?NonNegativeIntegerQ
+ DMax_?NonNegativeIntegerQ,
+ char_?NonNegativeIntegerQ
 ] :=
  Module[
   {
@@ -177,9 +120,9 @@ Benchmark[
    invariantAlgebraBasis, covariantModuleBasis
   },
   
-  invariantIsotypicDataTree = AbsoluteTiming @ IsotypicDataTree[\[Lambda]s, m\[Lambda]s, 0, DMax];
+  invariantIsotypicDataTree = AbsoluteTiming @ IsotypicDataTree[\[Lambda]s, m\[Lambda]s, 0, DMax, char];
   
-  If[\[Nu] != 0, covariantIsotypicDataTree = AbsoluteTiming @ IsotypicDataTree[\[Lambda]s, m\[Lambda]s, \[Nu], DMax]];
+  If[\[Nu] != 0, covariantIsotypicDataTree = AbsoluteTiming @ IsotypicDataTree[\[Lambda]s, m\[Lambda]s, \[Nu], DMax, char]];
   
   invariantVectorSpaceBasis = VectorSpaceBasis @ Last @ invariantIsotypicDataTree;
   
@@ -264,14 +207,6 @@ SymmetricTensor[
   ConstantArray[3, \[Lambda]],
   Symmetric
  ]
-
-
-SetAttributes[generateVariables, Listable]
-generateVariables[
- \[Lambda]_Integer?Positive,
- m\[Lambda]_Integer?Positive
-] :=
- {Table[Global`x[\[Lambda]][multiplicity][m], {multiplicity, 1, m\[Lambda]}, {m, -\[Lambda], \[Lambda]}]}
 
 
 End[];

@@ -4,6 +4,7 @@ BeginPackage["ClebschGordanTools`", {"CombinatoricsTools`", "IsotypicDecompositi
 
 
 ClebschGordanTensor
+ClebschGordanTensorTrain
 TensorTrainBasisTensorProduct
 TensorTrainBasisExteriorPower
 TensorTrainBasisSymmetricPower
@@ -37,38 +38,65 @@ Get[ClebschGordanTensorCache]
 ClebschGordanTensor[
  \[Lambda]1_?NonNegativeIntegerQ,
  \[Lambda]2_?NonNegativeIntegerQ,
- \[Lambda]3_?NonNegativeIntegerQ
+ \[Lambda]3_?NonNegativeIntegerQ,
+ 0
 ] :=
- ClebschGordanTensor[\[Lambda]1, \[Lambda]2, \[Lambda]3] =
-  Developer`ToPackedArray @ Normal @ N @ SparseArray[
-   Flatten @ Table[
-    {1 + \[Lambda]1 + m1, 1 + \[Lambda]2 + m2, 1 + \[Lambda]3 + m1 + m2} -> ClebschGordan[{\[Lambda]1, m1}, {\[Lambda]2, m2}, {\[Lambda]3, m1 + m2}],
+ClebschGordanTensor[\[Lambda]1, \[Lambda]2, \[Lambda]3, 0] = 
+ Developer`ToPackedArray @ Normal @ SparseArray[
+   Join @@ Table[
+    {1 + \[Lambda]1 + m1, 1 + \[Lambda]2 + m2, 1 + \[Lambda]3 + m1 + m2} ->
+     N @ ClebschGordan[{\[Lambda]1, m1}, {\[Lambda]2, m2}, {\[Lambda]3, m1 + m2}],
     {m1, -\[Lambda]1, \[Lambda]1},
     {m2, Max[-\[Lambda]2, -\[Lambda]3 - m1], Min[\[Lambda]2, \[Lambda]3 - m1]}
    ],
-   {2\[Lambda]1 + 1, 2\[Lambda]2 + 1, 2\[Lambda]3 + 1},
-   0
- ]
+   {2 \[Lambda]1 + 1, 2 \[Lambda]2 + 1, 2 \[Lambda]3 + 1},
+   0.
+  ]
+
+
+(*Take the tucker product with diagonal scaling*)
+ClebschGordanTensor[
+ \[Lambda]1_?NonNegativeIntegerQ,
+ \[Lambda]2_?NonNegativeIntegerQ,
+ \[Lambda]3_?NonNegativeIntegerQ,
+ char_?PositiveIntegerQ
+] :=
+ ClebschGordanTensor[\[Lambda]1, \[Lambda]2, \[Lambda]3, char] = 
+  With[
+   {\[Rho] = \[Lambda]1 + \[Lambda]2 - \[Lambda]3},
+   {s = Range[0, \[Rho]]},
+  
+   Developer`ToPackedArray @ Normal @ SparseArray[
+    Flatten @ Table[
+     {1 + \[Lambda]1 + m1, 1 + \[Lambda]2 + m2, 1 + \[Lambda]3 + m1 + m2} ->
+      Mod[
+       Total[
+        (-1)^s * Binomial[\[Rho], s] *
+        FactorialPower[\[Lambda]1 + m1, \[Rho] - s] *
+        FactorialPower[\[Lambda]1 - m1, s] *
+        FactorialPower[\[Lambda]2 + m2, s] *
+        FactorialPower[\[Lambda]2 - m2, \[Rho] - s]
+       ],
+       char
+      ],
+     {m1, -\[Lambda]1, \[Lambda]1},
+     {m2, Max[-\[Lambda]2, -\[Lambda]3 - m1], Min[\[Lambda]2, \[Lambda]3 - m1]}
+    ],
+    {2\[Lambda]1 + 1, 2\[Lambda]2 + 1, 2\[Lambda]3 + 1},
+    0
+   ]
+  ]
 
 
 ClebschGordanTensorTrain::usage = "gives the tensor train representation of the Clebsch-Gordan tensor CG(\[Lambda]s,\[Gamma]s)."
 
 
-ClebschGordanTensorTrain[\[Lambda]s_?NonNegativeIntegersQ][\[Gamma]s_?NonNegativeIntegersQ] := ClebschGordanTensorTrain[\[Lambda]s, \[Gamma]s]
-
-
-ClebschGordanTensorTrain[
- {\[Lambda]_?NonNegativeIntegerQ},
- {\[Gamma]_?NonNegativeIntegerQ}
-] :=
- {1}
-
-
 ClebschGordanTensorTrain[
  \[Lambda]s_?NonNegativeIntegersQ,
- \[Gamma]s_?NonNegativeIntegersQ
+ \[Gamma]s_?NonNegativeIntegersQ,
+ char_?NonNegativeIntegerQ
 ] /; Length @ \[Lambda]s == Length @ \[Gamma]s \[And] First @ \[Lambda]s == First @ \[Gamma]s \[And] If[Length @ \[Lambda]s >= 2, Abs[ListConvolve[{1, -1}, \[Gamma]s]] \[VectorLessEqual] Rest[\[Lambda]s] \[VectorLessEqual] ListConvolve[{1, 1}, \[Gamma]s], True] :=
- MapThread[ClebschGordanTensor, {Most[\[Gamma]s], Rest[\[Lambda]s], Rest[\[Gamma]s]}]
+ MapThread[ClebschGordanTensor[##, char] &, {Most[\[Gamma]s], Rest[\[Lambda]s], Rest[\[Gamma]s]}]
 
 
 PathBasisTensorProduct::usage = "gives a list of all Clebsch-Gordan paths from \[Mu] to the tensor product of the \[Lambda]s."
@@ -78,12 +106,9 @@ PathBasisTensorProduct[
  \[Lambda]s_?NonNegativeIntegersQ,
  \[Mu]_?NonNegativeIntegerQ
 ] :=
- SortBy[
-  Map[
-   Function[indices, FoldList[indicesToPaths, First[\[Lambda]s], Transpose[{Rest[\[Lambda]s], indices}]]],
-   Position[Fold[IsotypicComponentsTensorProduct, \[Lambda]s], \[Mu]]
-  ],
-  FreeQ[Most @ #, 0] & (*move all paths containing a zero to the left*)
+ Map[
+  Function[indices, FoldList[indicesToPaths, First[\[Lambda]s], Transpose[{Rest[\[Lambda]s], indices}]]],
+  Position[Fold[IsotypicComponentsTensorProduct, \[Lambda]s], \[Mu]]
  ]
 
 
@@ -91,14 +116,13 @@ PathBasisTensorProduct[
 (*Public Functions*)
 
 
+(*basis element; tensor train*)
 TensorTrainBasisTensorProduct[
  \[Lambda]s_?NonNegativeIntegersQ,
- \[Mu]_?NonNegativeIntegerQ
+ \[Mu]_?NonNegativeIntegerQ,
+ char_?NonNegativeIntegerQ
 ] :=
- ClebschGordanTensorTrain[\[Lambda]s] /@ PathBasisTensorProduct[\[Lambda]s, \[Mu]]
-
-
-TensorTrainBasisExteriorPower::usage = "gives a list of all Clebsch-Gordan paths from \[Mu] to the d-fold exterior power of \[Lambda]."
+ ClebschGordanTensorTrain[\[Lambda]s, #, char] & /@ PathBasisTensorProduct[\[Lambda]s, \[Mu]]
 
 
 SetAttributes[TensorTrainBasisExteriorPower, Listable]
@@ -107,21 +131,23 @@ SetAttributes[TensorTrainBasisExteriorPower, Listable]
 TensorTrainBasisExteriorPower[
  \[Lambda]_?NonNegativeIntegerQ,
  d_?NonNegativeIntegerQ,
- \[Mu]_?NonNegativeIntegerQ
+ \[Mu]_?NonNegativeIntegerQ,
+ char_?NonNegativeIntegerQ
 ] /;
  d <= 3 \[And] \[Lambda] <= 3 \[And] IsotypicMultiplicityExteriorPower[\[Lambda], d, \[Mu]] > 0 :=
   Switch[
    d,
-   1, {{1}},
-   2, {{ClebschGordanTensor[\[Lambda], \[Lambda], \[Mu]]}},
-   3, {ClebschGordanTensorTrain[{\[Lambda], \[Lambda], \[Lambda]}, {\[Lambda], # + 1 - Mod[#, 2] & @ Abs[\[Lambda] - \[Mu]], \[Mu]}]}
+   1, {{}},
+   2, {{ClebschGordanTensor[\[Lambda], \[Lambda], \[Mu], char]}},
+   3, {ClebschGordanTensorTrain[{\[Lambda], \[Lambda], \[Lambda]}, {\[Lambda], # + 1 - Mod[#, 2] & @ Abs[\[Lambda] - \[Mu]], \[Mu]}, char]}
   ]
 
 
 TensorTrainBasisExteriorPower[
  \[Lambda]_?NonNegativeIntegerQ,
  d_?PositiveIntegerQ,
- \[Mu]_?NonNegativeIntegerQ
+ \[Mu]_?NonNegativeIntegerQ,
+ char_?NonNegativeIntegerQ
 ] /; d > 3 \[Or] \[Lambda] > 3 :=
  Module[
   {
@@ -130,24 +156,30 @@ TensorTrainBasisExteriorPower[
    interiorRandomProbes,
    syndromeMatrix
   },
-  Print["yo"];
+
   interiorPaths =
    Select[
     PathBasisTensorProduct[ConstantArray[\[Lambda], d], \[Mu]],
-    OddQ @ #[[2]] & (*ensures that the original tensor is not Symmetric[{1,2}]*)
+    OddQ @ #[[2]] & (*ensures that the tensor is not Symmetric[{1, 2}]*)
    ];
   
-  interiorTensorTrains = ClebschGordanTensorTrain[ConstantArray[\[Lambda], d]] /@ interiorPaths;
+  interiorTensorTrains = ClebschGordanTensorTrain[ConstantArray[\[Lambda], d], #, char] & /@ interiorPaths;
   
-  interiorRandomProbes = Exp[I RandomReal[2 \[Pi], {Ceiling[IsotypicMultiplicityExteriorPower[\[Lambda], d, \[Mu]] / (2\[Mu] + 1) + 1], d, 2 \[Lambda] + 1}]];
+  (*part of partition; random probe; vector*)
+  interiorRandomProbes =
+   If[
+    char == 0,
+    RandomReal[1, {d, Ceiling[IsotypicMultiplicityExteriorPower[\[Lambda], d, \[Mu]] / (2\[Mu] + 1)] + 1, 2 \[Lambda] + 1}],
+    RandomInteger[char - 1, {d, Ceiling[IsotypicMultiplicityExteriorPower[\[Lambda], d, \[Mu]] / (2\[Mu] + 1)] + 1, 2 \[Lambda] + 1}]
+   ];
   
   syndromeMatrix =
    Flatten[
-    Outer[EvaluateAntisymmetrizedTensorTrain, interiorTensorTrains, interiorRandomProbes, 1],
+    EvaluateAntisymmetrizedTensorTrain[#, interiorRandomProbes, BatchEvaluateCore] & /@ interiorTensorTrains,
     {{2, 3}, {1}}
    ];
   
-  interiorTensorTrains[[PivotColumns @ syndromeMatrix]]
+  interiorTensorTrains[[PivotColumns[syndromeMatrix, char]]]
  ]
 
 
@@ -160,21 +192,23 @@ SetAttributes[TensorTrainBasisSymmetricPower, Listable]
 TensorTrainBasisSymmetricPower[
  \[Lambda]_?NonNegativeIntegerQ,
  d_?NonNegativeIntegerQ,
- \[Mu]_?NonNegativeIntegerQ
+ \[Mu]_?NonNegativeIntegerQ,
+ char_?NonNegativeIntegerQ
 ] /;
  d <= 3 \[And] \[Lambda] <= 3 \[And] {\[Lambda], d, \[Mu]} != {3, 3, 3} \[And] IsotypicMultiplicitySymmetricPower[\[Lambda], d, \[Mu]] > 0:=
   Switch[
    d,
-   1, {{1}},
-   2, {{ClebschGordanTensor[\[Lambda], \[Lambda], \[Mu]]}},
-   3, {ClebschGordanTensorTrain[{\[Lambda], \[Lambda], \[Lambda]}, {\[Lambda], # + Mod[#, 2] & @ Abs[\[Lambda] - \[Mu]], \[Mu]}]}
+   1, {{}},
+   2, {{ClebschGordanTensor[\[Lambda], \[Lambda], \[Mu], char]}},
+   3, {ClebschGordanTensorTrain[{\[Lambda], \[Lambda], \[Lambda]}, {\[Lambda], # + Mod[#, 2] & @ Abs[\[Lambda] - \[Mu]], \[Mu]}, char]}
   ]
 
 
 TensorTrainBasisSymmetricPower[
  \[Lambda]_?NonNegativeIntegerQ,
  d_?NonNegativeIntegerQ,
- \[Mu]_?NonNegativeIntegerQ
+ \[Mu]_?NonNegativeIntegerQ,
+ char_?NonNegativeIntegerQ
 ] /; d > 3 \[Or] \[Lambda] > 3 \[Or] {\[Lambda], d, \[Mu]} == {3, 3, 3} :=
  Module[
   {
@@ -187,63 +221,71 @@ TensorTrainBasisSymmetricPower[
   interiorPaths =
    Select[
     PathBasisTensorProduct[ConstantArray[\[Lambda], d], \[Mu]],
-    EvenQ @ #[[2]] & (*ensures that the original tensor is not Antisymmetric[{1,2}]*)
+    EvenQ @ #[[2]] & (*ensures that the tensor is not Antisymmetric[{1, 2}]*)
    ];
   
-  interiorTensorTrains = ClebschGordanTensorTrain[ConstantArray[\[Lambda], d]] /@ interiorPaths;
+  interiorTensorTrains = ClebschGordanTensorTrain[ConstantArray[\[Lambda], d], #, char] & /@ interiorPaths;
   
-  interiorRandomProbes = Exp[I RandomReal[2\[Pi], {Ceiling[IsotypicMultiplicitySymmetricPower[\[Lambda], d, \[Mu]] / (2\[Mu] + 1) + 1], 2\[Lambda] + 1}]];
+  (*random probe; vector*)
+  interiorRandomProbes =
+   If[
+    char == 0,
+    RandomReal[1, {Ceiling[IsotypicMultiplicitySymmetricPower[\[Lambda], d, \[Mu]] / (2\[Mu] + 1)] + 1, 2\[Lambda] + 1}],
+    RandomInteger[char - 1, {Ceiling[IsotypicMultiplicitySymmetricPower[\[Lambda], d, \[Mu]] / (2\[Mu] + 1)] + 1, 2\[Lambda] + 1}]
+   ];
   
   syndromeMatrix =
     Flatten[
-     Outer[EvaluateSymmetrizedTensorTrain, interiorTensorTrains, interiorRandomProbes, 1],
-     {{2, 3}, {1}}(*level 3 contains the vectors of syndromes*)
+     EvaluateSymmetrizedTensorTrain[#, interiorRandomProbes, BatchEvaluateCore] & /@ interiorTensorTrains,
+     {{2, 3}, {1}}
     ];
     
-  interiorTensorTrains[[PivotColumns @ syndromeMatrix]]
+  interiorTensorTrains[[PivotColumns[syndromeMatrix, char]]]
  ]
 
 
-(*these expensive functions need to be memoized when we are sure they work, since they are evaluated multiple times*)
-TensorTreeBasisSchurPower::usage = "gives a list of all Clebsch-Gordan paths from \[Mu] to the image of the Young symmetrizer p on \[Lambda]."
-
-
+(*basis element; tensor tree*)
 TensorTreeBasisSchurPower[
  \[Lambda]_?NonNegativeIntegerQ,
  {},
- \[Mu]_?NonNegativeIntegerQ
+ \[Mu]_?NonNegativeIntegerQ,
+ char_?NonNegativeIntegerQ
 ] :=
- <|"interiorTensorTrains" -> {{1}}, "leafObjects" -> {{{1}}}|>
+ {<|"interiorTensorTrain" -> {}, "leafTensorTrains" -> {{}}|>}
 
 
 TensorTreeBasisSchurPower[
  \[Lambda]_?NonNegativeIntegerQ,
  {1},
- \[Mu]_?NonNegativeIntegerQ
+ \[Mu]_?NonNegativeIntegerQ,
+ char_?NonNegativeIntegerQ
 ] /; \[Lambda] == \[Mu] :=
- <|"interiorTensorTrains" -> {{1}}, "leafObjects" -> {{{1}}}|>
+ {<|"interiorTensorTrain" -> {}, "leafTensorTrains" -> {{}}|>}
 
 
 TensorTreeBasisSchurPower[
  \[Lambda]_?NonNegativeIntegerQ,
  {d_?PositiveIntegerQ},
- \[Mu]_?NonNegativeIntegerQ
+ \[Mu]_?NonNegativeIntegerQ,
+ char_?NonNegativeIntegerQ
 ] /; d > 1 :=
- <|"interiorTensorTrains" -> ({1} & /@ #), "leafObjects" -> List /@ #|> & @ TensorTrainBasisExteriorPower[\[Lambda], d, \[Mu]]
+ <|"interiorTensorTrain" -> {}, "leafTensorTrains" -> {#}|> & /@ TensorTrainBasisExteriorPower[\[Lambda], d, \[Mu], char]
 
 
 TensorTreeBasisSchurPower[
  \[Lambda]_?NonNegativeIntegerQ,
  p_?IntegerPartitionQ,
- \[Mu]_?NonNegativeIntegerQ
+ \[Mu]_?NonNegativeIntegerQ,
+ char_?NonNegativeIntegerQ
 ] /; First @ p == 1 :=
- <|"interiorTensorTrains" -> #, "leafObjects" -> (ConstantArray[{1}, Length @ p] & /@ #)|> & @ TensorTrainBasisSymmetricPower[\[Lambda], Length @ p, \[Mu]]
+ <|"interiorTensorTrain" -> #, "leafTensorTrains" -> ConstantArray[{}, Length @ p]|> & /@ TensorTrainBasisSymmetricPower[\[Lambda], Length @ p, \[Mu], char]
 
 
 TensorTreeBasisSchurPower[
  \[Lambda]_?NonNegativeIntegerQ,
  p_?IntegerPartitionQ,
- \[Mu]_?NonNegativeIntegerQ
+ \[Mu]_?NonNegativeIntegerQ,
+ char_?NonNegativeIntegerQ
 ] :=
   Module[
     {
@@ -262,73 +304,50 @@ TensorTreeBasisSchurPower[
      tensorTrainIndices
     },
     
-    interiorSpins =
-     SortBy[
-      ConstrainedIsotypicComponentsExteriorPowers[\[Lambda], p, \[Mu]],
-      FreeQ[#, 0] &
+    (*interiorSpins*)
+    interiorSpins = ConstrainedIsotypicComponentsExteriorPowers[\[Lambda], p, \[Mu]];
+    
+    (*interiorSpins; basis element; tensor train*)
+    interiorTensorTrains = TensorTrainBasisTensorProduct[#, \[Mu], char] & /@ interiorSpins;
+
+    (*interiorSpins; part of partition; basis element; tensor train*)
+    leafTensorTrains = TensorTrainBasisExteriorPower[\[Lambda], p, #, char] & /@ interiorSpins;
+    
+    (*multiplicity; random probe; random vector*)
+    leafRandomProbes =
+     If[
+      char == 0,
+      RandomReal[1, {First @ p, Ceiling[IsotypicMultiplicitySchurPower[\[Lambda], p, \[Mu]] / (2\[Mu] + 1)] + 1, 2\[Lambda] + 1}],
+      RandomInteger[char - 1, {First @ p, Ceiling[IsotypicMultiplicitySchurPower[\[Lambda], p, \[Mu]] / (2\[Mu] + 1)] + 1, 2\[Lambda] + 1}]
      ];
     
-    (*
-    Level 1: interiorSpins
-    Level 2: basis element
-    Object: tensor train
-    *)
-    interiorTensorTrains = TensorTrainBasisTensorProduct[#, \[Mu]] & /@ interiorSpins;
-
-    (*
-    Level 1: interiorSpins
-    Level 2: part of partition
-    Level 3: basis element
-    Object: tensor train
-    *)
-    leafTensorTrains = TensorTrainBasisExteriorPower[\[Lambda], p, #] & /@ interiorSpins;
+    (*interiorSpins; part of partition; basis element; random probe; syndrome vector*)
+    interiorRandomProbes = Map[EvaluateAntisymmetrizedTensorTrain[#, leafRandomProbes, BatchEvaluateCore] &, leafTensorTrains, {3}];
     
-    (*random probe; multiplicity; random vector*)
-    leafRandomProbes = Exp[I RandomReal[2\[Pi], {Ceiling[IsotypicMultiplicitySchurPower[\[Lambda], p, \[Mu]] / (2\[Mu] + 1) + 1], First @ p, 2\[Lambda] + 1}]];
-    (*
-    Level 1: interiorSpins
-    Level 2: part of partition
-    Level 3: basis element
-    Level 4: random probe
-    Object: syndrome vector
-    *)
-    interiorRandomProbes = Outer[EvaluateAntisymmetrizedTensorTrain, leafTensorTrains, leafRandomProbes, 3, 1];
+    (*interiorSpins; part of partition; random probe; basis element; syndrome vector*)
+    interiorRandomProbes = Transpose[interiorRandomProbes, 3 <-> 4];
     
-    (*
-    Level 1: interiorSpins
-    Level 2: random probe
-    Level 3: part of partition
-    Level 4: basis element
-    Object: syndrome vector
-    *)
-    interiorRandomProbes = Transpose[interiorRandomProbes, {1, 3, 4, 2}];
-    
-    (*
-    Level 1: interiorSpins
-    Level 2: basis element
-    Level 3: random probe
-    Level 4: basis element
-    Object: syndrome vector
-    *)
+    (*interiorSpins; basis element (interiorTensorTrains); random probe; basis elements (interiorRandomProbes); syndrome vector*)
     syndromeMatrix =
       MapThread[
        Function[
         {interiorTensorTrain, interiorRandomProbe},
-        Outer[EvaluateTensorTrain, interiorTensorTrain, Tuples /@ interiorRandomProbe, 1, 2]
+        EvaluateTensorTrain[#, interiorRandomProbe, BatchMultiBatchEvaluateCore] & /@ interiorTensorTrain
        ],
        {interiorTensorTrains, interiorRandomProbes}
       ];
     
-    syndromeMatrix = Flatten[syndromeMatrix, {{3, 5}, {1, 2, 4}}];
+    (*full syndrome; interiorSpins, basis element (interiorTensorTrains), basis elements (interiorRandomProbes)*)
+    syndromeMatrix =
+     With[
+      {maxLevel = Depth @ syndromeMatrix - 1},
+      Flatten[syndromeMatrix, {{3, maxLevel}, Complement[Range @ maxLevel, {3, maxLevel}]}]
+     ];
     
-    linearIndices = PivotColumns @ syndromeMatrix;
-    
-    (*prioritize paths with 0 to include in the basis*)
-    (*perm=OrderingBy[Flatten[interiorTensorTrains,1],FreeQ[Most@#,0]&];
-    linearIndices = perm[[PivotColumns @ syndromeMatrix[[All, perm]]]];*)
+    linearIndices = PivotColumns[syndromeMatrix, char];
 
     interiorDimensions = Length /@ interiorTensorTrains;
-    leafDimensions = Map[Length, leafTensorTrains, {2}];
+    leafDimensions = Reverse /@ Map[Length, leafTensorTrains, {2}];
     totalDimensions = MapThread[Prepend, {leafDimensions, interiorDimensions}];
     tempDimensions = interiorDimensions * MapApply[Times, leafDimensions];
 
@@ -338,10 +357,13 @@ TensorTreeBasisSchurPower[
       RaggedMultiIndex[linearIndices, tempDimensions]
      ];
     
-    <|
-     "interiorTensorTrains" -> MapThread[interiorTensorTrains[[#1, First @ #2]] &, {interiorSpinsIndices, tensorTrainIndices}],
-     "leafObjects" -> MapThread[MapThread[Part, {leafTensorTrains[[#1]], Rest @ #2}] &, {interiorSpinsIndices, tensorTrainIndices}]
-    |>
+    MapThread[
+     <|
+      "interiorTensorTrain" -> interiorTensorTrains[[#1, First @ #2]],
+      "leafTensorTrains" -> MapThread[Part, {leafTensorTrains[[#1]], Reverse @ Rest @ #2}]
+     |> &,
+     {interiorSpinsIndices, tensorTrainIndices}
+    ]
    ]
 
 
