@@ -26,32 +26,32 @@ Cell[BoxData["Quit"], "Input",
 Cell[CellGroupData[{
 
 Cell["ClebschGordanTensor", "Section",
- CellChangeTimes->{{3.984232642548321*^9, 
+ CellChangeTimes->{{3.984232642548321*^9,
   3.9842326444867077`*^9}},ExpressionUUID->"b9f1c2cc-0ce8-a24f-a19f-\
 3bb763129b3c"],
 
 Cell[BoxData[{
  RowBox[{
-  RowBox[{"AppendTo", "[", "\[IndentingNewLine]", 
+  RowBox[{"AppendTo", "[", "\[IndentingNewLine]",
    RowBox[{
-   "$Path", ",", 
+   "$Path", ",",
     "\[IndentingNewLine]", "\"\<C:\\\\Users\\\\micha\\\\OneDrive\\\\Desktop\\\
 \\Oden\\\\Notes\\\\Equivariant-Polynomial-Tensor-Functions-main\\\\\
-Equivariant-Polynomial-Tensor-Functions-main\>\""}], "\[IndentingNewLine]", 
-   "]"}], ";"}], "\[IndentingNewLine]", 
- RowBox[{"Needs", "[", "\"\<ClebschGordanTools`\>\"", "]"}], "\[IndentingNewLine]", 
+Equivariant-Polynomial-Tensor-Functions-main\>\""}], "\[IndentingNewLine]",
+   "]"}], ";"}], "\[IndentingNewLine]",
+ RowBox[{"Needs", "[", "\"\<ClebschGordanTools`\>\"", "]"}], "\[IndentingNewLine]",
  RowBox[{
-  RowBox[{"ClebschGordanTensorCache", "=", "\[IndentingNewLine]", 
+  RowBox[{"ClebschGordanTensorCache", "=", "\[IndentingNewLine]",
    RowBox[{
-   "File", "[", 
+   "File", "[",
     "\[IndentingNewLine]", "\"\<C:\\\\Users\\\\micha\\\\OneDrive\\\\Desktop\\\
 \\Oden\\\\Notes\\\\Equivariant-Polynomial-Tensor-Functions-main\\\\\
 Equivariant-Polynomial-Tensor-Functions-main\\\\ClebschGordanTensorCache.wl\>\
 \"", "\[IndentingNewLine]", "]"}]}], ";"}]}], "Input",
  CellChangeTimes->{{3.9842321688089905`*^9, 3.9842322391756134`*^9}, {
    3.9842323834443645`*^9, 3.984232424685831*^9}, 3.984232547196743*^9, {
-   3.9842487929959927`*^9, 3.984248824678732*^9}, {3.9842488648311176`*^9, 
-   3.984248870869646*^9}, {3.9842510496645107`*^9, 
+   3.9842487929959927`*^9, 3.984248824678732*^9}, {3.9842488648311176`*^9,
+   3.984248870869646*^9}, {3.9842510496645107`*^9,
    3.9842510509461193`*^9}},ExpressionUUID->"928cfd7d-8661-8544-bc57-\
 bd607036a614"],
 
@@ -59,7 +59,7 @@ Cell[CellGroupData[{
 
 Cell["Read values", "Subsection",
  CellChangeTimes->{{3.9842328191442394`*^9, 3.9842328201788845`*^9}, {
-  3.984248990494238*^9, 
+  3.984248990494238*^9,
   3.984248991824501*^9}},ExpressionUUID->"de960337-4173-4149-9009-\
 2fa21f18e6a3"],
 
@@ -74,28 +74,28 @@ Cell[BoxData[
 Cell[CellGroupData[{
 
 Cell["Compute values", "Subsection",
- CellChangeTimes->{{3.9842489956185226`*^9, 
+ CellChangeTimes->{{3.9842489956185226`*^9,
   3.9842489966187096`*^9}},ExpressionUUID->"e5133894-1439-d441-aeb2-\
 fa697f0b4445"],
 
 Cell[BoxData[
  RowBox[{
-  RowBox[{"Table", "[", 
+  RowBox[{"Table", "[",
    RowBox[{
-    RowBox[{"ClebschGordanTensor", "[", 
-     RowBox[{"\[Lambda]1", ",", "\[Lambda]2", ",", "\[Lambda]3"}], "]"}], ",", 
-    RowBox[{"{", 
-     RowBox[{"\[Lambda]1", ",", "0", ",", "10"}], "}"}], ",", 
-    RowBox[{"{", 
-     RowBox[{"\[Lambda]2", ",", "0", ",", "10"}], "}"}], ",", 
-    RowBox[{"{", 
-     RowBox[{"\[Lambda]3", ",", 
-      RowBox[{"Abs", "[", 
-       RowBox[{"\[Lambda]1", "-", "\[Lambda]2"}], "]"}], ",", 
-      RowBox[{"\[Lambda]1", "+", "\[Lambda]2"}]}], "}"}]}], "]"}], 
+    RowBox[{"ClebschGordanTensor", "[",
+     RowBox[{"\[Lambda]1", ",", "\[Lambda]2", ",", "\[Lambda]3"}], "]"}], ",",
+    RowBox[{"{",
+     RowBox[{"\[Lambda]1", ",", "0", ",", "10"}], "}"}], ",",
+    RowBox[{"{",
+     RowBox[{"\[Lambda]2", ",", "0", ",", "10"}], "}"}], ",",
+    RowBox[{"{",
+     RowBox[{"\[Lambda]3", ",",
+      RowBox[{"Abs", "[",
+       RowBox[{"\[Lambda]1", "-", "\[Lambda]2"}], "]"}], ",",
+      RowBox[{"\[Lambda]1", "+", "\[Lambda]2"}]}], "}"}]}], "]"}],
   ";"}]], "Input",
  CellChangeTimes->{{3.9842490635462418`*^9, 3.9842490762393246`*^9}, {
-  3.984249167965437*^9, 3.9842491682077427`*^9}, {3.984250496164131*^9, 
+  3.984249167965437*^9, 3.9842491682077427`*^9}, {3.984250496164131*^9,
   3.984250555786703*^9}, {3.984250594242668*^9, 3.984250594354824*^9}},
  CellLabel->"In[6]:=",ExpressionUUID->"56bf75d1-46d4-5c44-ac2c-ee81f6388b16"]
 }, Open  ]],
@@ -103,15 +103,15 @@ Cell[BoxData[
 Cell[CellGroupData[{
 
 Cell["Write values", "Subsection",
- CellChangeTimes->{{3.9842489990838966`*^9, 3.984249000917673*^9}, 
+ CellChangeTimes->{{3.9842489990838966`*^9, 3.984249000917673*^9},
    3.984249185907072*^9},ExpressionUUID->"d063926d-eec5-c545-a505-\
 d49a88d743aa"],
 
 Cell[BoxData[
  RowBox[{
-  RowBox[{"Put", "[", 
+  RowBox[{"Put", "[",
    RowBox[{
-    RowBox[{"Definition", "[", "ClebschGordanTensor", "]"}], ",", 
+    RowBox[{"Definition", "[", "ClebschGordanTensor", "]"}], ",",
     "ClebschGordanTensorCache"}], "]"}], ";"}]], "Input",
  CellChangeTimes->{{3.984232776048252*^9, 3.984232788877224*^9}, {
   3.984249025287012*^9, 3.984249048753315*^9}},

@@ -3,6 +3,10 @@
 BeginPackage["CombinatoricsTools`", {"BooleanTools`"}];
 
 
+DotMod
+ModReduce
+
+
 FirstUnitPrime
 
 
@@ -40,6 +44,14 @@ Begin["`Private`"];
 (*Public Functions*)
 
 
+DotMod[0][x__] := Dot[x]
+DotMod[modulus_?PositiveIntegerQ][x__] := Mod[Dot[x], modulus]
+
+
+ModReduce[0][x_] := x
+ModReduce[modulus_?PositiveIntegerQ][x_] := Mod[x, modulus]
+
+
 FirstUnitPrime[m_?PositiveIntegerQ] :=
   NestWhile[# + If[OddQ[m] && m > 1, 2 m, m] &, 1, Not @* PrimeQ]
 
@@ -64,16 +76,15 @@ spaceDimensions[VectorSpaceBasis_List] := Total /@ Map[Times @@ tpDimensions @ #
 
 tpDimensions[basis_Association] :=
  Flatten[
-      {
-       Length @ basis[["interiorTensorTrains"]],
-       Reverse @ Flatten @ Transpose[
-        {
-         Length /@ basis[["leafTensorTrees"]],
-         Length /@ basis[["SSYT\[Lambda]s"]]
-        }
-       ]
-      }
-     ]
+  {
+   Length @ basis[["interiorTensorTrains"]],
+   Reverse @ Transpose @
+    {
+     Length /@ basis[["leafTensorTrees"]],
+     Length /@ basis[["SSYT\[Lambda]s"]]
+    }
+  }
+ ]
 
 
 RowKroneckerProduct[
@@ -109,8 +120,8 @@ ArrayMultiIndex[
  IntegerDigits[linearIndex - 1, MixedRadix @ dimensions, Length @ dimensions] + 1
 
 
-PivotColumns[matrix_?MatrixQ, char_?NonNegativeIntegerQ] :=
- Flatten[Position[#, 1, {1}, 1, Heads -> False] & /@ RowReduce[matrix, If[char == 0, Tolerance -> 10^-12 * Norm @ matrix, Modulus -> char]]] 
+PivotColumns[matrix_?MatrixQ, modulus_?NonNegativeIntegerQ] :=
+ Flatten[Position[#, 1, {1}, 1, Heads -> False] & /@ RowReduce[matrix, If[modulus == 0, Tolerance -> 10^-12 * Norm @ matrix, Modulus -> modulus]]]
 
 
 WeakCompositions::usage = "gives a list of all weak integer compositions of D into n parts."
@@ -202,7 +213,7 @@ SemiStandardYoungTableaux[
      }
     ]
   },
-  
+
   toCounts @ ConjugateTableau @ TakeList[#, p] & /@ SolveValues[constraints, v, Integers]
  ]
 
@@ -220,7 +231,7 @@ Contents[p_?IntegerPartitionQ] := Flatten @ Table[j - i, {i, Length @ p}, {j, p[
 HookLengths[p_?IntegerPartitionQ] :=
  With[
   {cp = ConjugatePartition @ p},
- 
+
   Flatten @ Table[p[[i]] + cp[[j]] - i - j + 1, {i, Length @ p}, {j, p[[i]]}]
  ]
 

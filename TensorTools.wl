@@ -24,34 +24,32 @@ Begin["`Private`"];
 (*EvaluateCore, BatchEvaluateCore, MultiBatchEvaluateCore, BatchMultiBatchEvaluateCore*)
 
 
-DotMod[0] := Dot
-DotMod[p_?PrimeQ] := Mod[Dot[##], p] &
-
-
 (*vector*)
 EvaluateCore[
  v1_,
  v2_,
- core_
+ core_,
+ modulus_?NonNegativeIntegerQ
 ] :=
- v2 . (v1 . core)
+ DotMod[modulus][v2, DotMod[modulus][v1, core]]
 
 
 (*batch; ...; batch; vector*)
 BatchEvaluateCore[
  v1Batch_,
  v2Batch_,
- core_
+ core_,
+ modulus_?NonNegativeIntegerQ
 ] :=
- Total[
-  ArrayReshape[
+ ModReduce[modulus] @ Total[
+  ModReduce[modulus] @ ArrayReshape[
    v2Batch, (*this assumes that v1Batch always has at least as many axes as v2Batch, which should be the case for us*)
    Join[
     {First @ Dimensions @ v2Batch},
-    ConstantArray[1, ArrayDepth @ v1Batch - ArrayDepth @ v2Batch],
+    ConstantArray[1, ArrayDepth @ v1Batch - ArrayDepth @ v2Batch],(*This doesn't work since Mathematica can't broadcast*)
     Rest @ Dimensions @ v2Batch
    ]
-  ] * v1Batch . core,
+  ] * DotMod[modulus][v1Batch, core],
   {ArrayDepth @ v1Batch}
  ]
 
@@ -60,18 +58,27 @@ BatchEvaluateCore[
 MultiBatchEvaluateCore[
  v1MultiBatch_,
  v2MultiBatch_,
- core_
+ core_,
+ modulus_?NonNegativeIntegerQ
 ] :=
- ArrayDot[v2MultiBatch, v1MultiBatch . core, {{ArrayDepth @ v2MultiBatch, ArrayDepth @ v1MultiBatch}}]
+ ModReduce[modulus] @ ArrayDot[
+  v2MultiBatch,
+  DotMod[modulus][v1MultiBatch, core],
+  {{ArrayDepth @ v2MultiBatch, ArrayDepth @ v1MultiBatch}}
+ ]
 
 
 (*batch; batch 2; batch 1; vector*)
 BatchMultiBatchEvaluateCore[
  v1BatchMultiBatch_,
  v2BatchMultiBatch_,
- core_
+ core_,
+ modulus_?NonNegativeIntegerQ
 ] :=
- MapThread[MultiBatchEvaluateCore[#1, #2, core] &, {v1BatchMultiBatch, v2BatchMultiBatch}]
+ MapThread[
+  MultiBatchEvaluateCore[#1, #2, core, modulus] &,
+  {v1BatchMultiBatch, v2BatchMultiBatch}
+ ]
 
 
 (* ::Subsubsection:: *)
@@ -81,11 +88,11 @@ BatchMultiBatchEvaluateCore[
 EvaluateTensorTrain[
  cores_List,
  vectors_List,
- char_,
+ modulus_?NonNegativeIntegerQ,
  f_
 ] :=
  Fold[
-  f[#1, vectors[[#2 + 1]], cores[[#2]]] &,
+  f[#1, vectors[[#2 + 1]], cores[[#2]], modulus] &,
   vectors[[1]],
   Range @ Length @ cores
  ]
@@ -94,13 +101,13 @@ EvaluateTensorTrain[
 EvaluateTensorTrain[
  cores_List,
  vectors_List,
- char_,
+ modulus_?NonNegativeIntegerQ,
  f_,
  perm_
 ] :=
  ReorderMultiBatchAxes[
   Fold[
-   f[#1, vectors[[perm[[#2 + 1]]]], cores[[#2]]] &,
+   f[#1, vectors[[perm[[#2 + 1]]]], cores[[#2]], modulus] &,
    vectors[[perm[[1]]]],
    Range @ Length @ cores
   ],
@@ -114,25 +121,27 @@ ReorderMultiBatchAxes[
  f_,
  perm_
 ] :=
- With[
-  {n = Length @ perm},
-  {reverse = Range[n, 1, -1]},
-  {axisPerm = InversePermutation @ PermutationProduct[reverse, InversePermutation @ perm, reverse]},
-  
-  If[n <= 1, Return @ result];
-  
-  Switch[
-    f,
-    
-    MultiBatchEvaluateCore,
-    Transpose[result, Append[axisPerm, n + 1]],
+ Module[
+  {n, reverse, axisPerm},
 
-    BatchMultiBatchEvaluateCore,
-    Transpose[result, Join[{1}, 1 + axisPerm, {n + 2}]],
-    
-    _,
-    result
-   ]
+  n = Length @ perm;
+  reverse = Range[n, 1, -1];
+  axisPerm = InversePermutation @ PermutationProduct[reverse, InversePermutation @ perm, reverse];
+
+  If[n <= 1, Return @ result];
+
+  Switch[
+   f,
+
+   MultiBatchEvaluateCore,
+   Transpose[result, Append[axisPerm, n + 1]],
+
+   BatchMultiBatchEvaluateCore,
+   Transpose[result, Join[{1}, 1 + axisPerm, {n + 2}]],
+
+   _,
+   result
+  ]
  ]
 
 
@@ -143,10 +152,11 @@ ReorderMultiBatchAxes[
 EvaluateSymmetrizedTensorTrain[
  cores_List,
  vector_List,
+ modulus_?NonNegativeIntegerQ,
  f_
 ] :=
  Fold[
-  f[#1, vector, #2] &,
+  f[#1, vector, #2, modulus] &,
   vector,
   cores
  ]
@@ -159,10 +169,11 @@ EvaluateSymmetrizedTensorTrain[
 EvaluateAntisymmetrizedTensorTrain[
  cores_List,
  vectors_List,
+ modulus_?NonNegativeIntegerQ,
  f_
 ] :=
- Sum[
-  i[[1]] * EvaluateTensorTrain[cores, vectors, f, i[[2]]],
+ ModReduce[modulus] @ Sum[
+  i[[1]] * EvaluateTensorTrain[cores, vectors, modulus, f, i[[2]]],
   {i, AntisymmetrizationData[Length @ cores + 1]}
  ]
 
@@ -172,7 +183,7 @@ AntisymmetrizationData[d_?PositiveIntegerQ] :=
  AntisymmetrizationData[d] =
   With[
    {perms = Select[Permutations @ Range @ d, #[[1]] < #[[2]] &]}, (*assume that the first core is Antisymmetric[{1, 2}]*)
-   
+
    Transpose @ {Signature /@ perms, perms}
   ]
 
@@ -185,63 +196,51 @@ EvaluateYoungSymmetrizedTensorTree[
  tensorTree_Association,
  {},
  probeBatches_List,
- char_?NonNegativeIntegerQ
+ modulus_?NonNegativeIntegerQ
 ] :=
- ConstantArray[{1}, Dimensions[probeBatches][[2]]]
+ ConstantArray[{1}, (Dimensions @ probeBatches)[[2]]]
 
 
 EvaluateYoungSymmetrizedTensorTree[
  tensorTree_Association,
  SSYT_List,
  probeBatches_List,
- char_?NonNegativeIntegerQ
+ modulus_?NonNegativeIntegerQ
 ] :=
- With[
-  {
-   (*SSYT column; CP summands; distinct variables*)
-   grids = SymmetrizedMonomialCP[#, char] & /@ Last @ SSYT,
-   
-   (*SSYT column; distinct variables; random probe; vector*)
-   vars = probeBatches[[#]] & /@ First @ SSYT
-  },
-  {
-   (*SSYT column; random probe; CP summands; vector*)
-   sym = Transpose /@ MapThread[DotMod[char], {grids, vars}]
-  },
-  {
-   (*part of partition; random probe; CP summands column c; ...; CP summands column 1; vector*)
-   antisym = EvaluateAntisymmetrizedTensorTrain[#, sym, BatchMultiBatchEvaluateCore] & /@ tensorTree[["leafTensorTrains"]]
-  },
-  {
-   (*random probe; CP summands column c; ...; CP summands column 1; vector*)
-   final = EvaluateTensorTrain[tensorTree[["interiorTensorTrain"]], antisym, BatchEvaluateCore]
-  },
-  
+ Module[
+  {grids, vars, sym, antisym, final},
+
+  (*SSYT column; CP summands; distinct variables*)
+  grids = SymmetrizedMonomialCP[#, modulus] & /@ Last @ SSYT;
+
+  (*SSYT column; distinct variables; random probe; vector*)
+  vars = probeBatches[[#]] & /@ First @ SSYT;
+
+  (*SSYT column; random probe; CP summands; vector*)
+  sym = Transpose /@ MapThread[DotMod[modulus], {grids, vars}];
+
+  (*part of partition; random probe; CP summands column c; ...; CP summands column 1; vector*)
+  antisym = EvaluateAntisymmetrizedTensorTrain[#, sym, modulus, BatchMultiBatchEvaluateCore] & /@ tensorTree[["leafTensorTrains"]];
+
+  (*random probe; CP summands column c; ...; CP summands column 1; vector*)
+  final = EvaluateTensorTrain[tensorTree[["interiorTensorTrain"]], antisym, modulus, BatchEvaluateCore];
+
   (*random probe; vector*)
-  Fold[ArrayDot[#1, #2, {{2, 1}}] &, final, Reverse @ Apply[Times, grids, {2}]]
+  Fold[ModReduce[modulus] @ ArrayDot[#1, #2, {{2, 1}}] &, final, Reverse @ ModReduce[modulus] @ Apply[Times, grids, {2}]]
  ]
 
 
 (*CP summands; multiplicity*)
-SymmetrizedMonomialCP[powers_?PositiveIntegersQ, char_?NonNegativeIntegerQ] :=
- SymmetrizedMonomialCP[powers, char] =
-  With[
-   {ds = ReplacePart[powers, 1 -> 0]},
-   {\[Zeta]s = FieldRoot[ds + 1, char]},
-   
-   Developer`ToPackedArray @ Mod[Tuples[\[Zeta]s ^ Range[0, ds]], char]
+SymmetrizedMonomialCP[powers_?PositiveIntegersQ, modulus_?NonNegativeIntegerQ] :=
+ SymmetrizedMonomialCP[powers, modulus] =
+  Module[
+   {ds, \[Zeta]s},
+
+   ds = ReplacePart[powers, 1 -> 0];
+   \[Zeta]s = If[modulus == 0, Exp[2 \[Pi] I / (ds + 1)], PowerMod[PrimitiveRoot @ modulus, (modulus - 1) / (ds + 1), modulus]];
+
+   Developer`ToPackedArray @ Tuples @ PowerMod[\[Zeta]s, Range[0, ds], modulus]
   ]
-
-
-SetAttributes[FieldRoot, Listable]
-FieldRoot[d_?PositiveIntegerQ, char_?NonNegativeIntegerQ] :=
- Switch[
-  char,
-  
-  0, Exp[2 \[Pi] I / d],
-  
-  _?PrimeQ, PowerMod[PrimitiveRoot @ char, (char - 1) / d, char]
- ]
 
 
 End[];

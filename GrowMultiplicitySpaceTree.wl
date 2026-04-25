@@ -37,13 +37,13 @@ IsotypicDataTree[
  m\[Lambda]s_?PositiveIntegersQ,
  \[Nu]_?NonNegativeIntegerQ,
  DMax_?NonNegativeIntegerQ,
- char_?NonNegativeIntegerQ
+ modulus_?NonNegativeIntegerQ
 ] /; Length @ \[Lambda]s == Length @ m\[Lambda]s :=
  Module[
   {tree},
 
   (*D*)
-  tree = Tree[{\[Lambda]s, m\[Lambda]s, \[Nu], DMax, char}, Range @ DMax];
+  tree = Tree[{\[Lambda]s, m\[Lambda]s, \[Nu], DMax, modulus}, Range @ DMax];
 
   (*d\[Lambda]s*)
   tree = NestTree[WeakCompositions[#, Length @ \[Lambda]s] &, tree];
@@ -66,7 +66,7 @@ IsotypicDataTree[
 
 TensorProductBasis[
  {
-  {\[Lambda]s_, m\[Lambda]s_, \[Nu]_, DMax_, char_},
+  {\[Lambda]s_, m\[Lambda]s_, \[Nu]_, DMax_, modulus_},
   D_,
   d\[Lambda]s_,
   \[Pi]\[Lambda]s_,
@@ -74,8 +74,8 @@ TensorProductBasis[
  }
 ] :=
  <|
-  "interiorTensorTrains" -> TensorTrainBasisTensorProduct[\[Mu]\[Lambda]s, \[Nu], char],
-  "leafTensorTrees" -> MapThread[TensorTreeBasisSchurPower[##, char] &, {\[Lambda]s, \[Pi]\[Lambda]s, \[Mu]\[Lambda]s}],
+  "interiorTensorTrains" -> TensorTrainBasisTensorProduct[\[Mu]\[Lambda]s, \[Nu], modulus],
+  "leafTensorTrees" -> MapThread[TensorTreeBasisSchurPower[##, modulus] &, {\[Lambda]s, \[Pi]\[Lambda]s, \[Mu]\[Lambda]s}],
   "SSYT\[Lambda]s" -> MapThread[SemiStandardYoungTableaux, {\[Pi]\[Lambda]s, m\[Lambda]s}]
  |>
 
@@ -85,7 +85,7 @@ VectorSpaceBasis[IsotypicDataTree_Tree] :=
   Association[
    TreeData @ # -> TreeData /@ TreeLeaves @ # & /@ TreeChildren @ IsotypicDataTree
   ],
-  Range[TreeData[IsotypicDataTree][[4]]],
+  Range[(TreeData @ IsotypicDataTree)[[4]]],
   {}
  ]
 
@@ -98,7 +98,7 @@ extractIndependentGenerators[
 ] :=
  Module[
   {
-   \[Lambda]s, m\[Lambda]s, \[Nu], DMax, char,
+   \[Lambda]s, m\[Lambda]s, \[Nu], DMax, modulus,
    invariantVectorSpaceBasis,
    covariantVectorSpaceBasis,
    targetNumProbes,
@@ -113,47 +113,47 @@ extractIndependentGenerators[
    degree,
    i
   },
-  
-  {\[Lambda]s, m\[Lambda]s, \[Nu], DMax, char} = TreeData @ covariantIsotypicDataTree;
-  
+
+  {\[Lambda]s, m\[Lambda]s, \[Nu], DMax, modulus} = TreeData @ covariantIsotypicDataTree;
+
   invariantVectorSpaceBasis = VectorSpaceBasis @ invariantIsotypicDataTree;
-  
+
   covariantVectorSpaceBasis = VectorSpaceBasis @ covariantIsotypicDataTree;
-  
+
   targetNumProbes = probeTarget[HilbertSeries[\[Lambda]s, m\[Lambda]s, \[Nu], DMax], \[Nu]];
-  
+
   probeBatches\[Lambda]s =
    MapThread[
     If[
-     char == 0,
+     modulus == 0,
      Function[{\[Lambda], m\[Lambda]}, RandomReal[1, {m\[Lambda], Max @ targetNumProbes, 2 \[Lambda] + 1}]],
-     Function[{\[Lambda], m\[Lambda]}, RandomInteger[char - 1, {m\[Lambda], Max @ targetNumProbes, 2 \[Lambda] + 1}]]
+     Function[{\[Lambda], m\[Lambda]}, RandomInteger[modulus - 1, {m\[Lambda], Max @ targetNumProbes, 2 \[Lambda] + 1}]]
     ],
     {\[Lambda]s, m\[Lambda]s}
    ];
-  
+
   covariantGenerators = ConstantArray[{}, DMax];
-  
+
   covariantSyndromes = ConstantArray[{}, DMax];
-  
-  invariantSyndromes = computeSyndromes[invariantVectorSpaceBasis[[#]], probeBatches\[Lambda]s, char] & /@ Range @ DMax;
-  
+
+  invariantSyndromes = computeSyndromes[invariantVectorSpaceBasis[[#]], probeBatches\[Lambda]s, modulus] & /@ Range @ DMax;
+
   covariantGenerators[[1]] = covariantVectorSpaceBasis[[1]];
-  
-  covariantSyndromes[[1]] = computeSyndromes[covariantGenerators[[1]], probeBatches\[Lambda]s, char];
+
+  covariantSyndromes[[1]] = computeSyndromes[covariantGenerators[[1]], probeBatches\[Lambda]s, modulus];
 
   For[
    degree = 2, degree <= DMax, degree++,
 
    (*If there are no vector space generators at the current degree, then there are no covariant generators at the current degree*)
    If[covariantVectorSpaceBasis[[degree]] === {}, Continue[]];
-   
+
    (*Compute previous product syndromes*)
    previousProductSyndromes =
     Table[
      If[
       invariantSyndromes[[degree - i]] =!= {} \[And] covariantSyndromes[[i]] =!= {},
-      RowKroneckerProduct[
+      ModReduce[modulus] @ RowKroneckerProduct[
        invariantSyndromes[[degree - i, ;; targetNumProbes[[degree]]]],
        covariantSyndromes[[i, ;; targetNumProbes[[degree]]]]
       ],
@@ -161,32 +161,32 @@ extractIndependentGenerators[
      ],
      {i, 1, degreeLimit[degree]}
     ];
-   
-   (*Compute new syndromes*)
-   candidateSyndromes = computeSyndromes[covariantVectorSpaceBasis[[degree]], probeBatches\[Lambda]s[[All, All, ;; targetNumProbes[[degree]]]], char];
 
-   numPreviousColumns = Total[Dimensions[#][[2]] & /@ previousProductSyndromes];
+   (*Compute new syndromes*)
+   candidateSyndromes = computeSyndromes[covariantVectorSpaceBasis[[degree]], probeBatches\[Lambda]s[[All, All, ;; targetNumProbes[[degree]]]], modulus];
+
+   numPreviousColumns = Total[(Dimensions @ #)[[2]] & /@ previousProductSyndromes];
 
    linearIndices =
     DeleteCases[
-     PivotColumns[Flatten[Append[previousProductSyndromes, candidateSyndromes], {{2, 4}, {1, 3}}], char],
+     PivotColumns[Flatten[Append[previousProductSyndromes, candidateSyndromes], {{2, 4}, {1, 3}}], modulus],
      j_ /; j <= numPreviousColumns
     ] - numPreviousColumns;
 
    covariantGenerators[[degree]] = extract[linearIndices, covariantVectorSpaceBasis[[degree]]];
-   
+
    If[
     degree < DMax,
-    
+
     covariantSyndromes[[degree]] = candidateSyndromes[[All, linearIndices]];
-    
+
     If[
      targetNumProbes[[degree]] < Max @ targetNumProbes,
-     
-     covariantSyndromes[[degree]] = 
+
+     covariantSyndromes[[degree]] =
       Join[
        covariantSyndromes[[degree]],
-       computeSyndromes[covariantGenerators[[degree]], probeBatches\[Lambda]s[[All, All, targetNumProbes[[degree]] + 1 ;;]], char]
+       computeSyndromes[covariantGenerators[[degree]], probeBatches\[Lambda]s[[All, All, targetNumProbes[[degree]] + 1 ;;]], modulus]
       ]
     ]
    ]
@@ -224,7 +224,7 @@ ModuleBasis[
 computeSyndromes[
  {},
  probeBatches\[Lambda]s_List,
- char_?NonNegativeIntegerQ
+ modulus_?NonNegativeIntegerQ
 ] :=
  {}
 
@@ -233,9 +233,9 @@ computeSyndromes[
 computeSyndromes[
  polynomials_List,
  probeBatches\[Lambda]s_List,
- char_?NonNegativeIntegerQ
+ modulus_?NonNegativeIntegerQ
 ] :=
- Flatten[EvaluateTensorProductBasis[#, probeBatches\[Lambda]s, char] & /@ polynomials, {{2}, {1, 3}, {4}}]
+ Flatten[EvaluateTensorProductBasis[#, probeBatches\[Lambda]s, modulus] & /@ polynomials, {{2}, {1, 3}, {4}}]
 
 
 extract[
@@ -245,16 +245,16 @@ extract[
  Module[
   {leafIndices, finalIndices, fullDimensions, leafDimensions},
 
-  (*leaf; {dim interiorTensorTrains, dim SSYTs, dim tensorTrees for each \[Lambda]}*)
+  (*leaf; {dim interiorTensorTrains, (tensorTrees; SSYTs; for the last \[Lambda]) ... (tensorTrees; SSYTs; for the first \[Lambda])}*)
   fullDimensions = tpDimensions /@ basis;
-  
+
   (*leaf; product of dimensions*)
   leafDimensions = MapApply[Times, fullDimensions];
 
-  (*linearIndices; {index into leaf, linear index into interiorTensorTrains, SSYTs, tensorTrees for each \[Lambda]}*)
+  (*linearIndices; {index into leaf, linear index into (tensorTrees; SSYTs; for the last \[Lambda]) ... (tensorTrees; SSYTs; for the first \[Lambda])}*)
   leafIndices = RaggedMultiIndex[linearIndices, leafDimensions];
-  
-  (*linearIndices; {index into leaf, multiindex into interiorTensorTrains, SSYTs, tensorTrees for each \[Lambda]}*)
+
+  (*linearIndices; {index into leaf, multiindex into interiorTensorTrains, (tensorTrees; SSYTs; for the last \[Lambda]) ... (tensorTrees; SSYTs; for the first \[Lambda])}*)
   finalIndices = MapApply[{#1, ArrayMultiIndex[#2, fullDimensions[[#1]]]} &, leafIndices];
 
   MapApply[
@@ -263,7 +263,7 @@ extract[
     "SSYT\[Lambda]s" ->
      MapThread[
       List @* Part,
-      {basis[[#1]][["SSYT\[Lambda]s"]], (Reverse @ Rest @ #2)[[2 ;; ;; 2]]}
+      {basis[[#1]][["SSYT\[Lambda]s"]], (Reverse @ Rest @ #2)[[1 ;; ;; 2]]}
      ],
     "leafTensorTrees" ->
      MapThread[
@@ -276,7 +276,7 @@ extract[
         |>
        }
       ],
-      {basis[[#1]][["leafTensorTrees"]], (Reverse @ Rest @ #2)[[1 ;; ;; 2]]}
+      {basis[[#1]][["leafTensorTrees"]], (Reverse @ Rest @ #2)[[2 ;; ;; 2]]}
      ]
    |> &,
    finalIndices
@@ -287,7 +287,7 @@ extract[
 EvaluateTensorProductBasis[
  basis_Association,
  probeBatches\[Lambda]s_List,
- char_?NonNegativeIntegerQ
+ modulus_?NonNegativeIntegerQ
 ] :=
  Module[
   {interiorVectors, outputVectors, maxLevel},
@@ -295,18 +295,19 @@ EvaluateTensorProductBasis[
   (*\[Lambda]; tensorTrees; SSYTs; random probe; vector*)
   interiorVectors =
    MapThread[
-    Function[{tensorTrees, SSYTs, probeBatches}, Outer[EvaluateYoungSymmetrizedTensorTree[#1, #2, probeBatches, char] &, tensorTrees, SSYTs, 1]],
+    Function[{tensorTrees, SSYTs, probeBatches}, Outer[EvaluateYoungSymmetrizedTensorTree[#1, #2, probeBatches, modulus] &, tensorTrees, SSYTs, 1]],
     {basis[["leafTensorTrees"]], basis[["SSYT\[Lambda]s"]], probeBatches\[Lambda]s}
    ];
 
   (*\[Lambda]; random probe; tensorTrees; SSYTs; vector*)
   interiorVectors = Flatten[interiorVectors, {{1}, {4}, {2}, {3}, {5}}];
 
-  (*interiorTensorTrains; randomProbes; for each \[Lambda], (SSYTs; tensorTrees;) vector*)
-  outputVectors = EvaluateTensorTrain[#, interiorVectors, BatchMultiBatchEvaluateCore] & /@ basis[["interiorTensorTrains"]];
+  (*interiorTensorTrains; randomProbes; (tensorTrees; SSYTs; for the last \[Lambda]) ... (tensorTrees; SSYTs; for the first \[Lambda]); vector*)
+  outputVectors = EvaluateTensorTrain[#, interiorVectors, modulus, BatchMultiBatchEvaluateCore] & /@ basis[["interiorTensorTrains"]];
 
   maxLevel = 3 + 2 * Length @ basis[["SSYT\[Lambda]s"]];
-  
+
+  (*randomProbes; interiorTensorTrains, (tensorTrees, SSYTs, for the last \[Lambda]) ... (tensorTrees, SSYTs, for the first \[Lambda]); vector*)
   Flatten[outputVectors,{{2}, Complement[Range @ maxLevel, {2, maxLevel}], {maxLevel}}]
  ]
 

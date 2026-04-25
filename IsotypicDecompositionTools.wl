@@ -102,7 +102,7 @@ IsotypicMultiplicitySchurPower[
 ] :=
  With[
   {poly = SchurS[ConjugatePartition @ p, q, \[Lambda]]},
-  
+
   SeriesCoefficient[poly, {q, 0, \[Mu]}] - SeriesCoefficient[poly, {q, 0, \[Mu] + 1}]
  ]
 

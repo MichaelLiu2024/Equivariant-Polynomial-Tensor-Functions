@@ -36,7 +36,7 @@ UnitTest[] :=
    tree, alg, polys,
    v1, v2, a1, a2, \[Epsilon], temp
   },
-  
+
   tree = IsotypicDataTree[\[Lambda]s, m\[Lambda]s, \[Nu], DMax];
   alg = AlgebraBasis[tree];
   polys =
@@ -45,15 +45,15 @@ UnitTest[] :=
     alg,
     {2}
    ];
-  
+
   v1 = SymmetricTensor[1, 1];
   v2 = SymmetricTensor[1, 2];
   a1 = SymmetricTensor[2, 1];
   a2 = SymmetricTensor[2, 2];
   \[Epsilon] = LeviCivitaTensor[3];
-  
+
   temp = TensorContract[a1 . a2 . \[Epsilon], {1, 2}];
-  
+
   FullSimplify @ Chop @ FullSimplify[
    1 / polys *
     {
@@ -111,7 +111,7 @@ Benchmark[
  m\[Lambda]s_?PositiveIntegersQ,
  \[Nu]_?NonNegativeIntegerQ,
  DMax_?NonNegativeIntegerQ,
- char_?NonNegativeIntegerQ
+ modulus_?NonNegativeIntegerQ
 ] :=
  Module[
   {
@@ -119,34 +119,34 @@ Benchmark[
    invariantVectorSpaceBasis, covariantVectorSpaceBasis,
    invariantAlgebraBasis, covariantModuleBasis
   },
-  
-  invariantIsotypicDataTree = AbsoluteTiming @ IsotypicDataTree[\[Lambda]s, m\[Lambda]s, 0, DMax, char];
-  
-  If[\[Nu] != 0, covariantIsotypicDataTree = AbsoluteTiming @ IsotypicDataTree[\[Lambda]s, m\[Lambda]s, \[Nu], DMax, char]];
-  
+
+  invariantIsotypicDataTree = AbsoluteTiming @ IsotypicDataTree[\[Lambda]s, m\[Lambda]s, 0, DMax, modulus];
+
+  If[\[Nu] != 0, covariantIsotypicDataTree = AbsoluteTiming @ IsotypicDataTree[\[Lambda]s, m\[Lambda]s, \[Nu], DMax, modulus]];
+
   invariantVectorSpaceBasis = VectorSpaceBasis @ Last @ invariantIsotypicDataTree;
-  
+
   If[\[Nu] != 0, covariantVectorSpaceBasis = VectorSpaceBasis @ Last @ covariantIsotypicDataTree];
-  
+
   invariantAlgebraBasis = AbsoluteTiming @ AlgebraBasis @ Last @ invariantIsotypicDataTree;
-  
+
   If[\[Nu] != 0, covariantModuleBasis = AbsoluteTiming @ ModuleBasis[Last @ invariantIsotypicDataTree, Last @ covariantIsotypicDataTree]];
-  
+
   Print["Computed number of candidate algebra generators by degree: ", spaceDimensions @ invariantVectorSpaceBasis];
   Print["Actual number of candidate algebra generators by degree: ", HilbertSeries[\[Lambda]s, m\[Lambda]s, 0, DMax]];
   Print["Total time to compute candidate algebra generators: ", First @ invariantIsotypicDataTree];
   Print[];
-  
+
   If[\[Nu] != 0, Print["Computed number of candidate module generators by degree: ", spaceDimensions @ covariantVectorSpaceBasis];
   Print["Actual number of candidate module generators by degree: ", HilbertSeries[\[Lambda]s, m\[Lambda]s, \[Nu], DMax]];
   Print["Total time to compute candidate module generators: ", First @ covariantIsotypicDataTree];
   Print[]];
-  
+
   Print["Computed number of independent algebra generators by degree: ", Length /@ Last @ invariantAlgebraBasis];
   Print["Actual number of independent algebra generators by degree: ", MinimalIntegrityBasisSize[\[Lambda]s, m\[Lambda]s, 0, DMax]];
   Print["Total time to compute independent algebra generators: ", First @ invariantAlgebraBasis];
   Print[];
-  
+
   If[\[Nu] != 0, Print["Computed number of independent module generators by degree: ", Length /@ Last @ covariantModuleBasis];
   Print["Actual number of independent module generators by degree: ", MinimalIntegrityBasisSize[\[Lambda]s, m\[Lambda]s, \[Nu], DMax]];
   Print["Total time to compute independent module generators: ", First @ covariantModuleBasis]];
@@ -167,7 +167,7 @@ SolidHarmonicR[
 ] /; Abs[m] <= l :=
  N @ With[
   {dpower = If[#2 == 0, 1, #1^#2] &, s = Sign[m], am = Abs[m]},
-  
+
   (-1)^((1 - s)am / 2)Sqrt[(l - am)!/(l + am)!]dpower[x + I s y, am] *
   Sum[
    (-1)^((l + am) / 2 - k)(l + am + 2k - 1)!!dpower[z, 2k]dpower[x^2 + y^2 + z^2, (l - am) / 2 - k] / ((2k)!(l - am - 2k)!!),
