@@ -42,7 +42,7 @@ BatchEvaluateCore[
  modulus_?NonNegativeIntegerQ
 ] :=
  ModReduce[modulus] @ Total[
-  ModReduce[modulus] @ ArrayReshape[
+  ArrayReshape[
    v2Batch, (*this assumes that v1Batch always has at least as many axes as v2Batch, which should be the case for us*)
    Join[
     {First @ Dimensions @ v2Batch},

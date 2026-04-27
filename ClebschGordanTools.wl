@@ -54,7 +54,6 @@ ClebschGordanTensor[\[Lambda]1, \[Lambda]2, \[Lambda]3, 0] =
   ]
 
 
-(*Take the tucker product with diagonal scaling*)
 ClebschGordanTensor[
  \[Lambda]1_?NonNegativeIntegerQ,
  \[Lambda]2_?NonNegativeIntegerQ,
@@ -62,26 +61,27 @@ ClebschGordanTensor[
  modulus_?PositiveIntegerQ
 ] :=
  ClebschGordanTensor[\[Lambda]1, \[Lambda]2, \[Lambda]3, modulus] =
-  With[
-   {\[Rho] = \[Lambda]1 + \[Lambda]2 - \[Lambda]3},
-   {s = Range[0, \[Rho]]},
+  Module[
+   {r, s, out},
+   
+   r = \[Lambda]1 + \[Lambda]2 - \[Lambda]3;
+   s = Range[0, r];
+   out = ConstantArray[0, {2\[Lambda]1 + 1, 2\[Lambda]2 + 1, 2\[Lambda]3 + 1}];
 
-   Developer`ToPackedArray @ Normal @ SparseArray[
-    Flatten @ Table[
-     {1 + \[Lambda]1 + m1, 1 + \[Lambda]2 + m2, 1 + \[Lambda]3 + m1 + m2} ->
-      ModReduce[modulus] @ Total[
-       (-1)^s * Binomial[\[Rho], s] *
-       FactorialPower[\[Lambda]1 + m1, \[Rho] - s] *
-       FactorialPower[\[Lambda]1 - m1, s] *
-       FactorialPower[\[Lambda]2 + m2, s] *
-       FactorialPower[\[Lambda]2 - m2, \[Rho] - s]
-      ],
-     {m1, -\[Lambda]1, \[Lambda]1},
-     {m2, Max[-\[Lambda]2, -\[Lambda]3 - m1], Min[\[Lambda]2, \[Lambda]3 - m1]}
-    ],
-    {2\[Lambda]1 + 1, 2\[Lambda]2 + 1, 2\[Lambda]3 + 1},
-    0
-   ]
+   Do[
+    out[[1 + \[Lambda]1 + m1, 1 + \[Lambda]2 + m2, 1 + \[Lambda]3 + m1 + m2]] =
+     ModReduce[modulus] @ Total[
+      (-1)^s * Binomial[r, s] *
+      FactorialPower[\[Lambda]1 + m1, r - s] *
+      FactorialPower[\[Lambda]1 - m1, s] *
+      FactorialPower[\[Lambda]2 + m2, s] *
+      FactorialPower[\[Lambda]2 - m2, r - s]
+     ],
+    {m1, -\[Lambda]1, \[Lambda]1},
+    {m2, Max[-\[Lambda]2, -\[Lambda]3 - m1], Min[\[Lambda]2, \[Lambda]3 - m1]}
+   ];
+
+   Developer`ToPackedArray @ out
   ]
 
 
