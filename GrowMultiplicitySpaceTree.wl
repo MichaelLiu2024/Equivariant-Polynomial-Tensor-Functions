@@ -36,14 +36,13 @@ IsotypicDataTree[
  \[Lambda]s_?DistinctPositiveIntegersQ,
  m\[Lambda]s_?PositiveIntegersQ,
  \[Nu]_?NonNegativeIntegerQ,
- DMax_?NonNegativeIntegerQ,
- modulus_?NonNegativeIntegerQ
+ DMax_?NonNegativeIntegerQ
 ] /; Length @ \[Lambda]s == Length @ m\[Lambda]s :=
  Module[
   {tree},
 
   (*D*)
-  tree = Tree[{\[Lambda]s, m\[Lambda]s, \[Nu], DMax, modulus}, Range @ DMax];
+  tree = Tree[{\[Lambda]s, m\[Lambda]s, \[Nu], DMax}, Range @ DMax];
 
   (*d\[Lambda]s*)
   tree = NestTree[WeakCompositions[#, Length @ \[Lambda]s] &, tree];
@@ -66,7 +65,7 @@ IsotypicDataTree[
 
 TensorProductBasis[
  {
-  {\[Lambda]s_, m\[Lambda]s_, \[Nu]_, DMax_, modulus_},
+  {\[Lambda]s_, m\[Lambda]s_, \[Nu]_, DMax_},
   D_,
   d\[Lambda]s_,
   \[Pi]\[Lambda]s_,
@@ -74,8 +73,8 @@ TensorProductBasis[
  }
 ] :=
  <|
-  "interiorTensorTrains" -> TensorTrainBasisTensorProduct[\[Mu]\[Lambda]s, \[Nu], modulus],
-  "leafTensorTrees" -> MapThread[TensorTreeBasisSchurPower[##, modulus] &, {\[Lambda]s, \[Pi]\[Lambda]s, \[Mu]\[Lambda]s}],
+  "interiorTensorTrains" -> TensorTrainBasisTensorProduct[\[Mu]\[Lambda]s, \[Nu]],
+  "leafTensorTrees" -> MapThread[TensorTreeBasisSchurPower, {\[Lambda]s, \[Pi]\[Lambda]s, \[Mu]\[Lambda]s}],
   "SSYT\[Lambda]s" -> MapThread[SemiStandardYoungTableaux, {\[Pi]\[Lambda]s, m\[Lambda]s}]
  |>
 
@@ -98,7 +97,8 @@ extractIndependentGenerators[
 ] :=
  Module[
   {
-   \[Lambda]s, m\[Lambda]s, \[Nu], DMax, modulus,
+   \[Lambda]s, m\[Lambda]s, \[Nu], DMax,
+   modulus,
    invariantVectorSpaceBasis,
    covariantVectorSpaceBasis,
    targetNumProbes,
@@ -114,7 +114,9 @@ extractIndependentGenerators[
    i
   },
 
-  {\[Lambda]s, m\[Lambda]s, \[Nu], DMax, modulus} = TreeData @ covariantIsotypicDataTree;
+  {\[Lambda]s, m\[Lambda]s, \[Nu], DMax} = TreeData @ covariantIsotypicDataTree;
+  
+  modulus = NextUnitPrimeMod[LCM @@ Range[DMax + 1]];
 
   invariantVectorSpaceBasis = VectorSpaceBasis @ invariantIsotypicDataTree;
 
@@ -124,11 +126,7 @@ extractIndependentGenerators[
 
   probeBatches\[Lambda]s =
    MapThread[
-    If[
-     modulus == 0,
-     Function[{\[Lambda], m\[Lambda]}, RandomReal[1, {m\[Lambda], Max @ targetNumProbes, 2 \[Lambda] + 1}]],
-     Function[{\[Lambda], m\[Lambda]}, RandomInteger[modulus - 1, {m\[Lambda], Max @ targetNumProbes, 2 \[Lambda] + 1}]]
-    ],
+    Function[{\[Lambda], m\[Lambda]}, RandomInteger[modulus - 1, {m\[Lambda], Max @ targetNumProbes, 2 \[Lambda] + 1}]],
     {\[Lambda]s, m\[Lambda]s}
    ];
 
@@ -153,9 +151,12 @@ extractIndependentGenerators[
     Table[
      If[
       invariantSyndromes[[degree - i]] =!= {} \[And] covariantSyndromes[[i]] =!= {},
-      ModReduce[modulus] @ RowKroneckerProduct[
-       invariantSyndromes[[degree - i, ;; targetNumProbes[[degree]]]],
-       covariantSyndromes[[i, ;; targetNumProbes[[degree]]]]
+      Mod[
+       RowKroneckerProduct[
+        invariantSyndromes[[degree - i, ;; targetNumProbes[[degree]]]],
+        covariantSyndromes[[i, ;; targetNumProbes[[degree]]]]
+       ],
+       modulus
       ],
       Nothing
      ],

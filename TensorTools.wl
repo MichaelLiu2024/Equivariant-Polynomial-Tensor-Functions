@@ -3,6 +3,9 @@
 BeginPackage["TensorTools`", {"CombinatoricsTools`", "BooleanTools`"}];
 
 
+ClebschGordanTensor
+
+
 EvaluateCore
 BatchEvaluateCore
 MultiBatchEvaluateCore
@@ -21,6 +24,50 @@ Begin["`Private`"];
 
 
 (* ::Subsubsection:: *)
+(*ClebschGordanTensor*)
+
+
+UnitaryClebschGordanTensor[{\[Lambda]1_?NonNegativeIntegerQ, \[Lambda]2_?NonNegativeIntegerQ, \[Lambda]3_?NonNegativeIntegerQ}] :=
+ UnitaryClebschGordanTensor[{\[Lambda]1, \[Lambda]2, \[Lambda]3}] =
+  Module[
+   {out = ConstantArray[0., {2\[Lambda]1 + 1, 2\[Lambda]2 + 1, 2\[Lambda]3 + 1}]},
+
+   Do[
+    out[[1 + \[Lambda]1 + m1, 1 + \[Lambda]2 + m2, 1 + \[Lambda]3 + m1 + m2]] = N @ ClebschGordan[{\[Lambda]1, m1}, {\[Lambda]2, m2}, {\[Lambda]3, m1 + m2}],
+    {m1, -\[Lambda]1, \[Lambda]1},
+    {m2, Max[-\[Lambda]2, -\[Lambda]3 - m1], Min[\[Lambda]2, \[Lambda]3 - m1]}
+   ];
+
+   Developer`ToPackedArray @ out
+  ]
+
+
+ClebschGordanTensor[{\[Lambda]1_?NonNegativeIntegerQ, \[Lambda]2_?NonNegativeIntegerQ, \[Lambda]3_?NonNegativeIntegerQ}] :=
+ ClebschGordanTensor[{\[Lambda]1, \[Lambda]2, \[Lambda]3}] =
+  Module[
+   {r, s, out = ConstantArray[0, {2\[Lambda]1 + 1, 2\[Lambda]2 + 1, 2\[Lambda]3 + 1}]},
+   
+   r = \[Lambda]1 + \[Lambda]2 - \[Lambda]3;
+   s = Range[0, r];
+
+   Do[
+    out[[1 + \[Lambda]1 + m1, 1 + \[Lambda]2 + m2, 1 + \[Lambda]3 + m1 + m2]] =
+     Total[
+      (-1)^s * Binomial[r, s] *
+      FactorialPower[\[Lambda]1 + m1, r - s] *
+      FactorialPower[\[Lambda]1 - m1, s] *
+      FactorialPower[\[Lambda]2 + m2, s] *
+      FactorialPower[\[Lambda]2 - m2, r - s]
+     ],
+    {m1, -\[Lambda]1, \[Lambda]1},
+    {m2, Max[-\[Lambda]2, -\[Lambda]3 - m1], Min[\[Lambda]2, \[Lambda]3 - m1]}
+   ];
+
+   Developer`ToPackedArray @ out
+  ]
+
+
+(* ::Subsubsection:: *)
 (*EvaluateCore, BatchEvaluateCore, MultiBatchEvaluateCore, BatchMultiBatchEvaluateCore*)
 
 
@@ -29,9 +76,9 @@ EvaluateCore[
  v1_,
  v2_,
  core_,
- modulus_?NonNegativeIntegerQ
+ modulus_?PrimeQ
 ] :=
- DotMod[modulus][v2, DotMod[modulus][v1, core]]
+ Mod[v2 . Mod[v1 . Mod[ClebschGordanTensor @ core, modulus], modulus], modulus]
 
 
 (*batch; ...; batch; vector*)
@@ -39,18 +86,21 @@ BatchEvaluateCore[
  v1Batch_,
  v2Batch_,
  core_,
- modulus_?NonNegativeIntegerQ
+ modulus_?PrimeQ
 ] :=
- ModReduce[modulus] @ Total[
-  ArrayReshape[
-   v2Batch, (*this assumes that v1Batch always has at least as many axes as v2Batch, which should be the case for us*)
-   Join[
-    {First @ Dimensions @ v2Batch},
-    ConstantArray[1, ArrayDepth @ v1Batch - ArrayDepth @ v2Batch],(*This doesn't work since Mathematica can't broadcast*)
-    Rest @ Dimensions @ v2Batch
-   ]
-  ] * DotMod[modulus][v1Batch, core],
-  {ArrayDepth @ v1Batch}
+ Mod[
+  Total[
+   ArrayReshape[
+    v2Batch, (*this assumes that v1Batch always has at least as many axes as v2Batch, which should be the case for us*)
+    Join[
+     {First @ Dimensions @ v2Batch},
+     ConstantArray[1, ArrayDepth @ v1Batch - ArrayDepth @ v2Batch],(*This doesn't work since Mathematica can't broadcast*)
+     Rest @ Dimensions @ v2Batch
+    ]
+   ] * Mod[v1Batch . Mod[ClebschGordanTensor @ core, modulus], modulus],
+   {ArrayDepth @ v1Batch}
+  ],
+  modulus
  ]
 
 
@@ -59,12 +109,15 @@ MultiBatchEvaluateCore[
  v1MultiBatch_,
  v2MultiBatch_,
  core_,
- modulus_?NonNegativeIntegerQ
+ modulus_?PrimeQ
 ] :=
- ModReduce[modulus] @ ArrayDot[
-  v2MultiBatch,
-  DotMod[modulus][v1MultiBatch, core],
-  {{ArrayDepth @ v2MultiBatch, ArrayDepth @ v1MultiBatch}}
+ Mod[
+  ArrayDot[
+   v2MultiBatch,
+   Mod[v1MultiBatch . Mod[ClebschGordanTensor @ core, modulus], modulus],
+   {{ArrayDepth @ v2MultiBatch, ArrayDepth @ v1MultiBatch}}
+  ],
+  modulus
  ]
 
 
@@ -73,7 +126,7 @@ BatchMultiBatchEvaluateCore[
  v1BatchMultiBatch_,
  v2BatchMultiBatch_,
  core_,
- modulus_?NonNegativeIntegerQ
+ modulus_?PrimeQ
 ] :=
  MapThread[
   MultiBatchEvaluateCore[#1, #2, core, modulus] &,
@@ -88,7 +141,7 @@ BatchMultiBatchEvaluateCore[
 EvaluateTensorTrain[
  cores_List,
  vectors_List,
- modulus_?NonNegativeIntegerQ,
+ modulus_?PrimeQ,
  f_
 ] :=
  Fold[
@@ -101,7 +154,7 @@ EvaluateTensorTrain[
 EvaluateTensorTrain[
  cores_List,
  vectors_List,
- modulus_?NonNegativeIntegerQ,
+ modulus_?PrimeQ,
  f_,
  perm_
 ] :=
@@ -152,7 +205,7 @@ ReorderMultiBatchAxes[
 EvaluateSymmetrizedTensorTrain[
  cores_List,
  vector_List,
- modulus_?NonNegativeIntegerQ,
+ modulus_?PrimeQ,
  f_
 ] :=
  Fold[
@@ -169,12 +222,15 @@ EvaluateSymmetrizedTensorTrain[
 EvaluateAntisymmetrizedTensorTrain[
  cores_List,
  vectors_List,
- modulus_?NonNegativeIntegerQ,
+ modulus_?PrimeQ,
  f_
 ] :=
- ModReduce[modulus] @ Sum[
-  i[[1]] * EvaluateTensorTrain[cores, vectors, modulus, f, i[[2]]],
-  {i, AntisymmetrizationData[Length @ cores + 1]}
+ Mod[
+  Sum[
+   i[[1]] * EvaluateTensorTrain[cores, vectors, modulus, f, i[[2]]],
+   {i, AntisymmetrizationData[Length @ cores + 1]}
+  ],
+  modulus
  ]
 
 
@@ -196,7 +252,7 @@ EvaluateYoungSymmetrizedTensorTree[
  tensorTree_Association,
  {},
  probeBatches_List,
- modulus_?NonNegativeIntegerQ
+ modulus_?PrimeQ
 ] :=
  ConstantArray[{1}, (Dimensions @ probeBatches)[[2]]]
 
@@ -205,7 +261,7 @@ EvaluateYoungSymmetrizedTensorTree[
  tensorTree_Association,
  SSYT_List,
  probeBatches_List,
- modulus_?NonNegativeIntegerQ
+ modulus_?PrimeQ
 ] :=
  Module[
   {grids, vars, sym, antisym, final},
@@ -217,7 +273,7 @@ EvaluateYoungSymmetrizedTensorTree[
   vars = probeBatches[[#]] & /@ First @ SSYT;
 
   (*SSYT column; random probe; CP summands; vector*)
-  sym = Transpose /@ MapThread[DotMod[modulus], {grids, vars}];
+  sym = Transpose /@ MapThread[Mod[Dot[##], modulus] &, {grids, vars}];
 
   (*part of partition; random probe; CP summands column c; ...; CP summands column 1; vector*)
   antisym = EvaluateAntisymmetrizedTensorTrain[#, sym, modulus, BatchMultiBatchEvaluateCore] & /@ tensorTree[["leafTensorTrains"]];
@@ -226,18 +282,16 @@ EvaluateYoungSymmetrizedTensorTree[
   final = EvaluateTensorTrain[tensorTree[["interiorTensorTrain"]], antisym, modulus, BatchEvaluateCore];
 
   (*random probe; vector*)
-  Fold[ModReduce[modulus] @ ArrayDot[#1, #2, {{2, 1}}] &, final, Reverse @ ModReduce[modulus] @ Apply[Times, grids, {2}]]
+  Fold[Mod[ArrayDot[#1, #2, {{2, 1}}], modulus] &, final, Reverse @ Mod[Apply[Times, grids, {2}], modulus]]
  ]
 
 
 (*CP summands; multiplicity*)
-SymmetrizedMonomialCP[powers_?PositiveIntegersQ, modulus_?NonNegativeIntegerQ] :=
+SymmetrizedMonomialCP[powers_?PositiveIntegersQ, modulus_?PrimeQ] :=
  SymmetrizedMonomialCP[powers, modulus] =
-  Module[
-   {ds, \[Zeta]s},
-
-   ds = ReplacePart[powers, 1 -> 0];
-   \[Zeta]s = If[modulus == 0, Exp[2 \[Pi] I / (ds + 1)], PowerMod[PrimitiveRoot @ modulus, (modulus - 1) / (ds + 1), modulus]];
+  With[
+   {ds = ReplacePart[powers, 1 -> 0]},
+   {\[Zeta]s = PowerMod[PrimitiveRoot @ modulus, (modulus - 1) / (ds + 1), modulus]},
 
    Developer`ToPackedArray @ Tuples @ PowerMod[\[Zeta]s, Range[0, ds], modulus]
   ]

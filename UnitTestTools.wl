@@ -110,8 +110,7 @@ Benchmark[
  \[Lambda]s_?DistinctPositiveIntegersQ,
  m\[Lambda]s_?PositiveIntegersQ,
  \[Nu]_?NonNegativeIntegerQ,
- DMax_?NonNegativeIntegerQ,
- modulus_?NonNegativeIntegerQ
+ DMax_?NonNegativeIntegerQ
 ] :=
  Module[
   {
@@ -120,9 +119,9 @@ Benchmark[
    invariantAlgebraBasis, covariantModuleBasis
   },
 
-  invariantIsotypicDataTree = AbsoluteTiming @ IsotypicDataTree[\[Lambda]s, m\[Lambda]s, 0, DMax, modulus];
+  invariantIsotypicDataTree = AbsoluteTiming @ IsotypicDataTree[\[Lambda]s, m\[Lambda]s, 0, DMax];
 
-  If[\[Nu] != 0, covariantIsotypicDataTree = AbsoluteTiming @ IsotypicDataTree[\[Lambda]s, m\[Lambda]s, \[Nu], DMax, modulus]];
+  If[\[Nu] != 0, covariantIsotypicDataTree = AbsoluteTiming @ IsotypicDataTree[\[Lambda]s, m\[Lambda]s, \[Nu], DMax]];
 
   invariantVectorSpaceBasis = VectorSpaceBasis @ Last @ invariantIsotypicDataTree;
 

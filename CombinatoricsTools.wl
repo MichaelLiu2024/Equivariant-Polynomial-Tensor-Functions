@@ -3,11 +3,7 @@
 BeginPackage["CombinatoricsTools`", {"BooleanTools`"}];
 
 
-DotMod
-ModReduce
-
-
-FirstUnitPrime
+NextUnitPrimeMod
 
 
 HilbertSeries
@@ -44,15 +40,7 @@ Begin["`Private`"];
 (*Public Functions*)
 
 
-DotMod[0][x__] := Dot[x]
-DotMod[modulus_?PositiveIntegerQ][x__] := Mod[Dot[x], modulus]
-
-
-ModReduce[0][x_] := x
-ModReduce[modulus_?PositiveIntegerQ][x_] := Mod[x, modulus]
-
-
-FirstUnitPrime[m_?PositiveIntegerQ] :=
+NextUnitPrimeMod[m_?PositiveIntegerQ] :=
   NestWhile[# + If[OddQ[m] && m > 1, 2 m, m] &, 1, Not @* PrimeQ]
 
 
