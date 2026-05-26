@@ -1,0 +1,66 @@
+# Usage
+
+The main package is `equivariant_polynomials`.
+
+```python
+from equivariant_polynomials import (
+    SO3RepresentationTheory,
+    build_isotypic_data_tree,
+    build_isotypic_data_trees_by_degree,
+    hilbert_series_so3,
+    space_dimension,
+    space_dimensions,
+    suggest_prime_modulus,
+)
+
+random_seed = 12345
+theory = SO3RepresentationTheory()
+modulus = suggest_prime_modulus(3)
+tree = build_isotypic_data_tree(
+    theory,
+    input_irreps=(1,),
+    input_multiplicities=(1,),
+    output_irrep=0,
+    degree=2,
+    random_seed=random_seed,
+    modulus=modulus,
+)
+assert space_dimension(tree.isotypic_leaves) == 1
+
+trees_by_degree = build_isotypic_data_trees_by_degree(
+    theory,
+    input_irreps=(1,),
+    input_multiplicities=(1,),
+    output_irrep=0,
+    max_degree=3,
+    random_seed=random_seed,
+    modulus=modulus,
+)
+assert space_dimensions(trees_by_degree) == hilbert_series_so3(
+    (1,),
+    (1,),
+    0,
+    3,
+)
+```
+
+For profiling-style checks, use `benchmarks.benchmark` with the representation
+backend and Hilbert series you want to measure:
+
+```python
+from benchmarks import benchmark
+from equivariant_polynomials import SO2RepresentationTheory, hilbert_series_so2
+
+theory = SO2RepresentationTheory()
+summary = benchmark(
+    theory,
+    hilbert_series_so2,
+    input_irreps=(1, -1),
+    input_multiplicities=(2, 1),
+    output_irrep=0,
+    max_degree=4,
+    invariant_irrep=0,
+    random_seed=0,
+    modulus=61,
+)
+```

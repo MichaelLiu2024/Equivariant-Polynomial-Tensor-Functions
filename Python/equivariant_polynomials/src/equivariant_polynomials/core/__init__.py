@@ -1,0 +1,97 @@
+"""Group-agnostic building blocks for equivariant polynomial bases."""
+
+from .combinatorics import (
+    conjugate_partition,
+    cond_mod,
+    integer_partitions,
+    next_unit_prime_mod,
+    pivot_columns,
+    ragged_multi_index,
+    row_kronecker_product,
+    semistandard_young_tableaux,
+    suggest_prime_modulus,
+    validate_modulus,
+    validate_waring_modulus,
+    waring_modulus_lcm,
+    weak_compositions,
+)
+from .evaluators import (
+    evaluate_antisymmetrized_tensor_train,
+    evaluate_basis,
+    evaluate_tensor_train,
+    evaluate_young_symmetrized_tensor_tree,
+    sample_isotypic_input_probes,
+    sample_tensor_power_probes,
+    monomial_waring_grid,
+)
+from .generators import (
+    compute_syndromes,
+    extract_independent_generators,
+)
+from .bases import (
+    extract,
+    schur_functor_basis,
+    space_dimension,
+    space_dimensions,
+    symmetrized_power_basis,
+    tensor_product_basis,
+)
+from .isotypic import (
+    build_isotypic_data_tree,
+    build_isotypic_data_trees_by_degree,
+)
+from .protocols import RepresentationTheory
+from .types import (
+    Irrep,
+    IsotypicDataTree,
+    IsotypicLeaf,
+    Multiplicity,
+    Partition,
+    SSYT,
+    TensorTrain,
+    TensorTrainCore,
+    TensorTree,
+)
+
+__all__ = (
+    "Partition",
+    "SSYT",
+    "Irrep",
+    "Multiplicity",
+    "TensorTrainCore",
+    "TensorTrain",
+    "TensorTree",
+    "IsotypicLeaf",
+    "IsotypicDataTree",
+    "RepresentationTheory",
+    "integer_partitions",
+    "weak_compositions",
+    "conjugate_partition",
+    "cond_mod",
+    "next_unit_prime_mod",
+    "waring_modulus_lcm",
+    "suggest_prime_modulus",
+    "validate_modulus",
+    "validate_waring_modulus",
+    "ragged_multi_index",
+    "pivot_columns",
+    "row_kronecker_product",
+    "semistandard_young_tableaux",
+    "sample_tensor_power_probes",
+    "sample_isotypic_input_probes",
+    "evaluate_tensor_train",
+    "evaluate_antisymmetrized_tensor_train",
+    "evaluate_young_symmetrized_tensor_tree",
+    "evaluate_basis",
+    "monomial_waring_grid",
+    "compute_syndromes",
+    "extract_independent_generators",
+    "tensor_product_basis",
+    "symmetrized_power_basis",
+    "schur_functor_basis",
+    "build_isotypic_data_tree",
+    "build_isotypic_data_trees_by_degree",
+    "space_dimension",
+    "space_dimensions",
+    "extract",
+)
