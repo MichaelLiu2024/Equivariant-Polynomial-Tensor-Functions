@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "equivariant-polynomial-tensor-functions"
+version = "0.1.0"
+description = "Layered Python implementation of equivariant-polynomial representation-theory algorithms."
+requires-python = ">=3.10"
+dependencies = ["numpy", "sympy", "pytest", "nbformat", "python-flint"]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+equivariant_polynomials = ["py.typed"]
