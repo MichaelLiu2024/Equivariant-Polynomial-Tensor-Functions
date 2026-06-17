@@ -6,7 +6,7 @@ import math
 from collections.abc import Hashable, Iterable, Iterator, Mapping
 from dataclasses import dataclass, replace
 from functools import cache
-from itertools import islice, product
+from itertools import product
 from typing import Callable
 
 import numpy as np
@@ -21,6 +21,11 @@ from .evaluators import evaluate_basis, sample_isotypic_input_probes
 from .bases import extract, schur_functor_basis
 from .isotypic import _IsotypicBlock, stream_isotypic_data_tree
 from .protocols import RepresentationTheory
+from .streaming import (
+    STREAM_BATCH_SIZE,
+    independent_column_indices,
+    stream_batches,
+)
 from .types import Irrep, IsotypicLeaf, SSYT
 
 
@@ -29,7 +34,6 @@ DegreeLimit = Callable[[int], int]
 MultidegreeDimensions = Mapping[tuple[int, ...], int]
 Content = tuple[int, ...]
 ContentGroupsByDegree = tuple[dict[Content, tuple[int, Iterable[IsotypicLeaf]]], ...]
-STREAM_LEAF_BATCH_SIZE = 20
 
 
 @dataclass(frozen=True, slots=True)
@@ -101,7 +105,7 @@ def extract_independent_generators(
     theory: RepresentationTheory,
     input_irreps: tuple[Irrep, ...],
     input_multiplicities: tuple[int, ...],
-    invariant_irrep: Irrep,
+    trivial_irrep: Irrep,
     output_irrep: Irrep,
     max_degree: int,
     probe_target: ProbeTarget,
@@ -124,7 +128,7 @@ def extract_independent_generators(
         theory,
         input_irreps,
         input_multiplicities,
-        invariant_irrep,
+        trivial_irrep,
         max_degree,
     )
     if first_generator_degree < 0:
@@ -132,7 +136,7 @@ def extract_independent_generators(
 
     validate_modulus(modulus, max_degree=max_degree)
     output_dimension = theory.irrep_dimension(output_irrep)
-    invariant_output_dimension = theory.irrep_dimension(invariant_irrep)
+    invariant_output_dimension = theory.irrep_dimension(trivial_irrep)
 
     def content_groups_by_degree(
         current_output_irrep: Irrep,
@@ -189,13 +193,11 @@ def extract_independent_generators(
     )
     young_tree_cache: dict[Hashable, np.ndarray] = {}
 
-    covariant_generators: list[tuple[IsotypicLeaf, ...]] = [
-        tuple() for _ in range(max_degree + 1)
-    ]
+    covariant_generators: list[tuple[IsotypicLeaf, ...]] = []
     invariant_content_groups = (
         covariant_content_groups
-        if invariant_irrep == output_irrep
-        else content_groups_by_degree(invariant_irrep, None)
+        if trivial_irrep == output_irrep
+        else content_groups_by_degree(trivial_irrep, None)
     )
     invariant_content_group_map = {
         content: group
@@ -265,7 +267,7 @@ def extract_independent_generators(
 
             if covariant_syndromes.shape[-1] > 0:
                 covariant_syndromes_by_content[content] = covariant_syndromes
-        covariant_generators[degree] = tuple(degree_generators)
+        covariant_generators.append(tuple(degree_generators))
     return tuple(covariant_generators)
 
 
@@ -279,8 +281,7 @@ def _content_leaf_groups(
     random_seed: int,
     modulus: int,
 ) -> dict[Content, tuple[int, Iterable[IsotypicLeaf]]]:
-    grouped: dict[Content, list[_IsotypicBlock]] = {}
-    dimensions: dict[Content, int] = {}
+    grouped: dict[Content, tuple[int, list[_IsotypicBlock]]] = {}
     for multidegree in weak_compositions(degree, len(input_irreps)):
         if (
             target_dimensions_by_multidegree is not None
@@ -321,17 +322,18 @@ def _content_leaf_groups(
                 )
                 if dimension == 0:
                     continue
-                grouped.setdefault(content, []).append(
+                group_dimension, sources = grouped.setdefault(content, (0, []))
+                sources.append(
                     replace(
                         source,
                         semi_standard_young_tableaux=content_tableaux,
                     )
                 )
-                dimensions[content] = dimensions.get(content, 0) + dimension
+                grouped[content] = (group_dimension + dimension, sources)
 
     return {
         content: (
-            dimensions[content],
+            dimension,
             _LazyContentLeaves(
                 theory,
                 input_irreps,
@@ -340,7 +342,7 @@ def _content_leaf_groups(
                 modulus,
             ),
         )
-        for content, sources in grouped.items()
+        for content, (dimension, sources) in grouped.items()
     }
 
 
@@ -375,6 +377,7 @@ def _previous_content_product_basis(
     output_dimension: int,
     modulus: int,
 ) -> np.ndarray:
+    row_count = num_probes * output_dimension
     previous_blocks = []
     for generator_content, cov_syn in covariant_syndromes_by_content.items():
         generator_degree = sum(generator_content)
@@ -390,7 +393,7 @@ def _previous_content_product_basis(
         if any(entry < 0 for entry in invariant_content) or sum(invariant_content) <= 0:
             continue
         inv_syn = invariant_syndromes(invariant_content)
-        if inv_syn.shape[-1] > 0 and cov_syn.shape[-1] > 0:
+        if inv_syn.shape[-1] > 0:
             previous_blocks.append(
                 row_kronecker_product(
                     inv_syn[:num_probes],
@@ -399,22 +402,12 @@ def _previous_content_product_basis(
                 )
             )
 
-    row_count = num_probes * output_dimension
-    if not previous_blocks:
+    if not previous_blocks or row_count == 0:
         return _empty_flat_syndromes(row_count, modulus)
 
-    previous_columns = sum(block.shape[-1] for block in previous_blocks)
-    previous = np.concatenate(previous_blocks, axis=-1).reshape(
-        row_count,
-        previous_columns,
-    )
-    if row_count == 0:
-        return _empty_flat_syndromes(row_count, modulus)
-
+    previous = np.concatenate(previous_blocks, axis=-1).reshape(row_count, -1)
     pivots = pivot_columns(previous, modulus)
-    if not pivots:
-        return _empty_flat_syndromes(row_count, modulus)
-    return previous[:, pivots]
+    return previous[:, pivots] if pivots else _empty_flat_syndromes(row_count, modulus)
 
 
 def _stream_content_generators(
@@ -443,12 +436,12 @@ def _stream_content_generators(
         young_tree_cache,
     ):
         batch_columns = batch_syndromes.shape[-1]
-        linear_indices = _independent_columns(
+        linear_indices = independent_column_indices(
             current_basis,
             batch_syndromes.reshape((-1, batch_columns)),
             needed - len(selected_generators),
             modulus,
-        )
+        ).indices
         if not linear_indices:
             continue
 
@@ -486,32 +479,10 @@ def _stream_content_generators(
             f"streamed {len(selected_generators)} generators, expected {needed}"
         )
 
-    if not selected_syndrome_blocks:
-        return (
-            tuple(selected_generators),
-            _empty_syndromes(max_probes, output_dimension, modulus),
-        )
     return (
         tuple(selected_generators),
         np.concatenate(selected_syndrome_blocks, axis=-1),
     )
-
-
-def _independent_columns(
-    basis: np.ndarray,
-    columns: np.ndarray,
-    limit: int,
-    modulus: int,
-) -> tuple[int, ...]:
-    if columns.shape[1] == 0 or limit == 0:
-        return ()
-    start = basis.shape[1]
-    if start == 0 and columns.shape[1] <= limit:
-        return tuple(range(columns.shape[1]))
-    matrix = columns if start == 0 else np.concatenate((basis, columns), axis=1)
-    return tuple(
-        pivot - start for pivot in pivot_columns(matrix, modulus) if pivot >= start
-    )[:limit]
 
 
 def _stream_syndromes(
@@ -548,8 +519,7 @@ def _syndrome_batches(
     output_dimension: int,
     young_tree_cache: dict[Hashable, np.ndarray],
 ) -> Iterator[tuple[tuple[IsotypicLeaf, ...], np.ndarray]]:
-    leaf_iterator = iter(leaves)
-    while leaf_batch := tuple(islice(leaf_iterator, STREAM_LEAF_BATCH_SIZE)):
+    for leaf_batch in stream_batches(leaves):
         syndromes = compute_syndromes(
             theory,
             leaf_batch,
@@ -576,7 +546,7 @@ def _validate_generator_metadata(
     theory: RepresentationTheory,
     input_irreps: tuple[Irrep, ...],
     input_multiplicities: tuple[int, ...],
-    invariant_irrep: Irrep,
+    trivial_irrep: Irrep,
     max_degree: int,
 ) -> None:
     if not input_irreps:
@@ -587,8 +557,8 @@ def _validate_generator_metadata(
         raise ValueError("input multiplicities must be positive")
     if max_degree < 0:
         raise ValueError("max_degree must be nonnegative")
-    if theory.irrep_dimension(invariant_irrep) != 1:
-        raise ValueError("invariant_irrep must be one-dimensional")
+    if theory.irrep_dimension(trivial_irrep) != 1:
+        raise ValueError("trivial_irrep must be one-dimensional")
 
 
 __all__ = ("DegreeLimit", "ProbeTarget", "compute_syndromes", "extract_independent_generators")

@@ -6,13 +6,11 @@ import math
 from dataclasses import replace
 from functools import cache
 from itertools import product
-from typing import TypeVar
 
 import numpy as np
 
 from .combinatorics import (
     conjugate_partition,
-    pivot_columns,
     ragged_multi_index,
     validate_modulus,
 )
@@ -22,6 +20,7 @@ from .evaluators import (
     sample_tensor_power_probes,
 )
 from .protocols import RepresentationTheory
+from .streaming import stream_independent_candidates
 from .types import (
     Irrep,
     IsotypicLeaf,
@@ -32,7 +31,6 @@ from .types import (
 )
 
 MAX_RANK_ATTEMPTS = 4
-_Entry = TypeVar("_Entry")
 
 
 @cache
@@ -107,16 +105,6 @@ def _has_tensor_product_constituent(
     return output in current
 
 
-def _select_independent_entries(
-    entries: tuple[tuple[np.ndarray, _Entry], ...],
-    modulus: int,
-) -> tuple[_Entry, ...]:
-    if not entries:
-        return ()
-    stacked_columns = np.stack([column for column, _entry in entries], axis=1)
-    return tuple(entries[index][1] for index in pivot_columns(stacked_columns, modulus))
-
-
 def _rank_select_tensor_trains(
     theory: RepresentationTheory,
     irrep: Irrep,
@@ -136,40 +124,49 @@ def _rank_select_tensor_trains(
     output_dimension = theory.irrep_dimension(output)
     base_num_probes = math.ceil(dimension / output_dimension) + 2
     last_rank = 0
+    evaluate = (
+        evaluate_antisymmetrized_tensor_train
+        if antisymmetric
+        else evaluate_tensor_train
+    )
 
     for attempt in range(MAX_RANK_ATTEMPTS):
+        num_probes = base_num_probes + attempt
         probe_vectors = sample_tensor_power_probes(
             theory,
             irrep,
             degree,
-            base_num_probes + attempt,
+            num_probes,
             modulus,
             random_seed + attempt,
             antisymmetric,
         )
-        entries = []
-        for tensor_train in candidates:
-            value = (
-                evaluate_antisymmetrized_tensor_train(
-                    theory,
-                    tensor_train,
-                    probe_vectors,
-                    modulus,
-                    "batch",
-                )
-                if antisymmetric
-                else evaluate_tensor_train(
-                    theory,
-                    tensor_train,
-                    probe_vectors,
-                    modulus,
-                    "batch",
-                )
+
+        def evaluate_batch(batch: tuple[TensorTrain, ...]) -> np.ndarray:
+            return np.stack(
+                [
+                    evaluate(
+                        theory,
+                        tensor_train,
+                        probe_vectors,
+                        modulus,
+                        "batch",
+                    ).reshape(-1)
+                    for tensor_train in batch
+                ],
+                axis=1,
             )
-            entries.append((value.reshape(-1), tensor_train))
-        selected = _select_independent_entries(tuple(entries), modulus)
-        last_rank = len(selected)
-        if last_rank == dimension:
+
+        selected, rank = stream_independent_candidates(
+            candidates,
+            evaluate_batch,
+            dimension,
+            num_probes * output_dimension,
+            modulus,
+            random_seed + attempt,
+        )
+        last_rank = rank
+        if len(selected) == dimension:
             return selected
 
     kind = "exterior" if antisymmetric else "symmetric"
@@ -222,21 +219,20 @@ def _rank_select_schur_power_candidates(
 
     output_dimension = theory.irrep_dimension(output)
     base_num_probes = math.ceil(dimension / output_dimension) + 2
-    degree = sum(partition)
     last_rank = 0
 
     for attempt in range(MAX_RANK_ATTEMPTS):
+        num_probes = base_num_probes + attempt
         probe_vectors = sample_tensor_power_probes(
             theory,
             irrep,
             len(partition),
-            base_num_probes + attempt,
+            num_probes,
             modulus,
             random_seed + attempt,
             antisymmetric=True,
         )
         leaf_values: dict[TensorTrain, np.ndarray] = {}
-        entries = []
 
         def evaluate_leaf(tensor_train: TensorTrain) -> np.ndarray:
             if tensor_train not in leaf_values:
@@ -249,23 +245,33 @@ def _rank_select_schur_power_candidates(
                 )
             return leaf_values[tensor_train]
 
-        for candidate in candidates:
-            vectors = tuple(
-                evaluate_leaf(tensor_train)
-                for tensor_train in candidate.leaf_tensor_trains
+        def evaluate_batch(batch: tuple[TensorTree, ...]) -> np.ndarray:
+            return np.stack(
+                [
+                    evaluate_tensor_train(
+                        theory,
+                        candidate.interior_tensor_train,
+                        tuple(
+                            evaluate_leaf(tensor_train)
+                            for tensor_train in candidate.leaf_tensor_trains
+                        ),
+                        modulus,
+                        "batch_multi",
+                    ).reshape(-1)
+                    for candidate in batch
+                ],
+                axis=1,
             )
-            value = evaluate_tensor_train(
-                theory,
-                candidate.interior_tensor_train,
-                vectors,
-                modulus,
-                "batch_multi",
-            )
-            entries.append((value.reshape(-1), candidate))
 
-        selected = _select_independent_entries(tuple(entries), modulus)
-        last_rank = len(selected)
-        if last_rank == dimension:
+        selected, last_rank = stream_independent_candidates(
+            candidates,
+            evaluate_batch,
+            dimension,
+            num_probes * output_dimension,
+            modulus,
+            random_seed + attempt,
+        )
+        if len(selected) == dimension:
             return selected
 
     raise RuntimeError(

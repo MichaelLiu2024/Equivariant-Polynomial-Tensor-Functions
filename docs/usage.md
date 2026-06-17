@@ -63,7 +63,7 @@ summary = benchmark(
     input_multiplicities=(2, 1),
     output_irrep=0,
     max_degree=4,
-    invariant_irrep=0,
+    trivial_irrep=0,
     random_seed=0,
     modulus=2521,
 )

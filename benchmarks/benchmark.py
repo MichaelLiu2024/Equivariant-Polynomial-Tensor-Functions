@@ -62,7 +62,7 @@ def benchmark(
     input_multiplicities: tuple[int, ...],
     output_irrep: Irrep,
     max_degree: int,
-    invariant_irrep: Irrep,
+    trivial_irrep: Irrep,
     random_seed: int,
     modulus: int,
     hilbert_series_multigraded: MultigradedHilbertSeries | None = None,
@@ -102,7 +102,7 @@ def benchmark(
             theory,
             input_irreps,
             input_multiplicities,
-            invariant_irrep,
+            trivial_irrep,
             target_irrep,
             max_degree,
             probe_target,
@@ -136,14 +136,14 @@ def benchmark(
             "input_irreps": input_irreps,
             "input_multiplicities": input_multiplicities,
             "output_irrep": output_irrep,
-            "invariant_irrep": invariant_irrep,
+            "trivial_irrep": trivial_irrep,
             "max_degree": max_degree,
             "random_seed": random_seed,
             "modulus": modulus,
         },
         "algebra": run_generators(
             "algebra",
-            invariant_irrep,
+            trivial_irrep,
             lambda dimensions, _output_dimension: dimensions,
             lambda degree: degree // 2,
             first_generator_degree=1,
@@ -152,7 +152,7 @@ def benchmark(
         "module": None,
     }
 
-    if output_irrep != invariant_irrep:
+    if output_irrep != trivial_irrep:
         result["module"] = run_generators(
             "module",
             output_irrep,

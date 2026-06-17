@@ -25,7 +25,7 @@ def test_core_algebra_generator_extractor_accepts_abstract_dimensions() -> None:
         theory,
         input_irreps=(1,),
         input_multiplicities=(1,),
-        invariant_irrep=0,
+        trivial_irrep=0,
         output_irrep=0,
         max_degree=3,
         probe_target=lambda dimensions, _output_dimension: dimensions,
@@ -46,7 +46,7 @@ def test_core_generator_extractor_streams_multigraded_targets() -> None:
         theory,
         input_irreps=(1,),
         input_multiplicities=(1,),
-        invariant_irrep=0,
+        trivial_irrep=0,
         output_irrep=0,
         max_degree=3,
         probe_target=lambda dimensions, _output_dimension: dimensions,
@@ -183,7 +183,7 @@ def test_stream_content_generators_evaluates_fixed_leaf_batches(
         _young_tree_cache,
     ):
         calls.append(polynomials)
-        assert len(polynomials) <= generator_core.STREAM_LEAF_BATCH_SIZE
+        assert len(polynomials) <= generator_core.STREAM_BATCH_SIZE
         return np.ones((1, 1, 1), dtype=np.uint64)
 
     monkeypatch.setattr(
