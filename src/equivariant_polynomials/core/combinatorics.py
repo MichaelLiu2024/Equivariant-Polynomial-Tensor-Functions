@@ -74,6 +74,34 @@ def validate_modulus(
     if max_degree is not None and modulus <= max_degree:
         raise ValueError("modulus must be greater than max_degree")
 
+
+def _validate_input_metadata(
+    input_irreps: tuple[object, ...],
+    input_multiplicities: tuple[int, ...],
+    *,
+    degrees: tuple[int, ...] | None = None,
+    degrees_name: str = "multidegree",
+    max_degree: int | None = None,
+    require_inputs: bool = True,
+) -> None:
+    if require_inputs and not input_irreps:
+        raise ValueError("input_irreps must be nonempty")
+    if len(input_irreps) != len(input_multiplicities):
+        raise ValueError("input_irreps and input_multiplicities must have equal length")
+    if degrees is not None and len(degrees) != len(input_irreps):
+        raise ValueError(f"{degrees_name} must have one entry per input irrep")
+    if any(multiplicity <= 0 for multiplicity in input_multiplicities):
+        raise ValueError("input multiplicities must be positive")
+    if degrees is not None and any(degree < 0 for degree in degrees):
+        raise ValueError(f"{degrees_name} entries must be nonnegative")
+    if max_degree is not None and max_degree < 0:
+        raise ValueError("max_degree must be nonnegative")
+
+
+def arithmetic_dtype(modulus: int) -> type[np.generic]:
+    return np.complex128 if modulus == 0 else np.uint64
+
+
 def cond_mod(
     x: np.ndarray,
     modulus: int,
@@ -111,10 +139,16 @@ def pivot_columns(
     R, rank = M.rref(inplace=True)
 
     num_cols = A.shape[1]
-    return tuple(
-        next(j for j in range(num_cols) if R[i, j])
-        for i in range(rank)
-    )
+    pivots = []
+    column = 0
+    for row in range(rank):
+        while column < num_cols and not R[row, column]:
+            column += 1
+        if column == num_cols:
+            raise RuntimeError("RREF rank/profile mismatch")
+        pivots.append(column)
+        column += 1
+    return tuple(pivots)
 
 def row_kronecker_product(
     A: np.ndarray,

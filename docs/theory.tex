@@ -216,7 +216,7 @@
 \newtheorem{example}[theorem]{Example}
 \newtheorem{remark}[theorem]{Remark}
 
-\title{Equivariant Learning via Minimal Integrity Bases for Equivariant Polynomials}
+\title{Equivariant Learning via Minimal Integrity Bases for Invariant and Equivariant Polynomials}
 \author{Michael Liaofan Liu}
 \date{}
 
@@ -225,39 +225,58 @@
 
 \begin{abstract}
 
-  Motivated by problems in equivariant machine learning, we present a general framework for enumerating a vector space basis for the space of homogeneous equivariant polynomials between finite-dimensional complex representations of a linearly reductive group.
-  Our framework relies on bookkeeping the isotypic decomposition of the symmetric power of the input representation.
-  We apply our construction along with the graded Nakayama lemma to obtain a minimal integrity basis (i.e., minimal homogeneous module or algebra generators) for the set of equivariant polynomials up to a given degree.
-  In order to turn our general framework into concrete algorithms, one needs a few extra ingredients: explicit isotypic decompositions for the input and output representations, and explicit Clebsch-Gordan decompositions for the tensor product of irreducible representations.
-  We implement our algorithms in full generality: provided that the user can supply the above ingredients, our algorithms work for any linearly reductive group.
-  In particular, we provide an end-to-end implementation for the group $\SO(3)$.
-  We discuss how these results enable the design of new lightweight equivariant neural network architectures, and we sketch representative applications.
+  We present a general framework for equivariant learning when the underlying group is linearly reductive.
+  Our approach enforces equivariance by a one-time computation of minimal integrity bases for the invariant algebra and covariant module of invariant and equivariant polynomials.
+  In particular, the trainable parameters in our model lie entirely in an unconstrained neural network whose architecture can be chosen arbitrarily.
+  Moreover, if untruncated integrity bases are used, our hypothesis class is dense in the space of continuous equivariant functions with the sup norm.
+  To compute minimal integrity bases, we first enumerate vector space bases for the invariant algebra and covariant module as candidate generators.
+  Then, we apply the graded Nakayama lemma to extract independent generators degree by degree.
+  We implement our algorithms in full generality: given explicit isotypic decompositions for the input and output representations, as well as explicit Clebsch--Gordan decompositions for the tensor product of irreducible representations, our algorithms work for any linearly reductive group.
+  In particular, we provide end-to-end implementations for the groups $\SO(2)$, $\SO(3)$, and $S_d$, and we sketch representative applications.
   Our code is available on GitHub at \href{https://github.com/MichaelLiu2024/Equivariant-Polynomial-Tensor-Functions}{\texttt{github.com/MichaelLiu2024/Equivariant-Polynomial-Tensor-Functions}}.
 
 \end{abstract}
 
 \section{Introduction}
 
-A central problem in supervised equivariant machine learning is to learn an unknown equivariant function given a dataset of input-output pairs.
-To solve this problem, many existing equivariant neural network architectures enforce equivariance via layerwise constraints.
-While layerwise architectures have been successfully applied in a variety of settings, they have a number of shortcomings.
-For instance, the choice of hidden representations is arbitrary and can contribute to undesirable scaling in the number of trainable parameters: substantial parameter budget may be spent learning equivariant maps between hidden representations.
-Ordinary pointwise nonlinearities are compatible in settings such as G-CNN feature fields~\cite{cohen2016gcnn}, but for general representation-valued features, gated, norm-based, or tensor-product nonlinearities are often required to ensure equivariance~\cite{finzi2021emlp, Thomas2018tfn, kondor2018cgnets}.
-In particular, tensor-product nonlinearities can create large quadratic expansions before compression. 
+%A central problem in supervised equivariant machine learning is to learn an unknown equivariant function given a dataset of input-output pairs.
+%To solve this problem, many existing equivariant neural network architectures enforce equivariance via layerwise constraints.
+%While layerwise architectures have been successfully applied in a variety of settings, they have a number of shortcomings.
+%For instance, the choice of hidden representations is arbitrary and can contribute to undesirable scaling in the number of trainable parameters: substantial parameter budget may be spent learning equivariant maps between hidden representations.
+%Ordinary pointwise nonlinearities are compatible in settings such as G-CNN feature fields~\cite{cohen2016gcnn}, but for general representation-valued features, gated, norm-based, or tensor-product nonlinearities are often required to ensure equivariance~\cite{finzi2021emlp, Thomas2018tfn, kondor2018cgnets}.
+%In particular, tensor-product nonlinearities can create large quadratic expansions before compression.
 
-Our work investigates a different class of learnable equivariant functions based on invariant theory~\cite{BlumSmithVillar2023}. Let $F\colon X\to Y$ be the unknown equivariant function we wish to learn. We derive an algorithm to compute, up to a prescribed degree, minimal algebra generators $r_1,\dots,r_R$ for the invariant polynomials on $X$ and minimal module generators $m_1,\dots,m_M$ for the equivariant polynomials from $X$ to $Y$. In a real-valued learning setting, we study the ansatz
+Let $X$ and $Y$ be finite-dimensional complex representations of a linearly reductive group $G$.
+Let
 \[
-F_\theta(x)
-=
-\scN_\theta\bigl(r_1(x),\dots,r_R(x)\bigr)\cdot\bigl(m_1(x),\dots,m_M(x)\bigr),
+  \scM_G(X,Y)\coloneq\left(\scS(X^*)\otimes Y\right)^G
 \]
-where $\scN_\theta\colon \dsR^R\to\dsR^M$ is a neural network on the invariant coordinates.
-This parameterization has several advantages.
-First, equivariance is built into the ansatz: the coefficients $\scN_\theta(r_1(x),\dots,r_R(x))$ depend only on invariant quantities, while the polynomials $m_i$ are guaranteed equivariant by our algorithm. Thus, the equivariance constraint is frontloaded into the computation of generators, and the learning procedure does not need to worry about further equivariance constraints.
-Second, since $\scN_\theta$ acts only on invariant coordinates and outputs scalar coefficients, its internal architecture need not satisfy any equivariance constraint. It may be chosen from any standard class of parameterized maps $\dsR^R\to\dsR^M$, such as a feed-forward network, residual network, attention-based scalar network, or other differentiable model. Thus, one may use standard pointwise nonlinearities and scalar-network design choices without imposing equivariance constraints on the hidden layers of $\scN_\theta$.
-so one may use standard pointwise nonlinearities and scalar-network design choices without imposing equivariance constraints on its hidden layers.
-Third, the trainable parameters are concentrated in this single coefficient network rather than in a sequence of equivariant linear maps and equivariant nonlinearities between auxiliary hidden representations.
-When the numbers $R$ and $M$ of invariant and equivariant generators are moderate, we expect fewer trainable parameters than comparable layerwise equivariant architectures.
+be the \emph{covariant module} of $G$-equivariant polynomials from $X$ to $Y$, and let
+\[
+  \scR_G(X)\coloneq\scS(X^*)^G
+\]
+be the \emph{invariant algebra} of $G$-invariant polynomials on $X$.
+
+Suppose that we wish to learn an unknown $G$-equivariant polynomial $q\colon X\to Y$.
+Let $\set{m_1,\dots,m_M}\subseteq \scM_G(X,Y)$ be minimal $\scR_G(X)$-module generators, and let $\set{r_1,\dots,r_R}\subseteq \scR_G(X)$ be minimal $\dsC$-algebra generators.
+Then $q$ admits a decomposition
+\begin{equation}\label{eq:polynomial-ansatz}
+  q(x)=\sum_{i=1}^M p_i(r_1(x),\dots,r_R(x))m_i(x),
+\end{equation}
+where $p\colon \dsC^R\to\dsC^M$ is some polynomial.
+Thus, learning the unknown polynomial $q$ reduces to learning $p$.
+
+Now, suppose that we wish to learn an unknown $G$-equivariant function $F\colon X\to Y$.
+Replacing the polynomial $p$ with a neural network $\scN_\theta\colon \dsC^R\to\dsC^M$, we obtain a large class of $G$-equivariant functions
+\begin{equation}\label{eq:neural-ansatz}
+  F_\theta(x)=\sum_{i=1}^M
+  \scN_{\theta,i}(r_1(x),\dots,r_R(x))m_i(x)
+\end{equation}
+from $X$ to $Y$, and it remains only to learn $\theta$ so that $F_\theta \approx F$. Special cases of the ansatz in Eq.~\eqref{eq:neural-ansatz} have appeared in the literature before \cite{BlumSmithVillar2023}.
+
+Note that equivariance is built into Eq.~\eqref{eq:neural-ansatz}: the coefficients $\scN_{\theta,i}(r_1(x),\dots,r_R(x))$ depend only on invariant quantities, and the polynomials $m_i$ are equivariant by construction.
+Thus, the equivariance constraint is frontloaded into the one-time computation of generators, and the learning procedure need not worry about further equivariance constraints.
+In particular, the neural network $\scN_\theta$ may have any standard architecture, such as a feed-forward network, residual network, attention-based scalar network, or other differentiable model, and one may use standard pointwise nonlinearities and scalar-network design choices without imposing equivariance constraints on the hidden layers of $\scN_\theta$. Moreover, the hypothesis class in Eq.~\eqref{eq:neural-ansatz} is a universal approximator for the continuous $G$-equivariant functions.
 
 \begin{figure}[H]
 \centering
@@ -278,15 +297,15 @@ $\,$-- symmetry group $G$,\\[0.2em]
 $\,$-- input representation $X$,\\[0.2em]
 $\,$-- output representation $Y$.};
 
-\node[prebox] (pre) at (-6.2,0.6) {\textbf{One-time precomputation}\\[0.35em]
+\node[prebox] (pre) at (-6.2,0.6) {\textbf{One-time computation}\\[0.35em]
 Input: $(G,X,Y)$ and $D_{\max}$\\[0.35em]
 Output: generators up to degree $D_{\max}$\\[0.25em]
-$\{r_1,\ldots,r_R\}\subseteq \scR(X)$\\[0.2em]
-$\{m_1,\ldots,m_M\}\subseteq \scM(X,Y)$};
+$\{r_1,\ldots,r_R\}\subseteq \scR_G(X)$\\[0.2em]
+$\{m_1,\ldots,m_M\}\subseteq \scM_G(X,Y)$};
 
 \node[learnbox] (learn) at (6.2,0.6) {\textbf{Learning}\\[0.35em]
 Freeze $\{r_j\}$ and $\{m_i\}$, then learn a vector-valued coefficient function:\\[0.35em]
-$\displaystyle F_{\theta}(x)=\scN_\theta\bigl(r_1(x),\ldots,r_R(x)\bigr)\cdot\bigl(m_1(x),\ldots,m_M(x)\bigr)$\\[0.35em]
+$\displaystyle F_\theta(x)=\sum_{i=1}^M \scN_{\theta,i}(r_1(x),\dots,r_R(x))m_i(x)$\\[0.35em]
 Optimize $\theta$ for the target $F$.};
 
 \draw[flow] (app.south west) -- node[midway, edgelabel] {choose $D_{\max}$} (pre.north);
@@ -295,51 +314,44 @@ Optimize $\theta$ for the target $F$.};
 
 \end{tikzpicture}%
 }
-\caption{Workflow for learning $G$-equivariant functions $F\!:\!X\to Y$. Starting from an application domain, one identifies the symmetry group $G$, the input representation $X$, and the output representation $Y$. For the resulting triple $(G,X,Y)$, one chooses a degree bound $D_{\max}$ and performs a one-time precomputation of invariant generators $\{r_1,\ldots,r_R\}\subseteq \scR(X)$ and covariant generators $\{m_1,\ldots,m_M\}\subseteq \scM(X,Y)$ up to degree $D_{\max}$. For any $G$-equivariant target function $F\!:\!X\to Y$, one trains the neural-network coefficient function $\scN_\theta\colon \dsR^R\to\dsR^M$ in the ansatz $F_{\theta}(x)=\scN_\theta(r_1(x),\ldots,r_R(x))\cdot(m_1(x),\ldots,m_M(x))$. In particular, for fixed $(G,X,Y)$, the same one-time precomputation can be reused to learn multiple $G$-equivariant functions from $X$ to $Y$ by training different neural networks.}
+\caption{Workflow for learning $G$-equivariant functions $F\!:\!X\to Y$.
+Starting from an application domain, one identifies the symmetry group $G$, the input representation $X$, and the output representation $Y$.
+For the resulting triple $(G,X,Y)$, one chooses a degree bound $D_{\max}$ and performs a one-time computation of invariant generators $\{r_1,\ldots,r_R\}\subseteq \scR_G(X)$ and covariant generators $\{m_1,\ldots,m_M\}\subseteq \scM_G(X,Y)$ up to degree $D_{\max}$.
+For any $G$-equivariant target function $F\!:\!X\to Y$, one trains the neural-network coefficient function $\scN_\theta\colon \dsR^R\to\dsR^M$ in the ansatz of Eq.~\eqref{eq:neural-ansatz}.
+In particular, for fixed $(G,X,Y)$, the same one-time computation can be reused to learn multiple $G$-equivariant functions from $X$ to $Y$ by training different neural networks.}
 \label{fig:equivariant-workflow}
 \end{figure}
 
-\subsection{Applications}
 
-Suppose that we wish to learn an unknown $G$-equivariant polynomial $p^*\colon X\to Y$ of degree at most $D_{\max}$. Our results yield, through degree $D_{\max}$, minimal $\scR(X)$-module generators $\set{m_1,\dots,m_M}\subseteq \scM(X,Y)$ and minimal $\dsC$-algebra generators $\set{r_1,\dots,r_R}\subseteq \scR(X)$. With respect to these degree-bounded generating sets, $p^*$ admits a decomposition
-\[
-  p^*=p(r_1,\dots,r_R)\cdot(m_1,\dots,m_M),
-\]
-where $p=(p_1,\dots,p_M)\colon \dsC^R\to\dsC^M$ is a polynomial map on the invariant coordinates. Thus, learning the unknown polynomial $p^*$ reduces to learning the coefficients of the polynomials $p_i$.
 
-Moreover, suppose that we wish to learn an unknown $G$-equivariant function $F\colon X\to Y$ in a real-valued setting. By replacing the polynomial map $p$ above by a neural network $\scN_\theta\colon \dsR^R\to\dsR^M$ on real invariant coordinates $r_1,\dots,r_R$, one obtains a large class of $G$-equivariant functions
-\[
-  F_\theta=\scN_\theta\bigl(r_1,\dots,r_R\bigr)\cdot(m_1,\dots,m_M)
-\]
-from $X$ to $Y$, and it remains only to learn $\theta$ so that $F_\theta \approx F$.
 
 \subsection{Roadmap}
 
-This paper is organized as follows. Section~\ref{sec:theory-and-algorithms} contains the theory and algorithms. Section~\ref{sec:examples} works through representative examples in more detail. Section~\ref{sec:conclusion} summarizes our work and suggests directions for future work. Appendix~\ref{sec:appendix-proofs} provides proofs of our results. Appendix~\ref{sec:appendix-implementation} describes implementation details, including shortcuts for the case $G = \SO(3)$.
+This paper is organized as follows.
+Section~\ref{sec:theory-and-algorithms} contains the theory and algorithms.
+Section~\ref{sec:examples} works through representative examples in more detail.
+Section~\ref{sec:conclusion} summarizes our work and suggests directions for future work.
+Appendix~\ref{sec:appendix-proofs} provides proofs of our results.
+Appendix~\ref{sec:appendix-implementation} describes implementation details, including shortcuts for the case $G = \SO(3)$.
 
 \section{Theory and Algorithms}\label{sec:theory-and-algorithms}
 
 \subsection{Overview}
 
-Let $X$ and $Y$ be finite-dimensional complex representations of a linearly reductive group $G$. Let
-\[
-  \scM(X,Y)\coloneq\left(\scS(X^*)\otimes Y\right)^G
-\]
-be the \emph{covariant module} of $G$-equivariant polynomials from $X$ to $Y$, and let
-\[
-  \scR(X)\coloneq\scS(X^*)^G
-\]
-be the \emph{invariant algebra} of $G$-invariant polynomials on $X$.
+
+We derive an algorithm to compute, up to a prescribed degree, minimal algebra generators $r_1,\dots,r_R$ for the invariant polynomials on $X$ and minimal module generators $m_1,\dots,m_M$ for the equivariant polynomials from $X$ to $Y$.
 
 In this paper, we describe a general framework for computing vector space bases for the homogeneous degree-$D$ pieces
 \[
-  \scM^D(X,Y)\coloneq\left(\scS^D(X^*)\otimes Y\right)^G
+  \scM_G^D(X,Y)\coloneq\left(\scS^D(X^*)\otimes Y\right)^G
 \]
 and
 \[
-  \scR^D(X)\coloneq\scS^D(X^*)^G
+  \scR_G^D(X)\coloneq\scS^D(X^*)^G
 \]
-of the covariant module and invariant algebra. The main technical result underlying our framework is an explicit isotypic decomposition of the symmetric power $\scS^D(X)$ of the input representation $X$. To see why, suppose that we are given explicit isotypic decompositions
+of the covariant module and invariant algebra.
+The main technical result underlying our framework is an explicit isotypic decomposition of the symmetric power $\scS^D(X)$ of the input representation $X$.
+To see why, suppose that we are given explicit isotypic decompositions
 \[
   \begin{aligned}\label{eq:input-output-isotypic}
     X &\cong \bigoplus_{\lambda} H_\lambda\otimes X_\lambda,
@@ -350,24 +362,30 @@ of the covariant module and invariant algebra. The main technical result underly
     Y_\nu &\coloneq \HomG{H_\nu}{Y},
   \end{aligned}
 \]
-for the input and output representations $X$ and $Y$, where $\lambda, \nu$ index the (isomorphism classes of) irreducible representations of $G$, and $H_\lambda, H_\nu$ are fixed irreducible representations with labels $\lambda, \nu$. The first key observation is that as vector spaces,
+for the input and output representations $X$ and $Y$, where $\lambda, \nu$ index the (isomorphism classes of) irreducible representations of $G$, and $H_\lambda, H_\nu$ are fixed irreducible representations with labels $\lambda, \nu$.
+The first key observation is that as vector spaces,
 \begin{equation}\label{eq:output-reduction}
-  \scM^D(X,Y)
+  \scM_G^D(X,Y)
   \cong
   \bigoplus_{\nu}
-  \scM^D(X,H_\nu)\otimes Y_\nu,
+  \scM_G^D(X,H_\nu)\otimes Y_\nu,
 \end{equation}
-so it suffices to study the spaces $\scM^D(X,H_\nu)$, i.e., to consider the special case where the output representation $Y = H_\nu$ is irreducible. The second key observation is that
+so it suffices to study the spaces $\scM_G^D(X,H_\nu)$, i.e., to consider the special case where the output representation $Y = H_\nu$ is irreducible.
+The second key observation is that
 \begin{equation}\label{eq:duality}
-  \scM^D(X,H_\nu)
+  \scM_G^D(X,H_\nu)
   \cong
   \HomG{H_\nu}{\scS^D(X)}^*,
 \end{equation}
-which is precisely the dual of the multiplicity space of $H_\nu$ in the isotypic decomposition of $\scS^D(X)$. Thus, an explicit isotypic decomposition of $\scS^D(X)$ ultimately yields a vector space basis for $\scM^D(X,Y)$.
+which is precisely the dual of the multiplicity space of $H_\nu$ in the isotypic decomposition of $\scS^D(X)$.
+Thus, an explicit isotypic decomposition of $\scS^D(X)$ ultimately yields a vector space basis for $\scM_G^D(X,Y)$.
 
-Now, suppose that $\scM(X,Y)$ is a finitely generated $\scR(X)$-module and $\scR(X)$ is a finitely generated $\dsC$-algebra. Then the vector space bases produced by our framework can be used as candidate generators in a standard procedure based on the graded Nakayama lemma to extract minimal homogeneous generators for $\scM(X,Y)$ as an $\scR(X)$-module and $\scR(X)$ as a $\dsC$-algebra up to a given degree. In particular, we show that when computing minimal module generators for $\scM(X,Y)$, it is more efficient to first use the graded Nakayama lemma to obtain minimal module generators for $\scM(X,H_\nu)$ and then use Eq.~\eqref{eq:output-reduction} to lift these generators to $\scM(X,Y)$.
+Now, suppose that $\scM_G(X,Y)$ is a finitely generated $\scR_G(X)$-module and $\scR_G(X)$ is a finitely generated $\dsC$-algebra.
+Then the vector space bases produced by our framework can be used as candidate generators in a standard procedure based on the graded Nakayama lemma to extract minimal homogeneous generators for $\scM_G(X,Y)$ as an $\scR_G(X)$-module and $\scR_G(X)$ as a $\dsC$-algebra up to a given degree.
+In particular, we show that when computing minimal module generators for $\scM_G(X,Y)$, it is more efficient to first use the graded Nakayama lemma to obtain minimal module generators for $\scM_G(X,H_\nu)$ and then use Eq.~\eqref{eq:output-reduction} to lift these generators to $\scM_G(X,Y)$.
 
-In principle, the theory in this work applies to any linearly reductive group. However, in order to implement concrete algorithms, one must provide a model for the irreps of $G$ along with the following.
+In principle, the theory in this work applies to any linearly reductive group.
+However, in order to implement concrete algorithms, one must provide a model for the irreps of $G$ along with the following.
 
 \begin{assumption}[Explicit isotypic decompositions of the input and output representations]\label{ass:explicit-isotypic}
   One can provide lists of the active irreducible representations in $X$ and $Y$, bases for the multiplicity spaces $X_\lambda = \HomG{H_\lambda}{X}$ and $Y_\nu = \HomG{H_\nu}{Y}$, and black--box routines for evaluating those basis maps and their adjoints.
@@ -377,7 +395,8 @@ In principle, the theory in this work applies to any linearly reductive group. H
   One can provide, for each pair of irrep labels $(\lambda_1,\lambda_2)$, a list of the active irreducible representations in $H_{\lambda_1} \otimes H_{\lambda_2}$, a basis for the multiplicity space $\HomG{H_\gamma}{H_{\lambda_1} \otimes H_{\lambda_2}}$, and black--box routines for evaluating those basis maps and their adjoints.
 \end{assumption}
 
-We adopt these assumptions henceforth. Our results are summarized in the table below.
+We adopt these assumptions henceforth.
+Our results are summarized in the table below.
 
 \begin{table}[htbp]
   \centering
@@ -403,14 +422,19 @@ We adopt these assumptions henceforth. Our results are summarized in the table b
     \\
     \bottomrule
   \end{tabular}
-  \caption{Overview of results. We begin in the top--left corner. We use Eq.~\eqref{eq:output-reduction} to move right in the table. We use the graded Nakayama lemma to move down in the table. To move from the top--left corner to the bottom--right corner, it is algorithmically more efficient to first move down and then move right.}
+  \caption{Overview of results.
+  We begin in the top--left corner.
+  We use Eq.~\eqref{eq:output-reduction} to move right in the table.
+  We use the graded Nakayama lemma to move down in the table.
+  To move from the top--left corner to the bottom--right corner, it is algorithmically more efficient to first move down and then move right.}
   \label{tab:main-results-guide}
 \end{table}
 
 
 
 \begin{theorem}[Universal approximation by invariant-coordinate networks]\label{thm:invariant-coordinate-universal-approximation}
-  Let $G$ be a compact Lie group, and let $X$ and $Y$ be finite-dimensional real $G$-representations. Define
+  Let $G$ be a compact Lie group, and let $X$ and $Y$ be finite-dimensional real $G$-representations.
+  Define
   \[
     C_G(X,Y)
     \coloneq
@@ -418,42 +442,36 @@ We adopt these assumptions henceforth. Our results are summarized in the table b
   \]
   Let
   \[
-    \scR_{\dsR}(X)\coloneq \dsR[X]^G,
+    \scR_{G,\dsR}(X)\coloneq \dsR[X]^G,
     \qquad
-    \scM_{\dsR}(X,Y)
+    \scM_{G,\dsR}(X,Y)
     \coloneq
     \set{p\colon X\to Y : p\text{ is polynomial and }G\text{-equivariant}}.
   \]
-  Suppose that $r_1,\dots,r_R\in \scR_{\dsR}(X)$ generate $\scR_{\dsR}(X)$ as a $\dsR$-algebra, and that $m_1,\dots,m_M\in \scM_{\dsR}(X,Y)$ generate $\scM_{\dsR}(X,Y)$ as an $\scR_{\dsR}(X)$-module. Let $\scN\subseteq C(\dsR^R,\dsR^M)$ be a neural-network class with the following density property: for every compact subset $L\subseteq \dsR^R$, the restrictions $\set{N|_L:N\in\scN}$ are dense in $C(L,\dsR^M)$ with respect to the uniform norm.
+  Suppose that $r_1,\dots,r_R\in \scR_{G,\dsR}(X)$ generate $\scR_{G,\dsR}(X)$ as a $\dsR$-algebra, and that $m_1,\dots,m_M\in \scM_{G,\dsR}(X,Y)$ generate $\scM_{G,\dsR}(X,Y)$ as an $\scR_{G,\dsR}(X)$-module.
+  Let $\scN\subseteq C(\dsR^R,\dsR^M)$ be a neural-network class with the following density property: for every compact subset $L\subseteq \dsR^R$, the restrictions $\set{N|_L:N\in\scN}$ are dense in $C(L,\dsR^M)$ with respect to the uniform norm.
 
-  Then the class
-  \[
-    \scA
-    \coloneq
-    \left\{
-      x\longmapsto
-      \scN_\theta\bigl(r_1(x),\dots,r_R(x)\bigr)
-      \cdot
-      \bigl(m_1(x),\dots,m_M(x)\bigr)
-      :
-      \scN_\theta\in\scN
-    \right\}
-  \]
-  is dense in $C_G(X,Y)$ in the compact-open topology. Equivalently, for every compact $K\subseteq X$, every $F\in C_G(X,Y)$, and every $\varepsilon>0$, there exists $F_\theta\in\scA$ such that
+  Then the class $\scA$ of functions $F_\theta$ given by the ansatz in Eq.~\eqref{eq:neural-ansatz}, with $\scN_\theta\in\scN$, is dense in $C_G(X,Y)$ in the compact-open topology.
+  Equivalently, for every compact $K\subseteq X$, every $F\in C_G(X,Y)$, and every $\varepsilon>0$, there exists $F_\theta\in\scA$ such that
   \[
     \sup_{x\in K}\left|F(x)-F_\theta(x)\right|<\varepsilon.
   \]
-  The density hypothesis on $\scN$ holds, for example, when $\scN$ contains all vector-valued one-hidden-layer feed-forward networks with biases and a continuous non-polynomial activation function; this follows coordinatewise from \cite[Theorem~3.1, p.~153]{Pinkus1999}. More generally, for locally bounded piecewise continuous activations, the corresponding non-polynomial a.e. criterion is given in \cite[Theorem~1, p.~863]{LeshnoLinPinkusSchocken1993}.
+  The density hypothesis on $\scN$ holds, for example, when $\scN$ contains all vector-valued one-hidden-layer feed-forward networks with biases and a continuous non-polynomial activation function; this follows coordinatewise from \cite[Theorem~3.1, p.~153]{Pinkus1999}.
+  More generally, for locally bounded piecewise continuous activations, the corresponding non-polynomial a.e. criterion is given in \cite[Theorem~1, p.~863]{LeshnoLinPinkusSchocken1993}.
 \end{theorem}
 
 \begin{proof}
-  It is enough to prove uniform approximation on an arbitrary compact subset $K\subseteq X$. Fix $F\in C_G(X,Y)$ and $\varepsilon>0$. Choose a $G$-invariant norm on $Y$ by averaging an inner product over normalized Haar measure on $G$. Since $G$ is compact, the saturation
+  It is enough to prove uniform approximation on an arbitrary compact subset $K\subseteq X$.
+  Fix $F\in C_G(X,Y)$ and $\varepsilon>0$.
+  Choose a $G$-invariant norm on $Y$ by averaging an inner product over normalized Haar measure on $G$.
+  Since $G$ is compact, the saturation
   \[
     K_G\coloneq GK
   \]
   is compact.
 
-  By the real Stone--Weierstrass theorem, applied coordinatewise after choosing a basis of $Y$, polynomial maps $X\to Y$ are uniformly dense in $C(K_G,Y)$. Hence there is a polynomial map $q\colon X\to Y$ such that
+  By the real Stone--Weierstrass theorem, applied coordinatewise after choosing a basis of $Y$, polynomial maps $X\to Y$ are uniformly dense in $C(K_G,Y)$.
+  Hence there is a polynomial map $q\colon X\to Y$ such that
   \[
     \sup_{x\in K_G}\left|q(x)-F(x)\right|<\frac{\varepsilon}{2}.
   \]
@@ -463,7 +481,8 @@ We adopt these assumptions henceforth. Our results are summarized in the table b
     \coloneq
     \int_G g^{-1}q(gx)\,d\mu(g).
   \]
-  Since the action is linear and $q$ is polynomial, $\overline q$ is again a polynomial map. It is also $G$-equivariant: for $h\in G$, the substitution $k=gh$ gives
+  Since the action is linear and $q$ is polynomial, $\overline q$ is again a polynomial map.
+  It is also $G$-equivariant: for $h\in G$, the substitution $k=gh$ gives
   \[
     \overline q(hx)
     =
@@ -489,24 +508,14 @@ We adopt these assumptions henceforth. Our results are summarized in the table b
   \]
   where we used $F(gx)=gF(x)$ and the $G$-invariance of the norm.
 
-  Since $\overline q\in\scM_{\dsR}(X,Y)$ and $m_1,\dots,m_M$ generate this module over $\scR_{\dsR}(X)$, there exist $a_1,\dots,a_M\in\scR_{\dsR}(X)$ such that
-  \[
-    \overline q(x)=\sum_{i=1}^M a_i(x)m_i(x).
-  \]
-  Since $r_1,\dots,r_R$ generate $\scR_{\dsR}(X)$ as a $\dsR$-algebra, there are polynomials $P_1,\dots,P_M\in\dsR[t_1,\dots,t_R]$ such that
-  \[
-    a_i(x)=P_i\bigl(r_1(x),\dots,r_R(x)\bigr).
-  \]
-  Write $r=(r_1,\dots,r_R)$ and $P=(P_1,\dots,P_M)$. The set $r(K)\subseteq\dsR^R$ is compact, so by the density assumption on $\scN$, there exists $\scN_\theta\in\scN$ such that
+  By the polynomial ansatz in Eq.~\eqref{eq:polynomial-ansatz}, applied over $\dsR$, there is a polynomial coefficient map $P=(P_1,\dots,P_M)\colon\dsR^R\to\dsR^M$ representing $\overline q$.
+  Write $r=(r_1,\dots,r_R)$ and $P=(P_1,\dots,P_M)$.
+  The set $r(K)\subseteq\dsR^R$ is compact, so by the density assumption on $\scN$, there exists $\scN_\theta\in\scN$ such that
   \[
     \sup_{z\in r(K)}\left|\scN_\theta(z)-P(z)\right|_2<\delta,
   \]
-  where $\delta>0$ will be chosen below. Define
-  \[
-    F_\theta(x)
-    \coloneq
-    \scN_\theta(r(x))\cdot(m_1(x),\dots,m_M(x)).
-  \]
+  where $\delta>0$ will be chosen below.
+  Define $F_\theta$ by the ansatz in Eq.~\eqref{eq:neural-ansatz} using this $\scN_\theta$.
   Since $K$ is compact and the $m_i$ are continuous, the constant
   \[
     C_K
@@ -514,7 +523,8 @@ We adopt these assumptions henceforth. Our results are summarized in the table b
     \sup_{x\in K}
     \left(\sum_{i=1}^M \left|m_i(x)\right|^2\right)^{1/2}
   \]
-  is finite. Therefore, for $x\in K$,
+  is finite.
+  Therefore, using Eqs.~\eqref{eq:polynomial-ansatz} and~\eqref{eq:neural-ansatz}, for $x\in K$,
   \[
     \begin{aligned}
       \left|F_\theta(x)-\overline q(x)\right|
@@ -542,14 +552,16 @@ We adopt these assumptions henceforth. Our results are summarized in the table b
 
 \subsection{Vector Space Bases, Irreducible Outputs}\label{sec:irreducible-bases}
 
-In this section, we describe how to obtain a vector space basis for $\scM^D(X,H_\nu)$. Our core theoretical result is an explicit isotypic decomposition of $\scS^D(X)$.
+In this section, we describe how to obtain a vector space basis for $\scM_G^D(X,H_\nu)$.
+Our core theoretical result is an explicit isotypic decomposition of $\scS^D(X)$.
 
 \begin{theorem}[Isotypic decomposition of $\scS^D(X)$]\label{thm:isotypic-decomposition}
   Let
   \[
     X\cong \bigoplus_\lambda H_\lambda\otimes X_\lambda
   \]
-  be the isotypic decomposition of $X$, let $\nu\in\dsN_0$, and let $D \in \dsN_0$. There is an isomorphism of vector spaces
+  be the isotypic decomposition of $X$, let $\nu\in\dsN_0$, and let $D \in \dsN_0$.
+  There is an isomorphism of vector spaces
   \begin{equation}\label{eq:isotypic-decomposition}
     \begin{aligned}
       \HomG{H_\nu}{\scS^D(X)}
@@ -624,7 +636,8 @@ In this section, we describe how to obtain a vector space basis for $\scM^D(X,H_
 \end{remark}
 
 \begin{theorem}[Evaluation scheme]\label{thm:evaluation}
-  Fix any isotypic data as in Definition \ref{def:isotypic-data}. The image of
+  Fix any isotypic data as in Definition \ref{def:isotypic-data}.
+  The image of
   \begin{equation}\label{eq:isotypic-data-tensor}
     C
     \otimes
@@ -653,9 +666,10 @@ In this section, we describe how to obtain a vector space basis for $\scM^D(X,H_
 \end{proof}
 
 \begin{corollary}\label{cor:evaluation}
-  Fix any isotypic data as in Definition \ref{def:isotypic-data}. Let the corresponding covariant be
+  Fix any isotypic data as in Definition \ref{def:isotypic-data}.
+  Let the corresponding covariant be
   \[
-    p^* \in \scM^D(X,H_\nu).
+    p^* \in \scM_G^D(X,H_\nu).
   \]
   Then $p^*$ acts on $x \in X$ by
   \begin{equation}
@@ -674,12 +688,14 @@ In this section, we describe how to obtain a vector space basis for $\scM^D(X,H_
 \end{proof}
 
 \begin{remark}\label{rem:isotypic-data-tree-duality}
-  In summary, a basis for $\scM^D(X,H_\nu)$ is obtained by first constructing an isotypic data tree as in Remark \ref{rem:isotypic-data-tree}, which yields a basis for $\HomG{H_\nu}{\scS^D(X)}$, and then passing that basis through the duality isomorphism in Eq.~\eqref{eq:duality}, which yields a basis for $\scM^D(X,H_\nu)$. In particular, Corollary \ref{cor:evaluation} describes how to evaluate a polynomial in $\scM^D(X,H_\nu)$ given only its isotypic data.
+  In summary, a basis for $\scM_G^D(X,H_\nu)$ is obtained by first constructing an isotypic data tree as in Remark \ref{rem:isotypic-data-tree}, which yields a basis for $\HomG{H_\nu}{\scS^D(X)}$, and then passing that basis through the duality isomorphism in Eq.~\eqref{eq:duality}, which yields a basis for $\scM_G^D(X,H_\nu)$.
+  In particular, Corollary \ref{cor:evaluation} describes how to evaluate a polynomial in $\scM_G^D(X,H_\nu)$ given only its isotypic data.
 \end{remark}
 
 
 
-As noted in Remark \ref{rem:isotypic-data-tree-duality}, the primary step in obtaining a basis for $\scM^D(X,H_\nu)$ is to construct an isotypic data tree. We summarize how to construct this tree in Algorithm \ref{alg:build-isotypic-data-tree} below.
+As noted in Remark \ref{rem:isotypic-data-tree-duality}, the primary step in obtaining a basis for $\scM_G^D(X,H_\nu)$ is to construct an isotypic data tree.
+We summarize how to construct this tree in Algorithm \ref{alg:build-isotypic-data-tree} below.
 
 \begin{algorithm}[\texttt{build\_isotypic\_data\_tree}]\label{alg:build-isotypic-data-tree}
 
@@ -689,7 +705,7 @@ As noted in Remark \ref{rem:isotypic-data-tree-duality}, the primary step in obt
 
     \item[\textbf{Input:}] an isotypic decomposition of $X\cong \bigoplus_\lambda H_\lambda\otimes X_\lambda$, an output irrep label $\nu$, and a degree $D \in \dsN_0$.
 
-    \item[\textbf{Output:}] an isotypic data tree recording a basis for $\scM^D(X,H_\nu)$.
+    \item[\textbf{Output:}] an isotypic data tree recording a basis for $\scM_G^D(X,H_\nu)$.
 
     \item \label{alg:build-isotypic-data-tree:step-multidegrees} Enumerate all multidegrees $(d_\lambda)_\lambda$ with $\sum_\lambda d_\lambda=D$.
 
@@ -710,10 +726,18 @@ As noted in Remark \ref{rem:isotypic-data-tree-duality}, the primary step in obt
   \end{enumerate}
 \end{algorithm}
 
-We proceed to describe in more detail how we implement each step in Algorithm \ref{alg:build-isotypic-data-tree}. It is clear how Steps~\ref{alg:build-isotypic-data-tree:step-multidegrees} and~\ref{alg:build-isotypic-data-tree:step-partitions} can be carried out. Step~\ref{alg:build-isotypic-data-tree:step-schur-constituents} is the plethsym problem, which we resolve computationally by running Algorithm \ref{alg:schur-functor-basis}, \texttt{schur\_functor\_basis}, and retaining the nonempty outputs. Step~\ref{alg:build-isotypic-data-tree:step-tensor-product-constituents} can be implemented as a consequence of Assumption \ref{ass:explicit-cg}: once the constituent irreps of the binary tensor product of irreps are known, iterating yields the constituent irreps of the n-ary tensor product. Step~\ref{alg:build-isotypic-data-tree:step-tensor-train-basis} also follows as a consequence of Assumption \ref{ass:explicit-cg}: we make this precise in Algorithm \ref{alg:tensor-product-basis}, \texttt{tensor\_product\_basis}, below. Step~\ref{alg:build-isotypic-data-tree:step-schur-tensor-tree-basis} is more complicated and is covered by Algorithm \ref{alg:schur-functor-basis}. Step~\ref{alg:build-isotypic-data-tree:step-ssyt-basis} is a standard result which we record in Lemma \ref{lem:ssyt-basis} below.
+We proceed to describe in more detail how we implement each step in Algorithm \ref{alg:build-isotypic-data-tree}.
+It is clear how Steps~\ref{alg:build-isotypic-data-tree:step-multidegrees} and~\ref{alg:build-isotypic-data-tree:step-partitions} can be carried out.
+Step~\ref{alg:build-isotypic-data-tree:step-schur-constituents} is the plethsym problem, which we resolve computationally by running Algorithm \ref{alg:schur-functor-basis}, \texttt{schur\_functor\_basis}, and retaining the nonempty outputs.
+Step~\ref{alg:build-isotypic-data-tree:step-tensor-product-constituents} can be implemented as a consequence of Assumption \ref{ass:explicit-cg}: once the constituent irreps of the binary tensor product of irreps are known, iterating yields the constituent irreps of the n-ary tensor product.
+Step~\ref{alg:build-isotypic-data-tree:step-tensor-train-basis} also follows as a consequence of Assumption \ref{ass:explicit-cg}: we make this precise in Algorithm \ref{alg:tensor-product-basis}, \texttt{tensor\_product\_basis}, below.
+Step~\ref{alg:build-isotypic-data-tree:step-schur-tensor-tree-basis} is more complicated and is covered by Algorithm \ref{alg:schur-functor-basis}.
+Step~\ref{alg:build-isotypic-data-tree:step-ssyt-basis} is a standard result which we record in Lemma \ref{lem:ssyt-basis} below.
 
 \begin{lemma}[Semistandard Young tableaux basis for Schur functors]\label{lem:ssyt-basis}
-  Let $V$ be a vector space with basis $(v_1,\dots,v_n)$, let $d \in \dsN_0$, and let $\pi\vdash d$ be a partition with at most $n$ parts. For each semistandard Young tableau $T$ of shape $\pi$ with entries filled from $\set{1,\dots,n}$, let $v_T\in e_\pi(V^{\otimes d})$ be the image under $e_\pi$ of the simple tensor obtained by reading the entries of $T$ in row major order and replacing each entry $i$ by $v_i$. Then
+  Let $V$ be a vector space with basis $(v_1,\dots,v_n)$, let $d \in \dsN_0$, and let $\pi\vdash d$ be a partition with at most $n$ parts.
+  For each semistandard Young tableau $T$ of shape $\pi$ with entries filled from $\set{1,\dots,n}$, let $v_T\in e_\pi(V^{\otimes d})$ be the image under $e_\pi$ of the simple tensor obtained by reading the entries of $T$ in row major order and replacing each entry $i$ by $v_i$.
+  Then
   \[
     \left\{v_T \mid T\in \SSYT(\pi,\set{1,\dots,n})\right\}
   \]
@@ -723,7 +747,10 @@ We proceed to describe in more detail how we implement each step in Algorithm \r
   See Weyman~\cite[Proposition~2.1.15(b)]{Weyman2003}.
 \end{proof}
 
-We now present the subroutines of Algorithm \ref{alg:build-isotypic-data-tree} in order of increasing complexity. To begin, by Assumption \ref{ass:explicit-cg}, for any irrep labels $\alpha,\beta,\delta$, we may fix explicit bases $\scB_{\alpha,\beta}^{\delta}$ for $\HomG{H_\delta}{H_\alpha\otimes H_\beta}$. We call any basis element $c_{\alpha,\beta}^{\delta,a}\in\scB_{\alpha,\beta}^{\delta}$ a \emph{tensor-train core}, where $a$ indexes the basis elements in $\scB_{\alpha,\beta}^{\delta}$. For any tuple of input irrep labels $\boldsymbol{\lambda}=(\lambda_1,\dots,\lambda_d)$, any tuple of admissible intermediate irrep labels $\boldsymbol{\gamma}=(\gamma_1,\dots,\gamma_d)$ satisfying
+We now present the subroutines of Algorithm \ref{alg:build-isotypic-data-tree} in order of increasing complexity.
+To begin, by Assumption \ref{ass:explicit-cg}, for any irrep labels $\alpha,\beta,\delta$, we may fix explicit bases $\scB_{\alpha,\beta}^{\delta}$ for $\HomG{H_\delta}{H_\alpha\otimes H_\beta}$.
+We call any basis element $c_{\alpha,\beta}^{\delta,a}\in\scB_{\alpha,\beta}^{\delta}$ a \emph{tensor-train core}, where $a$ indexes the basis elements in $\scB_{\alpha,\beta}^{\delta}$.
+For any tuple of input irrep labels $\boldsymbol{\lambda}=(\lambda_1,\dots,\lambda_d)$, any tuple of admissible intermediate irrep labels $\boldsymbol{\gamma}=(\gamma_1,\dots,\gamma_d)$ satisfying
 \[
   \gamma_1=\lambda_1,
   \qquad
@@ -774,12 +801,15 @@ For $d=1$, the unique tensor train is the identity on $H_{\lambda_1}=H_{\gamma_d
       \draw[wire] (cd.south) -- ++(0,-0.9) node[below] {$H_{\lambda_d}$};
     \end{tikzpicture}%
   }
-  \caption{Tensor-network diagram for the tensor train in Eq.~\eqref{eq:general-tensor-train-map}.  Horizontal wires carry the intermediate irreps in the admissible path $\gamma_1\to\cdots\to\gamma_d$. Reading the contraction from right to left gives the map $C_{\boldsymbol{\lambda},\boldsymbol{\gamma},\boldsymbol{a}}$.}
+  \caption{Tensor-network diagram for the tensor train in Eq.~\eqref{eq:general-tensor-train-map}.
+  Horizontal wires carry the intermediate irreps in the admissible path $\gamma_1\to\cdots\to\gamma_d$.
+  Reading the contraction from right to left gives the map $C_{\boldsymbol{\lambda},\boldsymbol{\gamma},\boldsymbol{a}}$.}
   \label{fig:general-tensor-train}
 \end{figure}
 
 \begin{proposition}[Tensor-train basis for arbitrary linearly reductive $G$]\label{prop:cg-tensor-train-basis}\label{prop:cg-tensor-train-basis-general}
-  Let $G$ be linearly reductive, let $\boldsymbol{\lambda}=(\lambda_1,\dots,\lambda_d)$ be a tuple of irrep labels, and let $\mu$ be an irrep label.  The maps $C_{\boldsymbol{\lambda},\boldsymbol{\gamma},\boldsymbol{a}}$ in Eq.~\eqref{eq:general-tensor-train-map}, ranging over all admissible intermediate labels $\boldsymbol{\gamma}$ with $\gamma_d=\mu$ and all choices of basis labels $\boldsymbol{a}$, form a basis of
+  Let $G$ be linearly reductive, let $\boldsymbol{\lambda}=(\lambda_1,\dots,\lambda_d)$ be a tuple of irrep labels, and let $\mu$ be an irrep label.
+  The maps $C_{\boldsymbol{\lambda},\boldsymbol{\gamma},\boldsymbol{a}}$ in Eq.~\eqref{eq:general-tensor-train-map}, ranging over all admissible intermediate labels $\boldsymbol{\gamma}$ with $\gamma_d=\mu$ and all choices of basis labels $\boldsymbol{a}$, form a basis of
   \[
     \HomG{H_\mu}{H_{\lambda_1}\otimes\cdots\otimes H_{\lambda_d}}.
   \]
@@ -794,14 +824,19 @@ For $d=1$, the unique tensor train is the identity on $H_{\lambda_1}=H_{\gamma_d
     \item[\textbf{Input:}] an input label tuple $\boldsymbol{\lambda}=(\lambda_1,\dots,\lambda_d)$ and an output label $\mu$.
     \item[\textbf{Output:}] tensor trains representing a basis for $\HomG{H_\mu}{H_{\lambda_1}\otimes\cdots\otimes H_{\lambda_d}}$.
     \item If $d=1$, return the identity tensor train on $H_{\lambda_1}=H_\mu$ if $\lambda_1=\mu$, and return no trains otherwise.
-    \item Build the admissible label paths ending at $\mu$.  Begin with the one-term path $(\lambda_1)$.  For $j=1,\dots,d-1$, extend each partial path ending in $\gamma_j$ by every irrep label $\gamma_{j+1}$ for which $\scB_{\gamma_j,\lambda_{j+1}}^{\gamma_{j+1}}$ is nonempty.  After the last extension, discard any path whose final label is not $\mu$.
+    \item Build the admissible label paths ending at $\mu$.
+    Begin with the one-term path $(\lambda_1)$.
+    For $j=1,\dots,d-1$, extend each partial path ending in $\gamma_j$ by every irrep label $\gamma_{j+1}$ for which $\scB_{\gamma_j,\lambda_{j+1}}^{\gamma_{j+1}}$ is nonempty.
+    After the last extension, discard any path whose final label is not $\mu$.
     \item For each remaining path $\boldsymbol{\gamma}$, choose independently one core $c_{\gamma_j,\lambda_{j+1}}^{\gamma_{j+1},a_j}$ from $\scB_{\gamma_j,\lambda_{j+1}}^{\gamma_{j+1}}$ for each edge $\gamma_j\to\gamma_{j+1}$, and include every possible tuple of such choices.
-    \item For each path and choice of cores, form the tensor train $C_{\boldsymbol{\lambda},\boldsymbol{\gamma},\boldsymbol{a}}$ from Eq.~\eqref{eq:general-tensor-train-map}.  Return the collection of all these tensor trains.
+    \item For each path and choice of cores, form the tensor train $C_{\boldsymbol{\lambda},\boldsymbol{\gamma},\boldsymbol{a}}$ from Eq.~\eqref{eq:general-tensor-train-map}.
+    Return the collection of all these tensor trains.
   \end{enumerate}
 \end{algorithm}
 
 Next, we describe how to obtain a basis for $\HomG{H_\mu}{e_\pi(H_\lambda^{\otimes d})}$.
-We first isolate the cases where $\pi$ is a single row (resp.~a single column).  If $\pi=(d)$ (resp.~$\pi=(1,\dots,1)$), then $e_\pi$ is the row symmetrizer (resp.~column antisymmetrizer), and
+We first isolate the cases where $\pi$ is a single row (resp.~a single column).
+If $\pi=(d)$ (resp.~$\pi=(1,\dots,1)$), then $e_\pi$ is the row symmetrizer (resp.~column antisymmetrizer), and
 \[
   e_\pi(H_\lambda^{\otimes d})
   =
@@ -810,7 +845,9 @@ We first isolate the cases where $\pi$ is a single row (resp.~a single column). 
     \Lambda^d(H_\lambda), & \pi=(1,\dots,1).
   \end{cases}
 \]
-In these cases, we first construct a spanning set for $\HomG{H_\mu}{e_\pi(H_\lambda^{\otimes d})}$ using the tensor-train basis for $\HomG{H_\mu}{H_\lambda^{\otimes d}}$ from Algorithm~\ref{alg:tensor-product-basis}. Then, we evaluate these candidates on random inputs in $H_\lambda^{\otimes d}$ to extract a basis.  We summarize this procedure in Algorithm \ref{alg:symmetrized-power-basis} below.
+In these cases, we first construct a spanning set for $\HomG{H_\mu}{e_\pi(H_\lambda^{\otimes d})}$ using the tensor-train basis for $\HomG{H_\mu}{H_\lambda^{\otimes d}}$ from Algorithm~\ref{alg:tensor-product-basis}.
+Then, we evaluate these candidates on random inputs in $H_\lambda^{\otimes d}$ to extract a basis.
+We summarize this procedure in Algorithm \ref{alg:symmetrized-power-basis} below.
 The probabilistic rank-selection step is the standard polynomial-identity-testing argument: by the Schwartz--Zippel lemma \cite{Schwartz1980,Zippel1979}, a nonzero maximal minor of the formal evaluation matrix is unlikely to vanish on a random finite-field probe batch; see Proposition~\ref{prop:random-rank-test} for the finite-field rank statement used here.
 
 \begin{algorithm}[\texttt{symmetrized\_power\_basis}]\label{alg:symmetrized-power-basis}
@@ -826,10 +863,13 @@ The probabilistic rank-selection step is the standard polynomial-identity-testin
     \]
     \item If $d=0$, return the scalar train exactly when $H_\mu$ is the trivial representation, and return no trains otherwise.
     \item Enumerate the tensor-train basis for $\HomG{H_\mu}{H_\lambda^{\otimes d}}$ from Algorithm~\ref{alg:tensor-product-basis}.
-    \item Choose a probe count $m$ for the rank selection and work over $\dsF_p$ for a prime $p>d$.  For computations through a maximum degree $D_{\max}$, choose $p>D_{\max}$.  The current implementation uses primes in the range $1000<p<10000$ as a practical heuristic.
+    \item Choose a probe count $m$ for the rank selection and work over $\dsF_p$ for a prime $p>d$.
+    For computations through a maximum degree $D_{\max}$, choose $p>D_{\max}$.
+    The current implementation uses primes in the range $1000<p<10000$ as a practical heuristic.
     \item For each probe batch used in the rank selection, do the following.
     \begin{enumerate}[label=\textup{(\alph*)},leftmargin=1.4cm]
-      \item If $\varepsilon=\mathrm{sym}$, sample $m$ probes $v^{(a)}\in\dsF_p^{\dim H_\lambda}$ and reuse each probe in all $d$ tensor factors. If $\varepsilon=\mathrm{antisym}$, sample $m$ independent $d$-tuples $(v_1^{(a)},\dots,v_d^{(a)})$.
+      \item If $\varepsilon=\mathrm{sym}$, sample $m$ probes $v^{(a)}\in\dsF_p^{\dim H_\lambda}$ and reuse each probe in all $d$ tensor factors.
+      If $\varepsilon=\mathrm{antisym}$, sample $m$ independent $d$-tuples $(v_1^{(a)},\dots,v_d^{(a)})$.
       \item For each candidate tensor train $C$, form the column whose $a$-th output block is
       \[
         \begin{cases}
@@ -842,14 +882,17 @@ The probabilistic rank-selection step is the standard polynomial-identity-testin
       \]
       \item Flatten the probe and output coordinates, and compute pivot columns over $\dsF_p$.
     \end{enumerate}
-    \item Return the tensor trains indexed by the selected pivot columns.  If no pivot columns are selected, return no trains.
+    \item Return the tensor trains indexed by the selected pivot columns.
+    If no pivot columns are selected, return no trains.
   \end{enumerate}
 \end{algorithm}
 
-We are now prepared to handle the case of an arbitrary partition $\pi$. Let $\pi^\top=(h_1,\dots,h_s)$ be the conjugate partition of $\pi$, so that $h_j$ is the height of the $j$-th column of the row-ordered Young diagram of $\pi$.
+We are now prepared to handle the case of an arbitrary partition $\pi$.
+Let $\pi^\top=(h_1,\dots,h_s)$ be the conjugate partition of $\pi$, so that $h_j$ is the height of the $j$-th column of the row-ordered Young diagram of $\pi$.
 
 \begin{proposition}[Tensor-tree spanning set for Schur powers]\label{prop:general-schur-tree-spanning}
-  Let $G$ be linearly reductive, let $\lambda$ and $\mu$ be irrep labels, and let $\pi\vdash d$.  For each column height $h_j$ and each constituent $\eta_j$ of $\Lambda^{h_j}(H_\lambda)$, choose a basis of
+  Let $G$ be linearly reductive, let $\lambda$ and $\mu$ be irrep labels, and let $\pi\vdash d$.
+  For each column height $h_j$ and each constituent $\eta_j$ of $\Lambda^{h_j}(H_\lambda)$, choose a basis of
   \[
     \HomG{H_{\eta_j}}{\Lambda^{h_j}(H_\lambda)}.
   \]
@@ -857,7 +900,8 @@ We are now prepared to handle the case of an arbitrary partition $\pi$. Let $\pi
   \[
     \HomG{H_\mu}{H_{\eta_1}\otimes\cdots\otimes H_{\eta_s}}
   \]
-  from Proposition~\ref{prop:cg-tensor-train-basis}.  Then the maps
+  from Proposition~\ref{prop:cg-tensor-train-basis}.
+  Then the maps
   \[
     H_\mu
     \longrightarrow
@@ -870,7 +914,11 @@ We are now prepared to handle the case of an arbitrary partition $\pi$. Let $\pi
   span $\HomG{H_\mu}{e_\pi(H_\lambda^{\otimes d})}$ as $\eta$ and the chosen basis elements vary.
 \end{proposition}
 \begin{proof}
-  Since $e_\pi$ is a scalar multiple of $r_\pi c_\pi$, every map $L\in\HomG{H_\mu}{e_\pi(H_\lambda^{\otimes d})}$ can be written as $e_\pi L=r_\pi(c_\pi L)$ up to the nonzero hook-length scalar.  The image of $c_\pi$ is the column-antisymmetric subspace, canonically identified with $\bigotimes_{j=1}^s\Lambda^{h_j}(H_\lambda)$.  Decompose each exterior power and then the tensor product of the resulting irreducibles using semisimplicity and Proposition~\ref{prop:cg-tensor-train-basis}.  This expresses $c_\pi L$, and hence $L$, as a linear combination of the displayed tensor trees.  Therefore any basis extracted from the displayed spanning set is a basis.
+  Since $e_\pi$ is a scalar multiple of $r_\pi c_\pi$, every map $L\in\HomG{H_\mu}{e_\pi(H_\lambda^{\otimes d})}$ can be written as $e_\pi L=r_\pi(c_\pi L)$ up to the nonzero hook-length scalar.
+  The image of $c_\pi$ is the column-antisymmetric subspace, canonically identified with $\bigotimes_{j=1}^s\Lambda^{h_j}(H_\lambda)$.
+  Decompose each exterior power and then the tensor product of the resulting irreducibles using semisimplicity and Proposition~\ref{prop:cg-tensor-train-basis}.
+  This expresses $c_\pi L$, and hence $L$, as a linear combination of the displayed tensor trees.
+  Therefore any basis extracted from the displayed spanning set is a basis.
 \end{proof}
 
 \begin{algorithm}[\texttt{schur\_functor\_basis}]\label{alg:schur-functor-basis}\label{alg:appendix-leaf-assembly}
@@ -880,15 +928,19 @@ We are now prepared to handle the case of an arbitrary partition $\pi$. Let $\pi
     \item[\textbf{Output:}] tensor trees representing a basis for $\HomG{H_\mu}{e_\pi(H_\lambda^{\otimes d})}$.
     \item If $d=0$, return the corresponding scalar tree exactly when $H_\mu$ is the trivial representation, and return no trees otherwise.
     \item If $\pi=(d)$ (resp.~$\pi=(1,\dots,1)$ with $d>1$), call Algorithm~\ref{alg:symmetrized-power-basis} with $\varepsilon=\mathrm{sym}$ (resp.~$\varepsilon=\mathrm{antisym}$), and wrap the selected tensor trains as the corresponding tensor trees.
-    \item In the general case, let $\pi^\top=(h_1,\dots,h_s)$.  Enumerate tuples $(\eta_1,\dots,\eta_s)$ such that Algorithm~\ref{alg:symmetrized-power-basis} returns a nonempty basis for each $\HomG{H_{\eta_j}}{\Lambda^{h_j}(H_\lambda)}$ and Algorithm~\ref{alg:tensor-product-basis} returns a nonempty basis for $\HomG{H_\mu}{H_{\eta_1}\otimes\cdots\otimes H_{\eta_s}}$.
+    \item In the general case, let $\pi^\top=(h_1,\dots,h_s)$.
+    Enumerate tuples $(\eta_1,\dots,\eta_s)$ such that Algorithm~\ref{alg:symmetrized-power-basis} returns a nonempty basis for each $\HomG{H_{\eta_j}}{\Lambda^{h_j}(H_\lambda)}$ and Algorithm~\ref{alg:tensor-product-basis} returns a nonempty basis for $\HomG{H_\mu}{H_{\eta_1}\otimes\cdots\otimes H_{\eta_s}}$.
     \item For every such tuple, combine an interior tensor train for $\HomG{H_\mu}{H_{\eta_1}\otimes\cdots\otimes H_{\eta_s}}$ with the leaf tensor trains returned for the exterior-power spaces $\HomG{H_{\eta_j}}{\Lambda^{h_j}(H_\lambda)}$.
-    \item Apply the row symmetrizer and rank-select a basis from the resulting tensor trees using the evaluation routine.  Return the selected trees.
+    \item Apply the row symmetrizer and rank-select a basis from the resulting tensor trees using the evaluation routine.
+    Return the selected trees.
   \end{enumerate}
 \end{algorithm}
 
 
 
-Finally, it remains to describe how to evaluate the polynomials given their isotypic data.  The only subtle point is the row symmetrizer in the semistandard Young tableau factor.  A row with distinct labels $\kappa_1,\dots,\kappa_r$ and multiplicities $d_1,\dots,d_r$ is governed by the monomial
+Finally, it remains to describe how to evaluate the polynomials given their isotypic data.
+The only subtle point is the row symmetrizer in the semistandard Young tableau factor.
+A row with distinct labels $\kappa_1,\dots,\kappa_r$ and multiplicities $d_1,\dots,d_r$ is governed by the monomial
 \[
   x_1^{d_1}\cdots x_r^{d_r}.
 \]
@@ -916,7 +968,9 @@ Its Waring decomposition gives a symmetric CP decomposition of the corresponding
     =
     d!F,
   \end{equation}
-  so $W$ has $\prod_i(d_i+1)$ rows.  In finite-field mode this identity is used with characteristic $p>d$ so that the degree factorial is nonzero.  The implementation uses the unnormalized left-hand side of \eqref{eq:waring-monomial}; as with the other randomized finite-field rank tests, very small primes may still give bad reductions.
+  so $W$ has $\prod_i(d_i+1)$ rows.
+  In finite-field mode this identity is used with characteristic $p>d$ so that the degree factorial is nonzero.
+  The implementation uses the unnormalized left-hand side of \eqref{eq:waring-monomial}; as with the other randomized finite-field rank tests, very small primes may still give bad reductions.
 \end{lemma}
 \begin{proof}
   This is the mixed finite-difference identity applied to the homogeneous polynomial $(t_1x_1+\cdots+t_rx_r)^d$.
@@ -927,7 +981,9 @@ Its Waring decomposition gives a symmetric CP decomposition of the corresponding
   \[
     P_d=\frac{1}{d!}\sum_{\sigma\in\mathfrak S_d}\sigma
   \]
-  be the symmetrizer on $V^{\otimes d}$.  For vectors $v_1,\dots,v_r\in V$, let $W$ and $b$ be the Waring grid and coefficient vector from Lemma~\ref{lem:waring-monomial-matrix} for the exponents $d_1,\dots,d_r$.  For each row $j=(j_1,\dots,j_r)$ of $W$, write $b_j$ for the matching entry of $b$ and set
+  be the symmetrizer on $V^{\otimes d}$.
+  For vectors $v_1,\dots,v_r\in V$, let $W$ and $b$ be the Waring grid and coefficient vector from Lemma~\ref{lem:waring-monomial-matrix} for the exponents $d_1,\dots,d_r$.
+  For each row $j=(j_1,\dots,j_r)$ of $W$, write $b_j$ for the matching entry of $b$ and set
   \[
     u_j=\sum_{i=1}^r j_i v_i.
   \]
@@ -940,12 +996,17 @@ Its Waring decomposition gives a symmetric CP decomposition of the corresponding
   \end{equation}
 \end{proposition}
 \begin{proof}
-  Lemma~\ref{lem:waring-monomial-matrix} is an identity in $\Sym^d(\dsC^r)$.  Apply the linear map $\dsC^r\to V$ sending the $i$-th standard basis vector to $v_i$, then use the standard symmetrization embedding $\Sym^d(V)\hookrightarrow V^{\otimes d}$.  Applying the linear map $M$ gives Eq.~\eqref{eq:waring-row-evaluation}.  The Waring identity used in the first step is exactly the one cited from Buczy\'nska--Buczy\'nski--Teitler in Lemma~\ref{lem:waring-monomial-matrix}.
+  Lemma~\ref{lem:waring-monomial-matrix} is an identity in $\Sym^d(\dsC^r)$.
+  Apply the linear map $\dsC^r\to V$ sending the $i$-th standard basis vector to $v_i$, then use the standard symmetrization embedding $\Sym^d(V)\hookrightarrow V^{\otimes d}$.
+  Applying the linear map $M$ gives Eq.~\eqref{eq:waring-row-evaluation}.
+  The Waring identity used in the first step is exactly the one cited from Buczy\'nska--Buczy\'nski--Teitler in Lemma~\ref{lem:waring-monomial-matrix}.
 \end{proof}
 
-Applying Proposition~\ref{prop:waring-grid-evaluation} independently to the rows of a tableau replaces the row part of the Young symmetrizer, whose direct expansion has $|R_\pi|$ terms, by the Cartesian product of the row Waring grids.  Consequently, the number of tensor-train evaluations is controlled by the number of rank-one terms in the symmetric CP decompositions of the row monomials.
+Applying Proposition~\ref{prop:waring-grid-evaluation} independently to the rows of a tableau replaces the row part of the Young symmetrizer, whose direct expansion has $|R_\pi|$ terms, by the Cartesian product of the row Waring grids.
+Consequently, the number of tensor-train evaluations is controlled by the number of rank-one terms in the symmetric CP decompositions of the row monomials.
 
-The evaluation procedure below is Corollary~\ref{cor:evaluation} written with the Waring-grid identity.  Including the normalizing factor in Eq.~\eqref{eq:waring-monomial} gives the normalized value of the chosen Young symmetrizer.
+The evaluation procedure below is Corollary~\ref{cor:evaluation} written with the Waring-grid identity.
+Including the normalizing factor in Eq.~\eqref{eq:waring-monomial} gives the normalized value of the chosen Young symmetrizer.
 
 \begin{algorithm}[Evaluation from isotypic data]\label{alg:evaluate-basis}
 
@@ -953,11 +1014,12 @@ The evaluation procedure below is Corollary~\ref{cor:evaluation} written with th
 
   \begin{enumerate}[label=\textbf{Step \arabic*.},leftmargin=2.8cm]
 
-    \item[\textbf{Input:}] isotypic data for a polynomial $p^* \in \scM^D(X,H_\nu)$ and a point $x \in X$.
+    \item[\textbf{Input:}] isotypic data for a polynomial $p^* \in \scM_G^D(X,H_\nu)$ and a point $x \in X$.
 
     \item[\textbf{Output:}] the evaluation $p^*(x) \in H_\nu$.
 
-    \item Decompose $x$ according to the isotypic decomposition of $X$.  Equivalently, for each active input irrep $\lambda$, form the multiplicity-indexed tuple
+    \item Decompose $x$ according to the isotypic decomposition of $X$.
+    Equivalently, for each active input irrep $\lambda$, form the multiplicity-indexed tuple
     \[
       x_\lambda=(x_{\lambda,1},\dots,x_{\lambda,\dim X_\lambda}),
       \qquad
@@ -966,9 +1028,11 @@ The evaluation procedure below is Corollary~\ref{cor:evaluation} written with th
 
     \item For each $\lambda$,
     \begin{enumerate}[label=\textup{(\alph*)},leftmargin=2.2em]
-      \item Let the chosen tableau tensor $T_\lambda$ be represented by an SSYT $\tau_\lambda$.  For each row of $\tau_\lambda$, read off the distinct multiplicity labels $\kappa=(\kappa_1,\dots,\kappa_r)$ and their powers $\alpha=(\alpha_1,\dots,\alpha_r)$.
+      \item Let the chosen tableau tensor $T_\lambda$ be represented by an SSYT $\tau_\lambda$.
+      For each row of $\tau_\lambda$, read off the distinct multiplicity labels $\kappa=(\kappa_1,\dots,\kappa_r)$ and their powers $\alpha=(\alpha_1,\dots,\alpha_r)$.
 
-      \item Form the Waring grid $W$ and coefficient vector $b$ for $\alpha$ using Lemma~\ref{lem:waring-monomial-matrix}.  Compute the row-linear combinations
+      \item Form the Waring grid $W$ and coefficient vector $b$ for $\alpha$ using Lemma~\ref{lem:waring-monomial-matrix}.
+      Compute the row-linear combinations
       \[
         U_{\mathrm{row}}(w)
         =
@@ -977,9 +1041,13 @@ The evaluation procedure below is Corollary~\ref{cor:evaluation} written with th
       \]
       for the rows $w=(w_1,\dots,w_r)$ of $W$, with coefficient $b_w$.
 
-      \item Evaluate each column leaf tensor train in the tensor-tree representation of $L_\lambda^*$ on the relevant row-linear combinations, using the explicit alternating sum for the column antisymmetrizer.  If a column has height $h$, this uses the Waring-grid rows attached to the first $h$ tableau rows.
+      \item Evaluate each column leaf tensor train in the tensor-tree representation of $L_\lambda^*$ on the relevant row-linear combinations, using the explicit alternating sum for the column antisymmetrizer.
+      If a column has height $h$, this uses the Waring-grid rows attached to the first $h$ tableau rows.
 
-      \item Evaluate the interior tensor train of $L_\lambda^*$ on the column-leaf outputs.  The same Waring-grid row is shared across every tensor slot belonging to a tableau row.  Sum over all choices of Waring-grid rows, weighted by the product of the corresponding coefficients $b_w$, and include the normalizing constants from Eq.~\eqref{eq:waring-monomial} if normalized Young symmetrizers are desired.  The result is
+      \item Evaluate the interior tensor train of $L_\lambda^*$ on the column-leaf outputs.
+      The same Waring-grid row is shared across every tensor slot belonging to a tableau row.
+      Sum over all choices of Waring-grid rows, weighted by the product of the corresponding coefficients $b_w$, and include the normalizing constants from Eq.~\eqref{eq:waring-monomial} if normalized Young symmetrizers are desired.
+      The result is
       \[
         h_{\mu_\lambda}
         =
@@ -1002,18 +1070,21 @@ The evaluation procedure below is Corollary~\ref{cor:evaluation} written with th
 
 \subsection{Vector Space Bases, Arbitrary Outputs}\label{sec:arbitrary-bases}
 
-In this section, we describe how to obtain a vector space basis for $\scM^D(X,Y)$ using Eq.~\eqref{eq:output-reduction}. Concretely, the isomorphism in Eq.~\eqref{eq:output-reduction} is just composition: given a polynomial $p^* \in \scM^D(X,H_\nu)$ and a map $q \in Y_\nu = \HomG{H_\nu}{Y}$, the corresponding polynomial in $\scM^D(X,Y)$ is the composition $q \circ p^*$. Thus, we have the following corollary.
+In this section, we describe how to obtain a vector space basis for $\scM_G^D(X,Y)$ using Eq.~\eqref{eq:output-reduction}.
+Concretely, the isomorphism in Eq.~\eqref{eq:output-reduction} is just composition: given a polynomial $p^* \in \scM_G^D(X,H_\nu)$ and a map $q \in Y_\nu = \HomG{H_\nu}{Y}$, the corresponding polynomial in $\scM_G^D(X,Y)$ is the composition $q \circ p^*$.
+Thus, we have the following corollary.
 
-\begin{corollary}[Basis for $\scM^D(X,Y)$]\label{cor:arbitrary-output-basis}
+\begin{corollary}[Basis for $\scM_G^D(X,Y)$]\label{cor:arbitrary-output-basis}
   Let
   \[
     Y\cong \bigoplus_{\nu} H_\nu\otimes Y_\nu
   \]
-  be the isotypic decomposition of $Y$, let $B_\nu$ be bases for the $\scM^D(X,H_\nu)$, let $C_\nu$ be bases for the $Y_\nu$, and let $D\in\dsN_0$. Then the simple tensors
+  be the isotypic decomposition of $Y$, let $B_\nu$ be bases for the $\scM_G^D(X,H_\nu)$, let $C_\nu$ be bases for the $Y_\nu$, and let $D\in\dsN_0$.
+  Then the simple tensors
   \[
     \bigcup_{\nu}\{p^*\otimes q : p^*\in B_\nu,\ q\in C_\nu\}
   \]
-  form a basis for $\scM^D(X,Y)$ under the isomorphism in Eq.~\eqref{eq:output-reduction}.
+  form a basis for $\scM_G^D(X,Y)$ under the isomorphism in Eq.~\eqref{eq:output-reduction}.
 \end{corollary}
 
 
@@ -1031,12 +1102,12 @@ In this section, we describe how to obtain a vector space basis for $\scM^D(X,Y)
     \]
     and a degree $D \in \dsN_0$.
 
-    \item[\textbf{Output:}] a vector space basis for $\scM^D(X,Y)$.
+    \item[\textbf{Output:}] a vector space basis for $\scM_G^D(X,Y)$.
 
     \item For each $\nu$ such that $Y_\nu\neq 0$,
 
     \begin{enumerate}
-      \item run Algorithm~\ref{alg:build-isotypic-data-tree} on $(X,\nu,D)$ to enumerate a basis $B_\nu$ for $\scM^D(X,H_\nu)$;
+      \item run Algorithm~\ref{alg:build-isotypic-data-tree} on $(X,\nu,D)$ to enumerate a basis $B_\nu$ for $\scM_G^D(X,H_\nu)$;
 
       \item enumerate a basis $C_\nu$ for the multiplicity space $Y_\nu$.
     \end{enumerate}
@@ -1049,30 +1120,31 @@ In this section, we describe how to obtain a vector space basis for $\scM^D(X,Y)
 
 \subsection{Minimal Integrity Bases, Irreducible Outputs}\label{sec:irreducible-generators}
 
-In this section, we use the graded Nakayama lemma to obtain minimal homogeneous module and algebra generators for $\scM(X,H_\nu)$ and $\scR(X)$ up to a given degree.
+In this section, we use the graded Nakayama lemma to obtain minimal homogeneous module and algebra generators for $\scM_G(X,H_\nu)$ and $\scR_G(X)$ up to a given degree.
 
 \begin{assumption}\label{ass:finitely-generated}
-  The covariant module $\scM(X,Y)$ is a finitely generated $\scR(X)$-module, and the invariant algebra $\scR(X)$ is a finitely generated $\dsC$-algebra.
+  The covariant module $\scM_G(X,Y)$ is a finitely generated $\scR_G(X)$-module, and the invariant algebra $\scR_G(X)$ is a finitely generated $\dsC$-algebra.
 \end{assumption}
 
 
 \begin{lemma}[Graded Nakayama lemma, module generators]\label{lem:module-generators}
-  Let $L\subseteq \scM(X,Y)$ be a homogeneous subset. The following are equivalent:
+  Let $L\subseteq \scM_G(X,Y)$ be a homogeneous subset.
+  The following are equivalent:
   \begin{enumerate}[label=\textup{(\roman*)}, leftmargin=2em]
-    \item $L$ is a minimal homogeneous generating set of $\scM(X,Y)$ as an $\scR(X)$-module.
-    \item The image of $L$ is a basis for $\scM(X,Y)\big/\scR_{+}(X)\scM(X,Y)$.
+    \item $L$ is a minimal homogeneous generating set of $\scM_G(X,Y)$ as an $\scR_G(X)$-module.
+    \item The image of $L$ is a basis for $\scM_G(X,Y)\big/\scR_{G,+}(X)\scM_G(X,Y)$.
     \item For every $D\in\dsN_0$, the degree-$D$ elements in $L$ form a basis for a complement of
     \[
-      \left(\scR_{+}(X)\scM(X,Y)\right)^D
+      \left(\scR_{G,+}(X)\scM_G(X,Y)\right)^D
     \]
-    inside $\scM^D(X,Y)$.
+    inside $\scM_G^D(X,Y)$.
   \end{enumerate}
-  Moreover, if $R^D$ and $M^D$ are vector space bases for $\scR^{D}(X)$ and $\scM^D(X,Y)$, then
+  Moreover, if $R^D$ and $M^D$ are vector space bases for $\scR_G^{D}(X)$ and $\scM_G^D(X,Y)$, then
   \[
     \begin{aligned}
-      \left(\scR_{+}(X)\scM(X,Y)\right)^D
+      \left(\scR_{G,+}(X)\scM_G(X,Y)\right)^D
       &=
-      \sum_{D'=1}^{D-1} \scR^{D'}(X)\,\scM^{D-D'}(X,Y) \\
+      \sum_{D'=1}^{D-1} \scR_G^{D'}(X)\,\scM_G^{D-D'}(X,Y) \\
       &=
       \Span\left\{r m \mid r \in R^{D'},\ m \in M^{D-D'},\ D' \in \set{1,\dots,D-1}\right\} \\
       &=
@@ -1081,22 +1153,24 @@ In this section, we use the graded Nakayama lemma to obtain minimal homogeneous 
   \]
 \end{lemma}
 \begin{proof}
-  \textup{(i)} $\iff$ \textup{(ii)}: This is the graded Nakayama lemma \cite[Lemma 10.56.1]{Stacks0EKB}. \textup{(ii)} $\iff$ \textup{(iii)}: This holds since $L$ is homogeneous.
+  \textup{(i)} $\iff$ \textup{(ii)}: This is the graded Nakayama lemma \cite[Lemma 10.56.1]{Stacks0EKB}.
+  \textup{(ii)} $\iff$ \textup{(iii)}: This holds since $L$ is homogeneous.
 \end{proof}
 
 \begin{lemma}[Graded Nakayama lemma, algebra generators]\label{lem:algebra-generators}
-  Let $L\subseteq \scR_{+}(X)$ be a homogeneous subset. The following are equivalent:
+  Let $L\subseteq \scR_{G,+}(X)$ be a homogeneous subset.
+  The following are equivalent:
   \begin{enumerate}[label=\textup{(\roman*)}, leftmargin=2em]
-    \item $L$ is a minimal homogeneous generating set of $\scR(X)$ as a $\dsC$-algebra.
-    \item The image of $L$ is a basis for $\scR_{+}(X)\big/\scR_{+}(X)^2$.
-    \item For every $D\in\dsN$, the degree-$D$ elements in $L$ form a basis for a complement of $\left(\scR_{+}(X)^2\right)^D$ inside $\scR^D(X)$.
+    \item $L$ is a minimal homogeneous generating set of $\scR_G(X)$ as a $\dsC$-algebra.
+    \item The image of $L$ is a basis for $\scR_{G,+}(X)\big/\scR_{G,+}(X)^2$.
+    \item For every $D\in\dsN$, the degree-$D$ elements in $L$ form a basis for a complement of $\left(\scR_{G,+}(X)^2\right)^D$ inside $\scR_G^D(X)$.
   \end{enumerate}
-  Moreover, if $R^D$ are vector space bases for $\scR^D(X)$, then
+  Moreover, if $R^D$ are vector space bases for $\scR_G^D(X)$, then
   \[
     \begin{aligned}
-      \left(\scR_{+}(X)^2\right)^D
+      \left(\scR_{G,+}(X)^2\right)^D
       &=
-      \sum_{D'=1}^{\lfloor D/2\rfloor} \scR^{D'}(X)\,\scR^{D-D'}(X) \\
+      \sum_{D'=1}^{\lfloor D/2\rfloor} \scR_G^{D'}(X)\,\scR_G^{D-D'}(X) \\
       &=
       \Span\left\{s r \mid s\in R^{D'},\ r\in R^{D-D'},\ D'\in \set{1,\dots,\lfloor D/2\rfloor}\right\} \\
       &=
@@ -1105,41 +1179,52 @@ In this section, we use the graded Nakayama lemma to obtain minimal homogeneous 
   \]
 \end{lemma}
 \begin{proof}
-  Apply \cite[Lemma 10.56.1]{Stacks0EKB} to the graded $\scR(X)$-module $\scR_{+}(X)$. It remains to show that for homogeneous subsets $L\subseteq \scR_{+}(X)$, generating $\scR(X)$ as a $\dsC$-algebra is equivalent to generating $\scR_{+}(X)$ as an $\scR(X)$-module.
+  Apply \cite[Lemma 10.56.1]{Stacks0EKB} to the graded $\scR_G(X)$-module $\scR_{G,+}(X)$.
+  It remains to show that for homogeneous subsets $L\subseteq \scR_{G,+}(X)$, generating $\scR_G(X)$ as a $\dsC$-algebra is equivalent to generating $\scR_{G,+}(X)$ as an $\scR_G(X)$-module.
 
-  First suppose that $L$ generates $\scR(X)$ as a $\dsC$-algebra. Then every element of $\scR_{+}(X)$ is a $\dsC$-linear combination of monomials in elements of $L$. Every such monomial has positive total degree, so it contains at least one factor from $L$; factoring out one such term shows that the monomial lies in $L \cdot \scR(X)$. Hence $L$ generates $\scR_{+}(X)$ as an $\scR(X)$-module.
+  First suppose that $L$ generates $\scR_G(X)$ as a $\dsC$-algebra.
+  Then every element of $\scR_{G,+}(X)$ is a $\dsC$-linear combination of monomials in elements of $L$.
+  Every such monomial has positive total degree, so it contains at least one factor from $L$; factoring out one such term shows that the monomial lies in $L \cdot \scR_G(X)$.
+  Hence $L$ generates $\scR_{G,+}(X)$ as an $\scR_G(X)$-module.
 
-  Conversely, suppose that $L$ generates $\scR_{+}(X)$ as an $\scR(X)$-module, and let $A\subseteq \scR(X)$ be the $\dsC$-subalgebra generated by $L$. We show by induction on $D$ that
+  Conversely, suppose that $L$ generates $\scR_{G,+}(X)$ as an $\scR_G(X)$-module, and let $A\subseteq \scR_G(X)$ be the $\dsC$-subalgebra generated by $L$.
+  We show by induction on $D$ that
   \[
-    \bigoplus_{d=0}^{D} \scR^d(X)\subseteq A.
+    \bigoplus_{d=0}^{D} \scR_G^d(X)\subseteq A.
   \]
-  This is clear for $D=0$. Assume it holds through degree $D-1$, and let $f\in \scR^D(X)\subseteq \scR_{+}(X)$. Since $L$ generates $\scR_{+}(X)$ as an $\scR(X)$-module, we can write
+  This is clear for $D=0$.
+  Assume it holds through degree $D-1$, and let $f\in \scR_G^D(X)\subseteq \scR_{G,+}(X)$.
+  Since $L$ generates $\scR_{G,+}(X)$ as an $\scR_G(X)$-module, we can write
   \[
     f=\sum_i r_i\ell_i,
     \qquad
     \ell_i\in L,
   \]
-  with each $r_i$ homogeneous of degree $D-\deg \ell_i < D$. By the induction hypothesis, every $r_i$ lies in $A$, and each $\ell_i$ lies in $A$ by construction, so $f\in A$. Thus $\scR^D(X)\subseteq A$, completing the induction. Therefore $A=\scR(X)$, so $L$ generates $\scR(X)$ as a $\dsC$-algebra.
+  with each $r_i$ homogeneous of degree $D-\deg \ell_i < D$.
+  By the induction hypothesis, every $r_i$ lies in $A$, and each $\ell_i$ lies in $A$ by construction, so $f\in A$.
+  Thus $\scR_G^D(X)\subseteq A$, completing the induction.
+  Therefore $A=\scR_G(X)$, so $L$ generates $\scR_G(X)$ as a $\dsC$-algebra.
 \end{proof}
 
 
-The implementation uses one generator-extraction routine. The caller chooses the target graded space, the probe-count rule, and the range of previous generator degrees, analogous to the Schur-power special cases where the same rank-selection routine is called with the symmetric or antisymmetric flag.
+The implementation uses one generator-extraction routine.
+The caller chooses the target graded space, the probe-count rule, and the range of previous generator degrees, analogous to the Schur-power special cases where the same rank-selection routine is called with the symmetric or antisymmetric flag.
 
 \begin{algorithm}[\texttt{extract\_independent\_generators}]\label{alg:extract-independent-generators}
 
   \phantom{}
   \begin{enumerate}[label=\textbf{Step \arabic*.},leftmargin=2.8cm]
 
-    \item[\textbf{Input:}] a flag $\kappa\in\{\mathrm{module},\mathrm{algebra}\}$; vector space bases for $\scR^D(X)$ for all $D=0,\dots,D_{\max}$; and vector space bases for a target graded space $\scT^D$ for all $D=0,\dots,D_{\max}$, where
+    \item[\textbf{Input:}] a flag $\kappa\in\{\mathrm{module},\mathrm{algebra}\}$; vector space bases for $\scR_G^D(X)$ for all $D=0,\dots,D_{\max}$; and vector space bases for a target graded space $\scT^D$ for all $D=0,\dots,D_{\max}$, where
     \[
       \scT^D=
       \begin{cases}
-        \scM^D(X,H_\nu), & \kappa=\mathrm{module},\\
-        \scR^D(X), & \kappa=\mathrm{algebra}.
+        \scM_G^D(X,H_\nu), & \kappa=\mathrm{module},\\
+        \scR_G^D(X), & \kappa=\mathrm{algebra}.
       \end{cases}
     \]
 
-    \item[\textbf{Output:}] selected homogeneous target generators up to degree $D_{\max}$: minimal module generators for $\scM(X,H_\nu)$ over $\scR(X)$ when $\kappa=\mathrm{module}$, and, when $\kappa=\mathrm{algebra}$, the positive-degree minimal algebra generators for $\scR(X)$ over $\dsC$ together with the initialized degree-$0$ block.
+    \item[\textbf{Output:}] selected homogeneous target generators up to degree $D_{\max}$: minimal module generators for $\scM_G(X,H_\nu)$ over $\scR_G(X)$ when $\kappa=\mathrm{module}$, and, when $\kappa=\mathrm{algebra}$, the positive-degree minimal algebra generators for $\scR_G(X)$ over $\dsC$ together with the initialized degree-$0$ block.
 
     \item Set
     \[
@@ -1170,20 +1255,24 @@ The implementation uses one generator-extraction routine. The caller chooses the
     \]
     in accordance with Proposition~\ref{prop:random-rank-test}.
 
-    \item Evaluate the invariant basis elements on these probes to form syndrome matrices for $\scR^D(X)$, and initialize the selected degree-$0$ target generators to be the whole basis of $\scT^0$.
+    \item Evaluate the invariant basis elements on these probes to form syndrome matrices for $\scR_G^D(X)$, and initialize the selected degree-$0$ target generators to be the whole basis of $\scT^0$.
 
     \item For each degree $D=1,\dots,D_{\max}$, use only the first $m_D$ probes and form the previous-generator product blocks
     \[
-      \scR^{D-g}(X)\,\scG^g,
+      \scR_G^{D-g}(X)\,\scG^g,
       \quad g\in J_D,
     \]
-    where $\scG^g\subseteq\scT^g$ denotes the target generators already selected in degree $g$. Each block is represented by the row-wise Kronecker product of the degree-$D-g$ invariant syndrome matrix and the degree-$g$ selected-generator syndrome matrix. Empty blocks are omitted.
+    where $\scG^g\subseteq\scT^g$ denotes the target generators already selected in degree $g$.
+    Each block is represented by the row-wise Kronecker product of the degree-$D-g$ invariant syndrome matrix and the degree-$g$ selected-generator syndrome matrix.
+    Empty blocks are omitted.
 
-    \item Evaluate the full target basis $\scT^D$ on the same $m_D$ probes. Concatenate the previous-generator product blocks first and this degree-$D$ target block last.
+    \item Evaluate the full target basis $\scT^D$ on the same $m_D$ probes.
+    Concatenate the previous-generator product blocks first and this degree-$D$ target block last.
 
     \item Compute the pivot columns of the concatenated syndrome matrix.
 
-    \item Retain only those pivots lying in the final target block. Record the corresponding basis elements as $\scG^D\subseteq\scT^D$, cache their syndrome matrices for later degrees, and collect the selected generators over all degrees $D=0,\dots,D_{\max}$.
+    \item Retain only those pivots lying in the final target block.
+    Record the corresponding basis elements as $\scG^D\subseteq\scT^D$, cache their syndrome matrices for later degrees, and collect the selected generators over all degrees $D=0,\dots,D_{\max}$.
   \end{enumerate}
 \end{algorithm}
 
@@ -1191,7 +1280,7 @@ The implementation uses one generator-extraction routine. The caller chooses the
 
 \subsection{Minimal Integrity Bases, Arbitrary Outputs}\label{sec:arbitrary-generators}
 
-In this section, we use Eq.~\eqref{eq:output-reduction} to generalize the results in the previous section and obtain minimal homogeneous module generators for covariant modules $\scM(X,Y)$ with arbitrary output space $Y$.
+In this section, we use Eq.~\eqref{eq:output-reduction} to generalize the results in the previous section and obtain minimal homogeneous module generators for covariant modules $\scM_G(X,Y)$ with arbitrary output space $Y$.
 
 
 \begin{theorem}[]\label{thm:module-generator-reduction}
@@ -1199,70 +1288,79 @@ In this section, we use Eq.~\eqref{eq:output-reduction} to generalize the result
   \[
     Y\cong \bigoplus_{\nu} H_\nu\otimes Y_\nu
   \]
-  be the isotypic decomposition of $Y$, let $L_\nu \subseteq \scM(X,H_\nu)$ be homogeneous subsets, and let $C_\nu$ be bases for the $Y_\nu$. Then Eq.~\eqref{eq:output-reduction} induces a canonical isomorphism of graded $\scR(X)$-modules
+  be the isotypic decomposition of $Y$, let $L_\nu \subseteq \scM_G(X,H_\nu)$ be homogeneous subsets, and let $C_\nu$ be bases for the $Y_\nu$.
+  Then Eq.~\eqref{eq:output-reduction} induces a canonical isomorphism of graded $\scR_G(X)$-modules
   \begin{equation}\label{eq:module-generator-reduction-iso}
-    \scM(X,Y)\cong\bigoplus_{\nu}\scM(X,H_\nu)\otimes Y_\nu.
+    \scM_G(X,Y)\cong\bigoplus_{\nu}\scM_G(X,H_\nu)\otimes Y_\nu.
   \end{equation}
   Moreover, the following are equivalent:
   \begin{enumerate}[label=\textup{(\roman*)}]
-    \item every $L_\nu$ is a minimal homogeneous generating set of $\scM(X,H_\nu)$ as an $\scR(X)$-module;
-    \item the preimage in $\scM(X,Y)$ of
+    \item every $L_\nu$ is a minimal homogeneous generating set of $\scM_G(X,H_\nu)$ as an $\scR_G(X)$-module;
+    \item the preimage in $\scM_G(X,Y)$ of
     \[
       \widetilde L\coloneq \bigcup_{\nu:\,Y_\nu\neq 0}\{m\otimes b : m\in L_\nu,\ b\in C_\nu\}
     \]
-    under the isomorphism \eqref{eq:module-generator-reduction-iso} is a minimal homogeneous generating set of $\scM(X,Y)$ as an $\scR(X)$-module.
+    under the isomorphism \eqref{eq:module-generator-reduction-iso} is a minimal homogeneous generating set of $\scM_G(X,Y)$ as an $\scR_G(X)$-module.
   \end{enumerate}
 \end{theorem}
 
 \begin{proof}
   Summing Eq.~\eqref{eq:output-reduction} over all degrees $D\ge 0$ gives a canonical isomorphism of graded vector spaces
   \[
-    \scM(X,Y)
+    \scM_G(X,Y)
     =
-    \bigoplus_{D\ge 0}\scM^D(X,Y)
+    \bigoplus_{D\ge 0}\scM_G^D(X,Y)
     \cong
-    \bigoplus_{D\ge 0}\bigoplus_{\nu}\scM^D(X,H_\nu)\otimes Y_\nu
+    \bigoplus_{D\ge 0}\bigoplus_{\nu}\scM_G^D(X,H_\nu)\otimes Y_\nu
     \cong
-    \bigoplus_{\nu}\scM(X,H_\nu)\otimes Y_\nu.
+    \bigoplus_{\nu}\scM_G(X,H_\nu)\otimes Y_\nu.
   \]
-  This isomorphism is $\scR(X)$-linear, because multiplication by an invariant polynomial acts only on the $\scM(X,H_\nu)$-factor. This proves \eqref{eq:module-generator-reduction-iso}.
+  This isomorphism is $\scR_G(X)$-linear, because multiplication by an invariant polynomial acts only on the $\scM_G(X,H_\nu)$-factor.
+  This proves \eqref{eq:module-generator-reduction-iso}.
 
   For each $\nu$, set
   \[
-    Q_\nu\coloneq \scM(X,H_\nu)\big/\scR_{+}(X)\scM(X,H_\nu).
+    Q_\nu\coloneq \scM_G(X,H_\nu)\big/\scR_{G,+}(X)\scM_G(X,H_\nu).
   \]
-  Since $Y_\nu$ is a multiplicity space, it carries the trivial $G$-action and is concentrated in degree $0$. Hence $\scR_{+}(X)$ acts only on the first tensor factor, so
+  Since $Y_\nu$ is a multiplicity space, it carries the trivial $G$-action and is concentrated in degree $0$.
+  Hence $\scR_{G,+}(X)$ acts only on the first tensor factor, so
   \[
-    \scR_{+}(X)\bigl(\scM(X,H_\nu)\otimes Y_\nu\bigr)
+    \scR_{G,+}(X)\bigl(\scM_G(X,H_\nu)\otimes Y_\nu\bigr)
     =
-    \scR_{+}(X)\scM(X,H_\nu)\otimes Y_\nu.
+    \scR_{G,+}(X)\scM_G(X,H_\nu)\otimes Y_\nu.
   \]
   Therefore,
   \[
-    \bigl(\scM(X,H_\nu)\otimes Y_\nu\bigr)\Big/\scR_{+}(X)\bigl(\scM(X,H_\nu)\otimes Y_\nu\bigr)
+    \bigl(\scM_G(X,H_\nu)\otimes Y_\nu\bigr)\Big/\scR_{G,+}(X)\bigl(\scM_G(X,H_\nu)\otimes Y_\nu\bigr)
     \cong
     Q_\nu\otimes Y_\nu.
   \]
   Applying this for all $\nu$ and using \eqref{eq:module-generator-reduction-iso}, we obtain an isomorphism
   \[
-    \scM(X,Y)\big/\scR_{+}(X)\scM(X,Y)
+    \scM_G(X,Y)\big/\scR_{G,+}(X)\scM_G(X,Y)
     \cong
     \bigoplus_{\nu} Q_\nu\otimes Y_\nu.
   \]
 
-  Assume \textup{(i)}. By Lemma~\ref{lem:module-generators}, the image $\overline{L_\nu}$ of $L_\nu$ in $Q_\nu$ is a basis for every $\nu$ with $Y_\nu\neq 0$. Since $C_\nu$ is a basis of $Y_\nu$, the simple tensors
+  Assume \textup{(i)}.
+  By Lemma~\ref{lem:module-generators}, the image $\overline{L_\nu}$ of $L_\nu$ in $Q_\nu$ is a basis for every $\nu$ with $Y_\nu\neq 0$.
+  Since $C_\nu$ is a basis of $Y_\nu$, the simple tensors
   \[
     \{\overline{m}\otimes b : m\in L_\nu,\ b\in C_\nu\}
   \]
-  form a basis of $Q_\nu\otimes Y_\nu$. Taking the union over $\nu$ yields a basis of
+  form a basis of $Q_\nu\otimes Y_\nu$.
+  Taking the union over $\nu$ yields a basis of
   \[
     \bigoplus_{\nu} Q_\nu\otimes Y_\nu
     \cong
-    \scM(X,Y)\big/\scR_{+}(X)\scM(X,Y).
+    \scM_G(X,Y)\big/\scR_{G,+}(X)\scM_G(X,Y).
   \]
-  Hence the image in $\scM(X,Y)/\scR_{+}(X)\scM(X,Y)$ of the preimage of $\widetilde L$ under \eqref{eq:module-generator-reduction-iso} is a basis. Another application of Lemma~\ref{lem:module-generators} shows that this preimage is a minimal homogeneous generating set of $\scM(X,Y)$ over $\scR(X)$. Thus \textup{(ii)} holds.
+  Hence the image in $\scM_G(X,Y)/\scR_{G,+}(X)\scM_G(X,Y)$ of the preimage of $\widetilde L$ under \eqref{eq:module-generator-reduction-iso} is a basis.
+  Another application of Lemma~\ref{lem:module-generators} shows that this preimage is a minimal homogeneous generating set of $\scM_G(X,Y)$ over $\scR_G(X)$.
+  Thus \textup{(ii)} holds.
 
-  Conversely, assume \textup{(ii)}. By Lemma~\ref{lem:module-generators}, the image of $\widetilde L$ is a basis of
+  Conversely, assume \textup{(ii)}.
+  By Lemma~\ref{lem:module-generators}, the image of $\widetilde L$ is a basis of
   \[
     \bigoplus_{\nu} Q_\nu\otimes Y_\nu.
   \]
@@ -1288,13 +1386,17 @@ In this section, we use Eq.~\eqref{eq:output-reduction} to generalize the result
   \[
     \{\overline{m}\otimes b : m\in L_\nu\}
   \]
-  is a basis of $Q_\nu\otimes \dsC b$. For any fixed nonzero $b\in C_\nu$, the map
+  is a basis of $Q_\nu\otimes \dsC b$.
+  For any fixed nonzero $b\in C_\nu$, the map
   \[
     Q_\nu \longrightarrow Q_\nu\otimes \dsC b,
     \quad
     q\longmapsto q\otimes b,
   \]
-  is an isomorphism of vector spaces. Therefore $\overline{L_\nu}$ is a basis of $Q_\nu$. By Lemma~\ref{lem:module-generators}, each $L_\nu$ is a minimal homogeneous generating set of $\scM(X,H_\nu)$ over $\scR(X)$. Thus \textup{(i)} holds.
+  is an isomorphism of vector spaces.
+  Therefore $\overline{L_\nu}$ is a basis of $Q_\nu$.
+  By Lemma~\ref{lem:module-generators}, each $L_\nu$ is a minimal homogeneous generating set of $\scM_G(X,H_\nu)$ over $\scR_G(X)$.
+  Thus \textup{(i)} holds.
 \end{proof}
 
 
@@ -1312,14 +1414,14 @@ In this section, we use Eq.~\eqref{eq:output-reduction} to generalize the result
     \]
     and a degree bound $D_{\max}\in\dsN_0$.
 
-    \item[\textbf{Output:}] minimal homogeneous module generators for $\scM(X,Y)$ over $\scR(X)$ up to degree $D_{\max}$.
+    \item[\textbf{Output:}] minimal homogeneous module generators for $\scM_G(X,Y)$ over $\scR_G(X)$ up to degree $D_{\max}$.
 
-    \item Compute vector space bases for $\scR^D(X)$ for all $D=0,\dots,D_{\max}$.
+    \item Compute vector space bases for $\scR_G^D(X)$ for all $D=0,\dots,D_{\max}$.
 
     \item For each $\nu$ such that $Y_\nu\neq 0$,
     \begin{enumerate}[leftmargin=2.2em]
-      \item compute vector space bases for $\scM^D(X,H_\nu)$ for all $D=0,\dots,D_{\max}$ using Section~\ref{sec:irreducible-bases};
-      \item run Algorithm~\ref{alg:extract-independent-generators} in the module setting with $Y=H_\nu$ to obtain a minimal homogeneous generating set $L_\nu\subseteq \scM(X,H_\nu)$ up to degree $D_{\max}$; and
+      \item compute vector space bases for $\scM_G^D(X,H_\nu)$ for all $D=0,\dots,D_{\max}$ using Section~\ref{sec:irreducible-bases};
+      \item run Algorithm~\ref{alg:extract-independent-generators} in the module setting with $Y=H_\nu$ to obtain a minimal homogeneous generating set $L_\nu\subseteq \scM_G(X,H_\nu)$ up to degree $D_{\max}$; and
       \item choose a basis $C_\nu$ of the multiplicity space $Y_\nu$.
     \end{enumerate}
 
@@ -1341,10 +1443,11 @@ Let $G=\SO(2)=\{e^{i\theta}:\theta\in\dsR\}$, so the irreps $H_\lambda$, $\lambd
   \chi_\lambda(e^{i\theta})=e^{i\lambda\theta}.
 \end{equation*}
 The Clebsch--Gordan decomposition is
-\begin{equation}\label{eq:so2-clebsch-gordan}
+\begin{equation}\label{eq:so2-Clebsch--Gordan}
   H_\lambda\otimes H_\mu\cong H_{\lambda+\mu}.
 \end{equation}
-Moreover, let $\pi\vdash d$. Since $H_\lambda$ is one-dimensional,
+Moreover, let $\pi\vdash d$.
+Since $H_\lambda$ is one-dimensional,
 \begin{equation}\label{eq:so2-schur-power}
   e_\pi(H_\lambda^{\otimes d})
   =
@@ -1360,7 +1463,8 @@ Specializing Theorem~\ref{thm:isotypic-decomposition} to this setting gives the 
   \[
     X\cong \bigoplus_{\lambda}H_\lambda\otimes X_\lambda
   \]
-  be the $\SO(2)$-isotypic decomposition of a finite-dimensional representation.  Then for every $\nu\in\dsZ$ and $D\in\dsN_0$,
+  be the $\SO(2)$-isotypic decomposition of a finite-dimensional representation.
+  Then for every $\nu\in\dsZ$ and $D\in\dsN_0$,
   \[
     \operatorname{Hom}_{G}(H_\nu,\scS^D(X))
     \cong
@@ -1368,10 +1472,10 @@ Specializing Theorem~\ref{thm:isotypic-decomposition} to this setting gives the 
     \bigotimes_{\lambda}\Sym^{d_\lambda}(X_\lambda),
   \]
   where $(d_\lambda)_\lambda$ ranges over all sequences of nonnegative integers such that $\sum_\lambda d_\lambda=D$ and $\sum_\lambda \lambda d_\lambda=\nu$.
-  Consequently, a basis for $\scM^D(X,H_\nu)$ is indexed by monomials in the multiplicity variables whose total $G$-weight is $\nu$.
+  Consequently, a basis for $\scM_G^D(X,H_\nu)$ is indexed by monomials in the multiplicity variables whose total $G$-weight is $\nu$.
 \end{corollary}
 \begin{proof}
-  Substitute Equations~\eqref{eq:so2-clebsch-gordan} and~\eqref{eq:so2-schur-power} into Theorem~\ref{thm:isotypic-decomposition} and apply Schur's lemma to conclude that the nonzero summands must have
+  Substitute Equations~\eqref{eq:so2-Clebsch--Gordan} and~\eqref{eq:so2-schur-power} into Theorem~\ref{thm:isotypic-decomposition} and apply Schur's lemma to conclude that the nonzero summands must have
   \[
     \pi_\lambda=(d_\lambda),\qquad
     \mu_\lambda=\lambda d_\lambda,\qquad
@@ -1386,7 +1490,8 @@ Specializing Theorem~\ref{thm:isotypic-decomposition} to this setting gives the 
 
 \subsection{\texorpdfstring{$\operatorname{O}(2)$}{O(2)}}\label{sec:examples-o2}
 
-Let $G=\operatorname{O}(2)$.  Its irreducible representations are labeled by
+Let $G=\operatorname{O}(2)$.
+Its irreducible representations are labeled by
 \[
   +,\quad -,\quad 1,2,3,\dots.
 \]
@@ -1404,8 +1509,9 @@ and, for $n\ge 1$, the two-dimensional irreducible representation $H_n$ restrict
   \oplus
   \chi_{-n}.
 \]
-We identify the labels $+$ and $-$ with the signs $+1$ and $-1$ when multiplying one-dimensional representations. The Clebsch--Gordan decompositions are
-\begin{equation}\label{eq:o2-clebsch-gordan-one-dimensional}
+We identify the labels $+$ and $-$ with the signs $+1$ and $-1$ when multiplying one-dimensional representations.
+The Clebsch--Gordan decompositions are
+\begin{equation}\label{eq:o2-Clebsch--Gordan-one-dimensional}
   H_\alpha\otimes H_\beta\cong H_{\alpha\beta},
   \qquad
   H_\alpha\otimes H_n\cong H_n,
@@ -1413,7 +1519,7 @@ We identify the labels $+$ and $-$ with the signs $+1$ and $-1$ when multiplying
   \alpha,\beta\in\{+,-\},\ n\ge 1,
 \end{equation}
 and
-\begin{equation}\label{eq:o2-clebsch-gordan-two-dimensional}
+\begin{equation}\label{eq:o2-Clebsch--Gordan-two-dimensional}
   H_m\otimes H_n
   \cong
   \begin{cases}
@@ -1422,7 +1528,8 @@ and
   \end{cases}
   \qquad m,n\ge 1.
 \end{equation}
-The Schur powers that occur in Theorem~\ref{thm:isotypic-decomposition} are multiplicity-free.  For $\alpha\in\{+,-\}$ and $\pi\vdash d$,
+The Schur powers that occur in Theorem~\ref{thm:isotypic-decomposition} are multiplicity-free.
+For $\alpha\in\{+,-\}$ and $\pi\vdash d$,
 \begin{equation}\label{eq:o2-schur-one-dimensional}
   e_\pi(H_\alpha^{\otimes d})
   =
@@ -1431,13 +1538,15 @@ The Schur powers that occur in Theorem~\ref{thm:isotypic-decomposition} are mult
     0, & \text{otherwise}.
   \end{cases}
 \end{equation}
-For $n\ge 1$, only partitions with at most two rows contribute, since $\dim H_n = 2$.  For fixed $d$, these partitions are
+For $n\ge 1$, only partitions with at most two rows contribute, since $\dim H_n = 2$.
+For fixed $d$, these partitions are
 \[
   \pi_j=(d-j,j),
   \qquad
   0\le j\le \left\lfloor \frac d2\right\rfloor.
 \]
-Here $(d,0)$ is identified with the one-row partition $(d)$.  Writing $r_j=d-2j$, one has
+Here $(d,0)$ is identified with the one-row partition $(d)$.
+Writing $r_j=d-2j$, one has
 \begin{equation}\label{eq:o2-schur-two-dimensional}
   e_{\pi_j}(H_n^{\otimes d})
   \cong
@@ -1458,11 +1567,14 @@ Indeed,
 \]
 because $\Lambda^2H_n\cong H_-$.
 
-It remains to describe the interior tensor-train space in Theorem~\ref{thm:isotypic-decomposition}.  Fix labels $\mu_\lambda$ chosen from the Schur constituents in \eqref{eq:o2-schur-one-dimensional} and \eqref{eq:o2-schur-two-dimensional}.  List the positive labels among them as
+It remains to describe the interior tensor-train space in Theorem~\ref{thm:isotypic-decomposition}.
+Fix labels $\mu_\lambda$ chosen from the Schur constituents in \eqref{eq:o2-schur-one-dimensional} and \eqref{eq:o2-schur-two-dimensional}.
+List the positive labels among them as
 \[
   \mu_{\lambda_1},\dots,\mu_{\lambda_s}\qquad(\mu_{\lambda_i}\ge 1),
 \]
-and let $\epsilon\in\{+,-\}$ be the product of the one-dimensional labels among the $\mu_\lambda$, with empty product $+$.  Then
+and let $\epsilon\in\{+,-\}$ be the product of the one-dimensional labels among the $\mu_\lambda$, with empty product $+$.
+Then
 \begin{equation}\label{eq:o2-interior-hom}
   \HomG{H_\nu}{\bigotimes_\lambda H_{\mu_\lambda}}
   \cong
@@ -1475,22 +1587,28 @@ and let $\epsilon\in\{+,-\}$ be the product of the one-dimensional labels among 
       & s\ge 1\text{ and }\nu\in\{+,-\}.
   \end{cases}
 \end{equation}
-Indeed, if no positive-dimensional label occurs among the $\mu_\lambda$, the tensor product is $H_\epsilon$, giving the first two cases of \eqref{eq:o2-interior-hom}.  Otherwise, after restriction to $\SO(2)$, the tensor product of the positive-dimensional factors has weights
+Indeed, if no positive-dimensional label occurs among the $\mu_\lambda$, the tensor product is $H_\epsilon$, giving the first two cases of \eqref{eq:o2-interior-hom}.
+Otherwise, after restriction to $\SO(2)$, the tensor product of the positive-dimensional factors has weights
 \[
   \sum_{i=1}^s \sigma_i \mu_{\lambda_i},
   \qquad
   (\sigma_i)_{i=1}^s\in\{\pm1\}^s.
 \]
-For $\nu=n\ge1$, each sign choice with sum $n$ determines one copy of $H_n$.  For $\nu\in\{+,-\}$, the relevant weight is zero, and simultaneous sign reversal pairs the two $\SO(2)$-weight vectors belonging to the same copy of $H_+\oplus H_-$.  Thus the quotient in the last line of \eqref{eq:o2-interior-hom} is by simultaneous sign reversal, and each zero-sum orbit contributes one copy of $H_+$ and one copy of $H_-$.  When $s\ge1$, the product $\epsilon$ can only interchange these two one-dimensional summands; hence it does not change their multiplicities.
+For $\nu=n\ge1$, each sign choice with sum $n$ determines one copy of $H_n$.
+For $\nu\in\{+,-\}$, the relevant weight is zero, and simultaneous sign reversal pairs the two $\SO(2)$-weight vectors belonging to the same copy of $H_+\oplus H_-$.
+Thus the quotient in the last line of \eqref{eq:o2-interior-hom} is by simultaneous sign reversal, and each zero-sum orbit contributes one copy of $H_+$ and one copy of $H_-$.
+When $s\ge1$, the product $\epsilon$ can only interchange these two one-dimensional summands; hence it does not change their multiplicities.
 
-The nonzero Schur-power constituents in \eqref{eq:o2-schur-one-dimensional} and \eqref{eq:o2-schur-two-dimensional} are multiplicity-free, so the corresponding Schur leaf spaces in Theorem~\ref{thm:isotypic-decomposition} are one-dimensional for the allowed choices and zero otherwise.  Combining the above results with Theorem~\ref{thm:isotypic-decomposition}, we obtain the following.
+The nonzero Schur-power constituents in \eqref{eq:o2-schur-one-dimensional} and \eqref{eq:o2-schur-two-dimensional} are multiplicity-free, so the corresponding Schur leaf spaces in Theorem~\ref{thm:isotypic-decomposition} are one-dimensional for the allowed choices and zero otherwise.
+Combining the above results with Theorem~\ref{thm:isotypic-decomposition}, we obtain the following.
 
 \begin{corollary}[Theorem~\ref{thm:isotypic-decomposition} for $\operatorname{O}(2)$]\label{cor:o2-isotypic-decomposition}
   Let
   \[
     X\cong \bigoplus_{\lambda\in\{+,-\}\sqcup\dsN_{>0}}H_\lambda\otimes X_\lambda
   \]
-  be the $\operatorname{O}(2)$-isotypic decomposition of a finite-dimensional representation.  Then, for every irreducible label $\nu$ and every $D\in\dsN_0$,
+  be the $\operatorname{O}(2)$-isotypic decomposition of a finite-dimensional representation.
+  Then, for every irreducible label $\nu$ and every $D\in\dsN_0$,
   \begin{equation}\label{eq:o2-isotypic-decomposition}
     \HomG{H_\nu}{\scS^D(X)}
     \cong
@@ -1501,7 +1619,8 @@ The nonzero Schur-power constituents in \eqref{eq:o2-schur-one-dimensional} and 
     \otimes
     \bigotimes_\lambda e_{\pi_\lambda}^*(X_\lambda^{\otimes d_\lambda}).
   \end{equation}
-  Here $\lambda$ ranges over the finitely many labels with $X_\lambda\neq0$, the degrees satisfy $\sum_\lambda d_\lambda=D$, and the partitions satisfy $\pi_\lambda\vdash d_\lambda$ with at most $\min(\dim H_\lambda, \dim X_\lambda)$ parts.  The remaining restrictions are exactly the constituent rules above: if $\lambda=\alpha\in\{+,-\}$, then $\pi_\lambda=(d_\lambda)$ and $\mu_\lambda=\alpha^{d_\lambda}$; if $\lambda=n\ge 1$, then
+  Here $\lambda$ ranges over the finitely many labels with $X_\lambda\neq0$, the degrees satisfy $\sum_\lambda d_\lambda=D$, and the partitions satisfy $\pi_\lambda\vdash d_\lambda$ with at most $\min(\dim H_\lambda, \dim X_\lambda)$ parts.
+  The remaining restrictions are exactly the constituent rules above: if $\lambda=\alpha\in\{+,-\}$, then $\pi_\lambda=(d_\lambda)$ and $\mu_\lambda=\alpha^{d_\lambda}$; if $\lambda=n\ge 1$, then
   \[
     \pi_\lambda=(d_\lambda-j_\lambda,j_\lambda),
     \qquad
@@ -1515,11 +1634,15 @@ The nonzero Schur-power constituents in \eqref{eq:o2-schur-one-dimensional} and 
     \quad\text{for}\quad
     0\le k_\lambda<r_\lambda/2,
   \]
-  together with the additional one-dimensional label $\mu_\lambda=(-1)^{j_\lambda}$ when $d_\lambda$ is even.  All Schur leaf spaces are one-dimensional for these allowed choices and zero otherwise, so they have been omitted from \eqref{eq:o2-isotypic-decomposition}.  The remaining interior tensor-train factor is given explicitly by \eqref{eq:o2-interior-hom}.
+  together with the additional one-dimensional label $\mu_\lambda=(-1)^{j_\lambda}$ when $d_\lambda$ is even.
+  All Schur leaf spaces are one-dimensional for these allowed choices and zero otherwise, so they have been omitted from \eqref{eq:o2-isotypic-decomposition}.
+  The remaining interior tensor-train factor is given explicitly by \eqref{eq:o2-interior-hom}.
 \end{corollary}
 
 \begin{remark}
-  Taking $\nu=+$ gives the invariant algebra.  In reflection-compatible $\SO(2)$ weight coordinates, these are the reflection-even weight-zero polynomial combinations.  Similarly, $\nu=-$ gives the reflection-odd weight-zero covariants, while $\nu=n\ge 1$ gives pairs of $\SO(2)$-weight $\pm n$ covariants exchanged by a reflection.
+  Taking $\nu=+$ gives the invariant algebra.
+  In reflection-compatible $\SO(2)$ weight coordinates, these are the reflection-even weight-zero polynomial combinations.
+  Similarly, $\nu=-$ gives the reflection-odd weight-zero covariants, while $\nu=n\ge 1$ gives pairs of $\SO(2)$-weight $\pm n$ covariants exchanged by a reflection.
 \end{remark}
 
 \subsection{\texorpdfstring{$\SO(3)$}{SO(3)}}\label{sec:examples-so3}
@@ -1531,16 +1654,17 @@ The irreducible $\SO(3)$-representations are the spin-$\lambda$ modules $H_\lamb
 Their torus weights are $-\lambda,-\lambda+1,\dots,\lambda$, each with multiplicity one.
 
 The Clebsch--Gordan decomposition is
-\begin{equation}\label{eq:so3-clebsch-gordan}
+\begin{equation}\label{eq:so3-Clebsch--Gordan}
   H_{\lambda_1}\otimes H_{\lambda_2}
   \cong
   \bigoplus_{\mu=|\lambda_1-\lambda_2|}^{\lambda_1+\lambda_2} H_\mu,
 \end{equation}
-with multiplicity one; see Sellerstam~\cite[Theorem~23]{Sellerstam2019}. Thus $H_\gamma$ appears in $H_{\lambda_1}\otimes H_{\lambda_2}$ exactly when
+with multiplicity one; see Sellerstam~\cite[Theorem~23]{Sellerstam2019}.
+Thus $H_\gamma$ appears in $H_{\lambda_1}\otimes H_{\lambda_2}$ exactly when
 \[
   |\lambda_1-\lambda_2|\le\gamma\le\lambda_1+\lambda_2.
 \]
-For $d\ge 1$, after iterating \eqref{eq:so3-clebsch-gordan}, the possible constituents of $H_{\lambda_1}\otimes\cdots\otimes H_{\lambda_d}$ are the $H_\mu$ with
+For $d\ge 1$, after iterating \eqref{eq:so3-Clebsch--Gordan}, the possible constituents of $H_{\lambda_1}\otimes\cdots\otimes H_{\lambda_d}$ are the $H_\mu$ with
 \[
   \max\!\left\{0,2\max_i\lambda_i-\sum_i\lambda_i\right\}
   \le \mu\le
@@ -1548,7 +1672,8 @@ For $d\ge 1$, after iterating \eqref{eq:so3-clebsch-gordan}, the possible consti
 \]
 Their multiplicities are the tensor-train dimensions from Proposition~\ref{prop:cg-tensor-train-basis}.
 
-For each admissible triple $(\lambda_1,\lambda_2,\gamma)$, the coupling space is one-dimensional.  In unitary weight bases $v_m^{(\lambda)}$, a standard Condon--Shortley normalized representative is the invariant tensor with coordinates
+For each admissible triple $(\lambda_1,\lambda_2,\gamma)$, the coupling space is one-dimensional.
+In unitary weight bases $v_m^{(\lambda)}$, a standard Condon--Shortley normalized representative is the invariant tensor with coordinates
 \begin{equation}\label{eq:so3-wigner-3j}
   c_{\lambda_1,\lambda_2}^{\gamma}
   =
@@ -1563,9 +1688,12 @@ For each admissible triple $(\lambda_1,\lambda_2,\gamma)$, the coupling space is
     \otimes
     v_{m_3}^{(\gamma)}.
 \end{equation}
-See Fulton--Harris~\cite[\S4.2]{FH1991} or Goodman--Wallach~\cite[Chapter~8]{GW2009}.  Any nonzero rescaling of these one-dimensional binary coupling lines gives the same constituent lists and dimensions below.
+See Fulton--Harris~\cite[\S4.2]{FH1991} or Goodman--Wallach~\cite[Chapter~8]{GW2009}.
+Any nonzero rescaling of these one-dimensional binary coupling lines gives the same constituent lists and dimensions below.
 
-Schur-power constituents are also determined by weights.  For a Laurent polynomial $f$, let $[q^r]f$ denote its $q^r$ coefficient.  The semistandard-tableau character formula gives, for $\pi\vdash d$ and $\mu\in\dsN_0$,
+Schur-power constituents are also determined by weights.
+For a Laurent polynomial $f$, let $[q^r]f$ denote its $q^r$ coefficient.
+The semistandard-tableau character formula gives, for $\pi\vdash d$ and $\mu\in\dsN_0$,
 \begin{equation}\label{eq:so3-schur-multiplicity}
   \dim\HomG{H_\mu}{e_\pi(H_\lambda^{\otimes d})}
   =
@@ -1575,14 +1703,16 @@ Schur-power constituents are also determined by weights.  For a Laurent polynomi
 \end{equation}
 Here we use Weyman~\cite[Proposition~2.1.15(b)]{Weyman2003} and the fact that each $H_\rho$ contributes one copy of every torus weight $-\rho,\dots,\rho$.
 
-For a concrete degree-$3$ case, take $X = 2H_2\oplus H_3$ and $Y = H_4$.  Write
+For a concrete degree-$3$ case, take $X = 2H_2\oplus H_3$ and $Y = H_4$.
+Write
 \[
   X\cong H_2\otimes X_2\oplus H_3\otimes X_3,
   \qquad
   X_2\cong \dsC^2,\qquad
   X_3\cong \dsC.
 \]
-Distribute degree as $d_2+d_3=3$ and choose partitions $\pi_2\vdash d_2$, $\pi_3\vdash d_3$ with at most $2$ and $1$ parts, respectively.  Applying \eqref{eq:so3-schur-multiplicity} and then \eqref{eq:so3-clebsch-gordan} leaves exactly the cases in Figure~\ref{fig:so3-degree-three-isotypic-tree}.
+Distribute degree as $d_2+d_3=3$ and choose partitions $\pi_2\vdash d_2$, $\pi_3\vdash d_3$ with at most $2$ and $1$ parts, respectively.
+Applying \eqref{eq:so3-schur-multiplicity} and then \eqref{eq:so3-Clebsch--Gordan} leaves exactly the cases in Figure~\ref{fig:so3-degree-three-isotypic-tree}.
 Each tensor-data node records $(C,L_2,T_2,L_3,T_3)$; $\dsI$ denotes the identity train and $\varnothing$ the unique partition of $0$.
 
 \begin{landscape}
@@ -1696,7 +1826,8 @@ the irrep label set is
   \Lambda_G=\dsN_0\times\{\pm 1\}.
 \]
 For $\lambda=(\ell,\sigma)\in\Lambda_G$, with $\ell\in\dsN_0$ and $\sigma\in\{\pm 1\}$, write $H_\lambda$ for the corresponding irreducible representation.
-Here $\ell$ is the usual $\SO(3)$ spin and $\sigma$ is the scalar by which $-I$ acts. Its dimension is
+Here $\ell$ is the usual $\SO(3)$ spin and $\sigma$ is the scalar by which $-I$ acts.
+Its dimension is
 \[
   \dim H_\lambda=2\ell+1.
 \]
@@ -1709,7 +1840,8 @@ For labels $\lambda=(\ell,\sigma)$ and $\mu=(m,\tau)$, the Clebsch--Gordan decom
   H_{(n,\sigma\tau)}.
 \]
 
-Let $\pi\vdash d$ and $\lambda=(\ell,\sigma)$. Then
+Let $\pi\vdash d$ and $\lambda=(\ell,\sigma)$.
+Then
 \[
   e_\pi(H_\lambda^{\otimes d})
   \cong
@@ -1728,13 +1860,15 @@ All labels $\nu\in\Lambda_G$ whose sign component is not $\sigma^d$ occur with m
 
 \subsection{\texorpdfstring{$\SO^+(3,1)$ and $\operatorname{Spin}^+(3,1)$}{SO+(3,1) and Spin+(3,1)}}\label{sec:examples-so31}
 
-Let $\widetilde G = \operatorname{Spin}^+(3,1)$ and let $G = \SO^+(3,1)$.  Use the double cover
+Let $\widetilde G = \operatorname{Spin}^+(3,1)$ and let $G = \SO^+(3,1)$.
+Use the double cover
 \[
   \widetilde G\cong \operatorname{SL}_2(\dsC),
   \qquad
   \mathfrak{so}(3,1)_{\dsC}\cong \mathfrak{sl}_2\oplus \mathfrak{sl}_2.
 \]
-The irrep label set for $\widetilde G$ is $\Lambda_{\widetilde G}=\dsN_0^2$. For $\lambda=(a,b)\in\Lambda_{\widetilde G}$, let
+The irrep label set for $\widetilde G$ is $\Lambda_{\widetilde G}=\dsN_0^2$.
+For $\lambda=(a,b)\in\Lambda_{\widetilde G}$, let
 \[
   H_\lambda\cong \Sym^a(\dsC^2)\otimes
   \Sym^b(\overline{\dsC^2}),
@@ -1759,7 +1893,8 @@ For labels $\lambda=(a,b)$ and $\mu=(c,d)$, the Clebsch--Gordan decomposition is
   H_{(e,f)}.
 \]
 
-Let $\pi\vdash r$ and $\lambda=(a,b)$. The weights of $H_\lambda$ are
+Let $\pi\vdash r$ and $\lambda=(a,b)$.
+The weights of $H_\lambda$ are
 \[
   (a-2i,\ b-2j),
   \qquad
@@ -1807,7 +1942,8 @@ if $\lambda=\lambda^\vee$, there are two extensions to the full group, distingui
 
 \subsection{\texorpdfstring{$S_n$}{S\_n}}\label{sec:examples-sn}
 
-Let $G = S_n$.  The irrep label set is
+Let $G = S_n$.
+The irrep label set is
 \[
   \Lambda_G=\{\lambda:\lambda\vdash n\}.
 \]
@@ -1838,7 +1974,8 @@ where the Kronecker coefficient is
 \]
 and $\chi_\lambda$ denotes the character of $H_\lambda$.
 
-Let $\pi\vdash d$. Then
+Let $\pi\vdash d$.
+Then
 \[
   e_\pi(H_\lambda^{\otimes d})
   \cong
@@ -1863,7 +2000,8 @@ The character of this Young-symmetrized tensor power is
   \prod_{i=1}^{\ell(\rho)}
   \chi_\lambda(g^{\rho_i}),
 \]
-where $\chi_{\pi}^{\mathfrak S_d}$ is the symmetric-group character indexed by $\pi$, and $z_\rho$ is the centralizer order of a permutation of cycle type $\rho$. Hence
+where $\chi_{\pi}^{\mathfrak S_d}$ is the symmetric-group character indexed by $\pi$, and $z_\rho$ is the centralizer order of a permutation of cycle type $\rho$.
+Hence
 \[
   m_{\pi,\lambda}^{\nu}
   =
@@ -1882,10 +2020,13 @@ where $\chi_{\pi}^{\mathfrak S_d}$ is the symmetric-group character indexed by $
 
 Several questions remain for future work:
 \begin{itemize}[leftmargin=2em]
-  \item Do the sequences $\{\dim \scR^D(X)\}_{D \in \dsN_0}$ and $\{\dim \scM^D(X,Y)\}_{D \in \dsN_0}$ appear in the OEIS? What connections can be made?
+  \item Do the sequences $\{\dim \scR_G^D(X)\}_{D \in \dsN_0}$ and $\{\dim \scM_G^D(X,Y)\}_{D \in \dsN_0}$ appear in the OEIS?
+  What connections can be made?
   \item Would the evaluation stage perform better if one replaced the CP decomposition of partially symmetrized monomials by the standard polarization identity for symmetric multilinear forms \cite[Theorem~1 and Eq.~(7)]{Thomas2014}?
-  \item What is the precise role of semistandard Young tableaux in the final generator sets? Can algebraic or module redundancy already be detected from the spin-coupling trees before tableau data are assembled?
-  \item More specifically, any spin tree with a vanishing interior spin corresponds to a product of lower-degree invariants and covariants. Can this observation be incorporated directly into the tree-construction stage to prune redundant branches earlier?
+  \item What is the precise role of semistandard Young tableaux in the final generator sets?
+  Can algebraic or module redundancy already be detected from the spin-coupling trees before tableau data are assembled?
+  \item More specifically, any spin tree with a vanishing interior spin corresponds to a product of lower-degree invariants and covariants.
+  Can this observation be incorporated directly into the tree-construction stage to prune redundant branches earlier?
 \end{itemize}
 
 \begin{thebibliography}{99}
@@ -2055,14 +2196,16 @@ Several questions remain for future work:
 
 
 \begin{proposition}[Isotypic decomposition]\label{prop:isotypic-decomposition}
-  Let $V$ be a finite-dimensional $G$-representation. There is a $G$-equivariant isomorphism
+  Let $V$ be a finite-dimensional $G$-representation.
+  There is a $G$-equivariant isomorphism
   \[
     V
     \cong
     \bigoplus_{\lambda}
     H_\lambda\otimes \HomG{H_\lambda}{V},
   \]
-  where $G$ acts trivially on each multiplicity space $\HomG{H_\lambda}{V}$. Moreover, the isomorphism (from right to left) is the evaluation map
+  where $G$ acts trivially on each multiplicity space $\HomG{H_\lambda}{V}$.
+  Moreover, the isomorphism (from right to left) is the evaluation map
   \[
     \bigoplus_{\lambda}
     H_\lambda\otimes \HomG{H_\lambda}{V}
@@ -2077,13 +2220,15 @@ Several questions remain for future work:
 \end{proof}
 
 \begin{proposition}[Symmetric power of a finite direct sum]\label{prop:sym-direct-sum}
-  Let $\{V_\lambda\}_\lambda$ be a finite collection of $G$-representations, and let $D\in\dsN_0$. There is a $G$-equivariant isomorphism
+  Let $\{V_\lambda\}_\lambda$ be a finite collection of $G$-representations, and let $D\in\dsN_0$.
+  There is a $G$-equivariant isomorphism
   \[
     \scS^D\!\left(\bigoplus_\lambda V_\lambda\right)
     \cong
     \bigoplus_{(d_\lambda)_\lambda}\bigotimes_\lambda \scS^{d_\lambda}(V_\lambda),
   \]
-  where $(d_\lambda)_\lambda$ ranges over all sequences of nonnegative integers such that $\sum_\lambda d_\lambda=D$. Moreover, the isomorphism (from right to left) is given by symmetrization over the $D$ tensor factors.
+  where $(d_\lambda)_\lambda$ ranges over all sequences of nonnegative integers such that $\sum_\lambda d_\lambda=D$.
+  Moreover, the isomorphism (from right to left) is given by symmetrization over the $D$ tensor factors.
 \end{proposition}
 \begin{proof}
   This is the degree-$D$ piece of the graded algebra isomorphism
@@ -2096,7 +2241,8 @@ Several questions remain for future work:
 \end{proof}
 
 \begin{definition}[Young symmetrizer]\label{def:young-symmetrizer}
-  Let $\pi$ be a partition of $d$, let $T_\pi$ be the row--ordered standard Young tableau of shape $\pi$, and let $R_\pi,C_\pi\subset \mathfrak{S}_d$ be its row and column stabilizers. The \emph{row}, \emph{column}, and \emph{Young symmetrizers} are
+  Let $\pi$ be a partition of $d$, let $T_\pi$ be the row--ordered standard Young tableau of shape $\pi$, and let $R_\pi,C_\pi\subset \mathfrak{S}_d$ be its row and column stabilizers.
+  The \emph{row}, \emph{column}, and \emph{Young symmetrizers} are
   \[
     r_\pi\coloneq \frac{1}{|R_\pi|}\sum_{\sigma\in R_\pi}\sigma,
     \quad
@@ -2104,18 +2250,21 @@ Several questions remain for future work:
     \quad
     e_\pi\coloneq \frac{|R_\pi||C_\pi|}{\mathrm{HL}_\pi}\,r_\pi c_\pi
   \]
-  respectively, where $\mathrm{HL}_\pi$ is the hook-length product. Note that the Young symmetrizer $e_\pi$ is an idempotent in $\dsR[\mathfrak{S}_d]$.
+  respectively, where $\mathrm{HL}_\pi$ is the hook-length product.
+  Note that the Young symmetrizer $e_\pi$ is an idempotent in $\dsR[\mathfrak{S}_d]$.
 \end{definition}
 
 \begin{theorem}[Cauchy decomposition]\label{thm:cauchy}
-  Let $V$ and $W$ be finite-dimensional complex vector spaces, and let $d \in \dsN_0$. There is a $\GL(V)\times \GL(W)$-equivariant isomorphism
+  Let $V$ and $W$ be finite-dimensional complex vector spaces, and let $d \in \dsN_0$.
+  There is a $\GL(V)\times \GL(W)$-equivariant isomorphism
   \begin{equation}\label{eq:cauchy}
     \scS^d(V\otimes W)
     \cong
     \bigoplus_\pi
     e_\pi(V^{\otimes d})\otimes e_\pi^*(W^{\otimes d}),
   \end{equation}
-  where the sum is over all integer partitions $\pi\vdash d$ with at most $\min(\dim V,\dim W)$ parts. Moreover, the isomorphism (from right to left) is given by rearranging the tensor product and symmetrizing.
+  where the sum is over all integer partitions $\pi\vdash d$ with at most $\min(\dim V,\dim W)$ parts.
+  Moreover, the isomorphism (from right to left) is given by rearranging the tensor product and symmetrizing.
 \end{theorem}
 \begin{proof}
   See Weyman~\cite[\S2.3, Corollary 2.3.3]{Weyman2003}.
@@ -2126,11 +2275,13 @@ Several questions remain for future work:
   \[
     \tau:V^{\otimes d}\otimes W^{\otimes d}\longrightarrow (V\otimes W)^{\otimes d}
   \]
-  be the natural reshuffling isomorphism. Let
+  be the natural reshuffling isomorphism.
+  Let
   \[
     P_d=\frac{1}{d!}\sum_{\sigma\in\mathfrak S_d}\sigma
   \]
-  be the symmetrizer on $(V\otimes W)^{\otimes d}$. Then for any $e\in \dsR[\mathfrak S_d]$,
+  be the symmetrizer on $(V\otimes W)^{\otimes d}$.
+  Then for any $e\in \dsR[\mathfrak S_d]$,
   \[
     P_d\tau(1\otimes e^*)
     =
@@ -2142,7 +2293,8 @@ Several questions remain for future work:
   \[
     P_d\tau=\frac{1}{d!}\sum_{\sigma\in\mathfrak S_d}\sigma\otimes\sigma
   \]
-  on $V^{\otimes d}\otimes W^{\otimes d}$. Thus, for any
+  on $V^{\otimes d}\otimes W^{\otimes d}$.
+  Thus, for any
   \[
     e=\sum_{\rho\in\mathfrak S_d} e_\rho\,\rho \in \dsC[\mathfrak S_d],
   \]
@@ -2161,7 +2313,8 @@ Several questions remain for future work:
 
 \subsection{Proof of Theorem~\ref{thm:isotypic-decomposition}}\label{sec:proof-main-decomposition}
 
-Because $X$ is finite dimensional, only finitely many $\lambda$ satisfy $X_\lambda\neq 0$. Applying Proposition~\ref{prop:sym-direct-sum} to the isotypic decomposition of $X$, we have
+Because $X$ is finite dimensional, only finitely many $\lambda$ satisfy $X_\lambda\neq 0$.
+Applying Proposition~\ref{prop:sym-direct-sum} to the isotypic decomposition of $X$, we have
 \[
   \scS^D(X)
   \cong
@@ -2171,14 +2324,16 @@ Because $X$ is finite dimensional, only finitely many $\lambda$ satisfy $X_\lamb
   \bigotimes_\lambda
   \scS^{d_\lambda}(H_\lambda\otimes X_\lambda),
 \]
-where $(d_\lambda)_\lambda$ ranges over all sequences of nonnegative integers such that $\sum_\lambda d_\lambda=D$. For each $\lambda$, Theorem~\ref{thm:cauchy} gives
+where $(d_\lambda)_\lambda$ ranges over all sequences of nonnegative integers such that $\sum_\lambda d_\lambda=D$.
+For each $\lambda$, Theorem~\ref{thm:cauchy} gives
 \[
   \scS^{d_\lambda}(H_\lambda\otimes X_\lambda)
   \cong
   \bigoplus_{\pi_\lambda}
   e_{\pi_\lambda}(H_\lambda^{\otimes d_\lambda})\otimes e_{\pi_\lambda}^*(X_\lambda^{\otimes d_\lambda}),
 \]
-where $\pi_\lambda$ ranges over all partitions of $d_\lambda$ with at most $\min(\dim H_\lambda,\dim X_\lambda)$ parts. Substituting this into the previous display gives
+where $\pi_\lambda$ ranges over all partitions of $d_\lambda$ with at most $\min(\dim H_\lambda,\dim X_\lambda)$ parts.
+Substituting this into the previous display gives
 \[
   \scS^D(X)
   \cong
@@ -2241,7 +2396,9 @@ where $(\mu_\lambda)_\lambda$ ranges over all sequences of nonnegative integers 
 \[
   \HomG{H_{\mu_\lambda}}{e_{\pi_\lambda}(H_\lambda^{\otimes d_\lambda})}\neq 0
 \]
-for all $\lambda$. Finally, apply $\HomG{H_\nu}{-}$ to both sides. Since $\HomG{H_\nu}{-}$ preserves finite direct sums, and since each space
+for all $\lambda$.
+Finally, apply $\HomG{H_\nu}{-}$ to both sides.
+Since $\HomG{H_\nu}{-}$ preserves finite direct sums, and since each space
 \[
   \HomG{H_{\mu_\lambda}}{e_{\pi_\lambda}(H_\lambda^{\otimes d_\lambda})}
   \quad\text{and}\quad
@@ -2268,7 +2425,8 @@ Restricting to those $(\mu_\lambda)_\lambda$ for which
 does not change the direct sum, and we are done.
 
 \subsection{Proof of Theorem~\ref{thm:evaluation}}\label{sec:proof-evaluation}
-Following the proof of Theorem~\ref{thm:isotypic-decomposition} in reverse, the isomorphism in Eq.~\eqref{eq:isotypic-decomposition} acts on the elementary tensor in Eq.~\eqref{eq:isotypic-data-tensor} as follows. First, compose the core tensor $C$ with the Young-symmetrized leaf tensors $e_{\pi_\lambda} L_\lambda$ in each mode to obtain
+Following the proof of Theorem~\ref{thm:isotypic-decomposition} in reverse, the isomorphism in Eq.~\eqref{eq:isotypic-decomposition} acts on the elementary tensor in Eq.~\eqref{eq:isotypic-data-tensor} as follows.
+First, compose the core tensor $C$ with the Young-symmetrized leaf tensors $e_{\pi_\lambda} L_\lambda$ in each mode to obtain
 \[
   \left(\bigotimes_\lambda e_{\pi_\lambda} L_\lambda\right)
   \circ
@@ -2314,11 +2472,13 @@ Now, by Lemma \ref{lem:cauchy-transfer}, for every $z\in H_{\mu_\lambda}$,
   &=
   P_{d_\lambda}\tau\Bigl((e_{\pi_\lambda}L_\lambda)(z)\otimes T_\lambda\Bigr).
 \end{align*}
-Thus the factors $e_{\pi_\lambda}^*$ acting on $T_\lambda$ can be removed. To complete the proof, recall that
+Thus the factors $e_{\pi_\lambda}^*$ acting on $T_\lambda$ can be removed.
+To complete the proof, recall that
 \[
   X_\lambda = \HomG{H_\lambda}{X}.
 \]
-Thus, every tableau tensor $T_\lambda\in X_\lambda^{\otimes d_\lambda}$ can be viewed as a linear map $T_\lambda \in \HomG{H_\lambda^{\otimes d_\lambda}}{X^{\otimes d_\lambda}}$. With this identification, we have
+Thus, every tableau tensor $T_\lambda\in X_\lambda^{\otimes d_\lambda}$ can be viewed as a linear map $T_\lambda \in \HomG{H_\lambda^{\otimes d_\lambda}}{X^{\otimes d_\lambda}}$.
+With this identification, we have
 \[
   \tau(u\otimes T_\lambda)=T_\lambda(u)
   \quad
@@ -2326,7 +2486,8 @@ Thus, every tableau tensor $T_\lambda\in X_\lambda^{\otimes d_\lambda}$ can be v
   \quad
   u\in H_\lambda^{\otimes d_\lambda}
 \]
-up to the isomorphism in Proposition \ref{prop:isotypic-decomposition}.  Substituting this yields
+up to the isomorphism in Proposition \ref{prop:isotypic-decomposition}.
+Substituting this yields
 \[
   p
   =
@@ -2408,11 +2569,14 @@ Since this holds for all $y\in H_\nu$, the stated formula follows.
 \subsection{Evaluation and rank extraction}
 
 \begin{proposition}[Finite-field rank extraction by random evaluation]\label{prop:random-rank-test}
-  Let $f_1,\dots,f_N$ be polynomial maps $\dsF_p^n\to\dsF_p^q$ of degree at most $D$, and let $Z=(z^{(1)},\dots,z^{(m)})$ denote $m$ formal probes in $\dsF_p^n$.  Form the stacked evaluation matrix
+  Let $f_1,\dots,f_N$ be polynomial maps $\dsF_p^n\to\dsF_p^q$ of degree at most $D$, and let $Z=(z^{(1)},\dots,z^{(m)})$ denote $m$ formal probes in $\dsF_p^n$.
+  Form the stacked evaluation matrix
   \[
     E(Z)\in \operatorname{Mat}_{mq\times N}\left(\dsF_p[Z]\right)
   \]
-  whose $j$-th column stacks $f_j(z^{(1)}),\dots,f_j(z^{(m)})$.  Suppose that the column span of $E(Z)$ has rank $r$ over the function field $\dsF_p(Z)$, equivalently that some $r\times r$ minor $\Delta(Z)$ is a nonzero polynomial.  If the coordinates of $Z$ are sampled independently and uniformly from $\dsF_p$, then
+  whose $j$-th column stacks $f_j(z^{(1)}),\dots,f_j(z^{(m)})$.
+  Suppose that the column span of $E(Z)$ has rank $r$ over the function field $\dsF_p(Z)$, equivalently that some $r\times r$ minor $\Delta(Z)$ is a nonzero polynomial.
+  If the coordinates of $Z$ are sampled independently and uniformly from $\dsF_p$, then
   \[
     \Pr\left[\operatorname{rank}_{\dsF_p}E(Z)<r\right]
     \le
@@ -2420,36 +2584,50 @@ Since this holds for all $y\in H_\nu$, the stated formula follows.
     \le
     \min\left\{1,\frac{rD}{p}\right\}.
   \]
-  In particular, whenever full rank is obtained, the pivot columns computed over $\dsF_p$ index a basis for the reduced candidate span.  If the finite-field reduction preserves the characteristic-zero rank of the candidate space, the same pivot indices select a characteristic-zero basis.
+  In particular, whenever full rank is obtained, the pivot columns computed over $\dsF_p$ index a basis for the reduced candidate span.
+  If the finite-field reduction preserves the characteristic-zero rank of the candidate space, the same pivot indices select a characteristic-zero basis.
 \end{proposition}
 \begin{proof}
-  If the sampled matrix has rank smaller than $r$, then every $r\times r$ minor vanishes at the sampled probes, in particular $\Delta(Z)=0$.  The Schwartz-Zippel lemma gives
+  If the sampled matrix has rank smaller than $r$, then every $r\times r$ minor vanishes at the sampled probes, in particular $\Delta(Z)=0$.
+  The Schwartz-Zippel lemma gives
   \[
     \Pr[\Delta(Z)=0]\le \deg\Delta/p.
   \]
-  Each entry of $E(Z)$ has degree at most $D$, so an $r\times r$ determinant has degree at most $rD$.  The pivot-column statement is ordinary Gaussian elimination over $\dsF_p$ on a full-rank evaluation matrix.
+  Each entry of $E(Z)$ has degree at most $D$, so an $r\times r$ determinant has degree at most $rD$.
+  The pivot-column statement is ordinary Gaussian elimination over $\dsF_p$ on a full-rank evaluation matrix.
 \end{proof}
 
-The proposition is conditional on a nonzero minor remaining nonzero after reduction modulo $p$.  For a fixed characteristic-zero minor with rational or integral coefficients, only finitely many primes are bad after clearing denominators, but the current code chooses the prime for arithmetic convenience rather than searching over primes.  Finite-field runs require $p>D_{\max}$ for the maximum degree under consideration, and the current heuristic is to choose a prime with $1000<p<10000$.  Thus a failed rank selection can come either from an unlucky probe batch or from bad reduction at the chosen modulus.
+The proposition is conditional on a nonzero minor remaining nonzero after reduction modulo $p$.
+For a fixed characteristic-zero minor with rational or integral coefficients, only finitely many primes are bad after clearing denominators, but the current code chooses the prime for arithmetic convenience rather than searching over primes.
+Finite-field runs require $p>D_{\max}$ for the maximum degree under consideration, and the current heuristic is to choose a prime with $1000<p<10000$.
+Thus a failed rank selection can come either from an unlucky probe batch or from bad reduction at the chosen modulus.
 
 Under the idealized model that each retry is a fresh independent uniform finite-field batch, one Schur-basis rank test with output rank $r$, polynomial degree $D$, and $t$ retries fails with probability at most
 \[
   \min\left\{1,\frac{rD}{p}\right\}^{t}
 \]
-after excluding bad reduction.  The implemented Schur-basis construction uses $t=4$.  Generator extraction reuses one common probe batch across degrees; independence between degree tests is not needed for a union bound.  If the degree-$D$ concatenated syndrome matrix has function-field rank $r_D$ and all its columns have polynomial degree $D$, then the probability that at least one of these degree tests fails is bounded by
+after excluding bad reduction.
+The implemented Schur-basis construction uses $t=4$.
+Generator extraction reuses one common probe batch across degrees; independence between degree tests is not needed for a union bound.
+If the degree-$D$ concatenated syndrome matrix has function-field rank $r_D$ and all its columns have polynomial degree $D$, then the probability that at least one of these degree tests fails is bounded by
 \[
   \sum_D \min\left\{1,\frac{r_DD}{p}\right\},
 \]
-again conditional on good reduction of the relevant minors.  These are conservative upper bounds; when $rD\ge p$ they become vacuous, although the observed success probability may still be high.
+again conditional on good reduction of the relevant minors.
+These are conservative upper bounds; when $rD\ge p$ they become vacuous, although the observed success probability may still be high.
 
 \subsection[SO(3) backend shortcuts]{\texorpdfstring{$\SO(3)$}{SO(3)} backend shortcuts}
 
-The $\SO(3)$ backend uses the representation-theoretic conventions and formulas from Section~\ref{sec:examples-so3}.  The remaining details here are implementation shortcuts rather than part of the abstract contract.
+The $\SO(3)$ backend uses the representation-theoretic conventions and formulas from Section~\ref{sec:examples-so3}.
+The remaining details here are implementation shortcuts rather than part of the abstract contract.
 
-For tensor-product constituents, the backend applies \eqref{eq:so3-clebsch-gordan}.  For tensor-train evaluation, it uses the Clebsch--Gordan tensors fixed in \eqref{eq:so3-wigner-3j}, evaluating an equivalent integer formula for the coefficients.  The finite-field evaluator then reduces those integer tensor entries modulo the active prime.
+For tensor-product constituents, the backend applies \eqref{eq:so3-Clebsch--Gordan}.
+For tensor-train evaluation, it uses the Clebsch--Gordan tensors fixed in \eqref{eq:so3-wigner-3j}, evaluating an equivalent integer formula for the coefficients.
+The finite-field evaluator then reduces those integer tensor entries modulo the active prime.
 
 \begin{example}[$\SO(3)$ small-degree shortcuts]\label{ex:so3-small-degree-shortcuts}
-  For small exterior and symmetric powers, the $\SO(3)$ backend may bypass the general rank-selection procedure and use explicit formulas.  These shortcuts are not part of the general contract; they only improve efficiency in low degrees.
+  For small exterior and symmetric powers, the $\SO(3)$ backend may bypass the general rank-selection procedure and use explicit formulas.
+  These shortcuts are not part of the general contract; they only improve efficiency in low degrees.
 
   For $\lambda\in\set{0,\dots,3}$, one has
   \[
@@ -2489,21 +2667,24 @@ For tensor-product constituents, the backend applies \eqref{eq:so3-clebsch-gorda
   \[
     \scS^3(H_3)\cong H_9\oplus H_7\oplus H_6\oplus H_5\oplus H_4\oplus 2H_3\oplus H_1.
   \]
-  These decompositions follow by applying \eqref{eq:so3-schur-multiplicity} to the partitions $(1,1)$, $(1,1,1)$, $(2)$, and $(3)$.  The only listed multiplicity greater than $1$ is the term $2H_3$ in $\scS^3(H_3)$.
+  These decompositions follow by applying \eqref{eq:so3-schur-multiplicity} to the partitions $(1,1)$, $(1,1,1)$, $(2)$, and $(3)$.
+  The only listed multiplicity greater than $1$ is the term $2H_3$ in $\scS^3(H_3)$.
 \end{example}
 
 \begin{example}[$\SO(3)$ Hilbert-series shortcut]\label{ex:so3-hilbert-shortcut}
   The specialized routine \texttt{hilbert\_series\_so3} computes
   \[
-    \dim \scM^D(X,H_\nu)
+    \dim \scM_G^D(X,H_\nu)
     =
     \dim \HomG{H_\nu}{\scS^D(X)}
   \]
-  from weight generating functions.  If $X=\bigoplus_i H_{\lambda_i}^{\oplus m_i}$, then the weight generating function of $\scS(X)$ is
+  from weight generating functions.
+  If $X=\bigoplus_i H_{\lambda_i}^{\oplus m_i}$, then the weight generating function of $\scS(X)$ is
   \[
     \prod_i\prod_{w=-\lambda_i}^{\lambda_i}(1-tq^w)^{-m_i}.
   \]
-  The coefficient of $t^Dq^m$ is the weight-$m$ multiplicity in $\scS^D(X)$, and the multiplicity of $H_\nu$ is the difference between the weight-$\nu$ and weight-$(\nu+1)$ multiplicities.  This is an $\SO(3)$-specific fast path used to size random probe batches; the abstract algorithm can instead use the dimensions obtained directly from the constructed data trees.
+  The coefficient of $t^Dq^m$ is the weight-$m$ multiplicity in $\scS^D(X)$, and the multiplicity of $H_\nu$ is the difference between the weight-$\nu$ and weight-$(\nu+1)$ multiplicities.
+  This is an $\SO(3)$-specific fast path used to size random probe batches; the abstract algorithm can instead use the dimensions obtained directly from the constructed data trees.
 \end{example}
 
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import math
 
 import numpy as np
+import pytest
 
 import equivariant_polynomials.core.generators as generator_core
 from equivariant_polynomials.core import (
@@ -11,21 +12,29 @@ from equivariant_polynomials.core import (
     TensorTree,
     extract_independent_generators,
 )
+from equivariant_polynomials.core.streaming import STREAM_BATCH_SIZE
 from equivariant_polynomials.groups.so3 import (
     SO3RepresentationTheory,
-    hilbert_series_so3,
     hilbert_series_so3_multigraded,
 )
 
 
-def test_core_algebra_generator_extractor_accepts_abstract_dimensions() -> None:
+@pytest.mark.parametrize(
+    "target_dimensions_by_multidegree",
+    [
+        None,
+        hilbert_series_so3_multigraded((1,), (1,), 0, (3,)),
+    ],
+)
+def test_core_algebra_generator_extractor_infers_target_dimensions(
+    target_dimensions_by_multidegree,
+) -> None:
     theory = SO3RepresentationTheory()
 
     generators = extract_independent_generators(
         theory,
         input_irreps=(1,),
         input_multiplicities=(1,),
-        trivial_irrep=0,
         output_irrep=0,
         max_degree=3,
         probe_target=lambda dimensions, _output_dimension: dimensions,
@@ -33,34 +42,7 @@ def test_core_algebra_generator_extractor_accepts_abstract_dimensions() -> None:
         random_seed=0,
         modulus=13,
         first_generator_degree=1,
-        target_dimensions_by_degree=hilbert_series_so3((1,), (1,), 0, 3),
-    )
-
-    assert tuple(map(len, generators)) == (1, 0, 1, 0)
-
-
-def test_core_generator_extractor_streams_multigraded_targets() -> None:
-    theory = SO3RepresentationTheory()
-
-    generators = extract_independent_generators(
-        theory,
-        input_irreps=(1,),
-        input_multiplicities=(1,),
-        trivial_irrep=0,
-        output_irrep=0,
-        max_degree=3,
-        probe_target=lambda dimensions, _output_dimension: dimensions,
-        degree_limit=lambda degree: degree // 2,
-        random_seed=0,
-        modulus=13,
-        first_generator_degree=1,
-        target_dimensions_by_degree=hilbert_series_so3((1,), (1,), 0, 3),
-        target_dimensions_by_multidegree=hilbert_series_so3_multigraded(
-            (1,),
-            (1,),
-            0,
-            (3,),
-        ),
+        target_dimensions_by_multidegree=target_dimensions_by_multidegree,
     )
 
     assert tuple(map(len, generators)) == (1, 0, 1, 0)
@@ -68,6 +50,8 @@ def test_core_generator_extractor_streams_multigraded_targets() -> None:
 
 def test_probe_counts_are_copy_content_local(monkeypatch) -> None:
     class DimensionOnlyTheory:
+        trivial_irrep = 0
+
         def irrep_dimension(self, irrep):
             return 1
 
@@ -131,7 +115,6 @@ def test_probe_counts_are_copy_content_local(monkeypatch) -> None:
         theory,
         input_irreps,
         input_multiplicities,
-        0,
         1,
         2,
         lambda dimensions, output_dimension: tuple(
@@ -141,7 +124,6 @@ def test_probe_counts_are_copy_content_local(monkeypatch) -> None:
         lambda degree: degree - 1,
         random_seed=0,
         modulus=13,
-        target_dimensions_by_degree=(0, 0, 18),
         target_dimensions_by_multidegree={(2,): 18},
     )
 
@@ -183,7 +165,7 @@ def test_stream_content_generators_evaluates_fixed_leaf_batches(
         _young_tree_cache,
     ):
         calls.append(polynomials)
-        assert len(polynomials) <= generator_core.STREAM_BATCH_SIZE
+        assert len(polynomials) <= STREAM_BATCH_SIZE
         return np.ones((1, 1, 1), dtype=np.uint64)
 
     monkeypatch.setattr(

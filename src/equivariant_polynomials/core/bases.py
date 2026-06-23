@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Callable, Sequence
 from dataclasses import replace
 from functools import cache
 from itertools import product
+from typing import TypeVar
 
 import numpy as np
 
@@ -31,6 +33,7 @@ from .types import (
 )
 
 MAX_RANK_ATTEMPTS = 4
+_T = TypeVar("_T")
 
 
 @cache
@@ -105,6 +108,34 @@ def _has_tensor_product_constituent(
     return output in current
 
 
+def _rank_select_candidates(
+    candidates: Sequence[_T],
+    dimension: int,
+    output_dimension: int,
+    random_seed: int,
+    modulus: int,
+    attempt_evaluator: Callable[[int, int], Callable[[tuple[_T, ...]], np.ndarray]],
+    error_message: Callable[[int], str],
+) -> tuple[_T, ...]:
+    base_num_probes = math.ceil(dimension / output_dimension) + 2
+    last_rank = 0
+
+    for attempt in range(MAX_RANK_ATTEMPTS):
+        num_probes = base_num_probes + attempt
+        selected, last_rank = stream_independent_candidates(
+            candidates,
+            attempt_evaluator(attempt, num_probes),
+            dimension,
+            num_probes * output_dimension,
+            modulus,
+            random_seed + attempt,
+        )
+        if len(selected) == dimension:
+            return selected
+
+    raise RuntimeError(error_message(last_rank))
+
+
 def _rank_select_tensor_trains(
     theory: RepresentationTheory,
     irrep: Irrep,
@@ -122,16 +153,16 @@ def _rank_select_tensor_trains(
 
     candidates = tensor_product_basis(theory, (irrep,) * degree, output)
     output_dimension = theory.irrep_dimension(output)
-    base_num_probes = math.ceil(dimension / output_dimension) + 2
-    last_rank = 0
     evaluate = (
         evaluate_antisymmetrized_tensor_train
         if antisymmetric
         else evaluate_tensor_train
     )
 
-    for attempt in range(MAX_RANK_ATTEMPTS):
-        num_probes = base_num_probes + attempt
+    def attempt_evaluator(
+        attempt: int,
+        num_probes: int,
+    ) -> Callable[[tuple[TensorTrain, ...]], np.ndarray]:
         probe_vectors = sample_tensor_power_probes(
             theory,
             irrep,
@@ -157,22 +188,21 @@ def _rank_select_tensor_trains(
                 axis=1,
             )
 
-        selected, rank = stream_independent_candidates(
-            candidates,
-            evaluate_batch,
-            dimension,
-            num_probes * output_dimension,
-            modulus,
-            random_seed + attempt,
-        )
-        last_rank = rank
-        if len(selected) == dimension:
-            return selected
+        return evaluate_batch
 
     kind = "exterior" if antisymmetric else "symmetric"
-    raise RuntimeError(
-        f"rank probes found {last_rank} {kind}-power basis elements "
-        f"for irrep={irrep}, degree={degree}, output={output}; expected {dimension}"
+    return _rank_select_candidates(
+        candidates,
+        dimension,
+        output_dimension,
+        random_seed,
+        modulus,
+        attempt_evaluator,
+        lambda rank: (
+            f"rank probes found {rank} {kind}-power basis elements "
+            f"for irrep={irrep}, degree={degree}, output={output}; "
+            f"expected {dimension}"
+        ),
     )
 
 
@@ -218,11 +248,11 @@ def _rank_select_schur_power_candidates(
         return ()
 
     output_dimension = theory.irrep_dimension(output)
-    base_num_probes = math.ceil(dimension / output_dimension) + 2
-    last_rank = 0
 
-    for attempt in range(MAX_RANK_ATTEMPTS):
-        num_probes = base_num_probes + attempt
+    def attempt_evaluator(
+        attempt: int,
+        num_probes: int,
+    ) -> Callable[[tuple[TensorTree, ...]], np.ndarray]:
         probe_vectors = sample_tensor_power_probes(
             theory,
             irrep,
@@ -263,21 +293,20 @@ def _rank_select_schur_power_candidates(
                 axis=1,
             )
 
-        selected, last_rank = stream_independent_candidates(
-            candidates,
-            evaluate_batch,
-            dimension,
-            num_probes * output_dimension,
-            modulus,
-            random_seed + attempt,
-        )
-        if len(selected) == dimension:
-            return selected
+        return evaluate_batch
 
-    raise RuntimeError(
-        f"rank probes found {last_rank} Schur-power basis elements "
-        f"for irrep={irrep}, partition={partition}, output={output}; "
-        f"expected {dimension}"
+    return _rank_select_candidates(
+        candidates,
+        dimension,
+        output_dimension,
+        random_seed,
+        modulus,
+        attempt_evaluator,
+        lambda rank: (
+            f"rank probes found {rank} Schur-power basis elements "
+            f"for irrep={irrep}, partition={partition}, output={output}; "
+            f"expected {dimension}"
+        ),
     )
 
 

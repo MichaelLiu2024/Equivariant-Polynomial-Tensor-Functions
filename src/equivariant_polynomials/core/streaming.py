@@ -9,7 +9,7 @@ from typing import TypeVar
 
 import numpy as np
 
-from .combinatorics import pivot_columns
+from .combinatorics import arithmetic_dtype, pivot_columns
 
 STREAM_BATCH_SIZE = 64
 
@@ -38,10 +38,9 @@ def shuffled_stream_batches(
     items: Sequence[_T],
     random_seed: int,
     batch_size: int = STREAM_BATCH_SIZE,
-) -> Iterator[tuple[tuple[int, ...], tuple[_T, ...]]]:
+) -> Iterator[tuple[_T, ...]]:
     order = np.random.default_rng(random_seed).permutation(len(items))
-    for indices in stream_batches((int(index) for index in order), batch_size):
-        yield indices, tuple(items[index] for index in indices)
+    yield from stream_batches((items[int(index)] for index in order), batch_size)
 
 
 def independent_column_indices(
@@ -69,12 +68,11 @@ def stream_independent_candidates(
     random_seed: int,
     batch_size: int = STREAM_BATCH_SIZE,
 ) -> tuple[tuple[_T, ...], int]:
-    dtype = np.complex128 if modulus == 0 else np.uint64
-    basis = np.empty((row_count, 0), dtype=dtype)
+    basis = np.empty((row_count, 0), dtype=arithmetic_dtype(modulus))
     selected: list[_T] = []
     last_rank = 0
 
-    for _batch_indices, candidate_batch in shuffled_stream_batches(
+    for candidate_batch in shuffled_stream_batches(
         candidates,
         random_seed,
         batch_size,

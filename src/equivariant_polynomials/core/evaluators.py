@@ -3,42 +3,53 @@
 from __future__ import annotations
 
 from collections.abc import Hashable
-from functools import cache, reduce
+from functools import cache
 from itertools import product
-from math import comb
-from math import prod
+from math import comb, factorial, prod
 
 import numpy as np
 
-from .combinatorics import cond_mod
+from .combinatorics import arithmetic_dtype, cond_mod
 from .protocols import RepresentationTheory
 from .types import Irrep, IsotypicLeaf, SSYT, TensorTrain, TensorTrainCore, TensorTree
 
 _INTEGER_PROBE_BOUND = 2**16
 
 
-def _left_partial_contraction(
-    vectors: np.ndarray,
-    core: np.ndarray,
+def _sample_probe_array(
+    rng: np.random.Generator,
+    shape: tuple[int, ...],
+    modulus: int,
 ) -> np.ndarray:
-    """Contract left vectors into ``core`` while preserving factor axes."""
-    i, j, k = core.shape
-    leading_shape = vectors.shape[:-1]
-    matrix = core.reshape(i, j * k)
-    flat_vectors = vectors.reshape(-1, vectors.shape[-1])
-    return (flat_vectors @ matrix).reshape(*leading_shape, j, k)
+    high = modulus if modulus != 0 else _INTEGER_PROBE_BOUND
+    probe = rng.integers(0, high, size=shape, dtype=np.uint64)
+    return probe.astype(arithmetic_dtype(modulus), copy=False)
 
 
-def _right_partial_contraction(
+@cache
+def _clebsch_gordan_matrices(
+    theory: RepresentationTheory,
+    core: TensorTrainCore,
+    modulus: int,
+) -> tuple[tuple[int, int, int], np.ndarray, np.ndarray]:
+    tensor = theory.clebsch_gordan_tensor(core, modulus)
+    i, j, k = tensor.shape
+    return (
+        tensor.shape,
+        tensor.reshape(i, j * k),
+        tensor.transpose(1, 0, 2).reshape(j, i * k),
+    )
+
+
+def _partial_contraction(
     vectors: np.ndarray,
-    core: np.ndarray,
+    matrix: np.ndarray,
+    shape: tuple[int, int],
 ) -> np.ndarray:
-    """Contract right vectors into ``core`` while preserving factor axes."""
-    i, j, k = core.shape
-    leading_shape = vectors.shape[:-1]
-    matrix = core.transpose(1, 0, 2).reshape(j, i * k)
-    flat_vectors = vectors.reshape(-1, vectors.shape[-1])
-    return (flat_vectors @ matrix).reshape(*leading_shape, i, k)
+    return (vectors.reshape(-1, vectors.shape[-1]) @ matrix).reshape(
+        *vectors.shape[:-1],
+        *shape,
+    )
 
 
 def _prepend_unit_factor_axes(
@@ -60,27 +71,27 @@ def _evaluate_tensor_train_batch_multi(
     for i, core in enumerate(cores):
         a = result
         b = vectors[i + 1]
-        tensor = theory.clebsch_gordan_tensor(core, modulus)
+        cg_shape, left_mat, right_mat = _clebsch_gordan_matrices(theory, core, modulus)
         probe_count = a.shape[0]
         a_shape = a.shape[1:-1]
         b_shape = b.shape[1:-1]
         a = a.reshape(probe_count, -1, a.shape[-1])
         b = b.reshape(probe_count, -1, b.shape[-1])
 
-        if b.shape[1] * tensor.shape[0] < a.shape[1] * tensor.shape[1]:
-            tmp = _right_partial_contraction(b, tensor)
+        if b.shape[1] * cg_shape[0] < a.shape[1] * cg_shape[1]:
+            tmp = _partial_contraction(b, right_mat, (cg_shape[0], cg_shape[2]))
             result = np.matmul(
                 a[:, :, None, None, :],
                 tmp[:, None, :, :, :],
             )[:, :, :, 0, :]
         else:
-            tmp = _left_partial_contraction(a, tensor)
+            tmp = _partial_contraction(a, left_mat, (cg_shape[1], cg_shape[2]))
             result = np.matmul(
                 b[:, None, :, None, :],
                 tmp[:, :, None, :, :],
             )[:, :, :, 0, :]
 
-        result = result.reshape(probe_count, *a_shape, *b_shape, tensor.shape[2])
+        result = result.reshape(probe_count, *a_shape, *b_shape, cg_shape[2])
         result = cond_mod(result, modulus)
     return result
 
@@ -95,18 +106,18 @@ def _evaluate_tensor_train_batch(
     for i, core in enumerate(cores):
         a = result
         b = vectors[i + 1]
-        tensor = theory.clebsch_gordan_tensor(core, modulus)
+        cg_shape, left_mat, right_mat = _clebsch_gordan_matrices(theory, core, modulus)
         ndim_delta = a.ndim - b.ndim
 
         a_size = a.size // a.shape[-1]
         b_size = b.size // b.shape[-1]
-        if b_size * tensor.shape[0] < a_size * tensor.shape[1]:
+        if b_size * cg_shape[0] < a_size * cg_shape[1]:
             b = _prepend_unit_factor_axes(b, ndim_delta)
-            tmp = _right_partial_contraction(b, tensor)
+            tmp = _partial_contraction(b, right_mat, (cg_shape[0], cg_shape[2]))
             a = _prepend_unit_factor_axes(a, -ndim_delta)
             result = np.matmul(a[..., None, :], tmp).squeeze(-2)
         else:
-            tmp = _left_partial_contraction(a, tensor)
+            tmp = _partial_contraction(a, left_mat, (cg_shape[1], cg_shape[2]))
             b = _prepend_unit_factor_axes(b, ndim_delta)
             result = np.matmul(b[..., None, :], tmp).squeeze(-2)
         result = cond_mod(result, modulus)
@@ -133,7 +144,7 @@ def evaluate_tensor_train(
         raise ValueError(f"unknown core evaluation mode {mode}")
     if not cores:
         return (
-            vectors[0].astype(np.complex128, copy=False)
+            vectors[0].astype(arithmetic_dtype(modulus), copy=False)
             if modulus == 0
             else cond_mod(vectors[0], modulus)
         )
@@ -280,20 +291,15 @@ def sample_tensor_power_probes(
     """Sample random probes for the tensor power of an irrep."""
     rng = np.random.default_rng(random_seed)
     irrep_dimension = theory.irrep_dimension(irrep)
-    high = modulus if modulus != 0 else _INTEGER_PROBE_BOUND
     if antisymmetric:
-        probe = rng.integers(
-            0,
-            high,
-            size=(degree, num_probes, irrep_dimension),
-            dtype=np.uint64,
+        return tuple(
+            _sample_probe_array(
+                rng,
+                (degree, num_probes, irrep_dimension),
+                modulus,
+            )
         )
-        if modulus == 0:
-            probe = probe.astype(np.complex128, copy=False)
-        return tuple(probe)
-    probe = rng.integers(0, high, size=(num_probes, irrep_dimension), dtype=np.uint64)
-    if modulus == 0:
-        probe = probe.astype(np.complex128, copy=False)
+    probe = _sample_probe_array(rng, (num_probes, irrep_dimension), modulus)
     return (probe,) * degree
 
 
@@ -307,19 +313,14 @@ def sample_isotypic_input_probes(
 ) -> tuple[np.ndarray, ...]:
     """Sample random probes for the input representation."""
     rng = np.random.default_rng(random_seed)
-    high = modulus if modulus != 0 else _INTEGER_PROBE_BOUND
-    probes = tuple(
-        rng.integers(
-            0,
-            high,
-            size=(num_probes, multiplicity, theory.irrep_dimension(irrep)),
-            dtype=np.uint64,
+    return tuple(
+        _sample_probe_array(
+            rng,
+            (num_probes, multiplicity, theory.irrep_dimension(irrep)),
+            modulus,
         )
         for irrep, multiplicity in zip(input_irreps, input_multiplicities)
     )
-    if modulus == 0:
-        return tuple(probe.astype(np.complex128, copy=False) for probe in probes)
-    return probes
 
 
 @cache
@@ -345,9 +346,8 @@ def monomial_waring_grid(
     modulus: int,
 ) -> np.ndarray:
     """Finite-difference CP grid for the Waring expansion of one monomial."""
-    dtype = np.complex128 if modulus == 0 else np.uint64
     columns = tuple(range(degree + 1) for degree in powers)
-    out = np.asarray(tuple(product(*columns)), dtype=dtype)
+    out = np.asarray(tuple(product(*columns)), dtype=arithmetic_dtype(modulus))
     out.setflags(write=False)
     return out
 
@@ -368,10 +368,110 @@ def monomial_waring_coefficients(
                 coefficient = -coefficient
         coefficients.append(coefficient if modulus == 0 else coefficient % modulus)
 
-    dtype = np.complex128 if modulus == 0 else np.uint64
-    out = np.asarray(coefficients, dtype=dtype)
+    out = np.asarray(coefficients, dtype=arithmetic_dtype(modulus))
     out.setflags(write=False)
     return out
+
+
+@cache
+def _young_row_waring_data(
+    powers: tuple[int, ...],
+    modulus: int,
+) -> tuple[np.ndarray, np.ndarray]:
+    if len(powers) != 1:
+        return monomial_waring_grid(powers, modulus), monomial_waring_coefficients(
+            powers,
+            modulus,
+        )
+
+    dtype = arithmetic_dtype(modulus)
+    grid = np.ones((1, 1), dtype=dtype)
+    coefficient = factorial(powers[0])
+    coeff = np.asarray(
+        [coefficient if modulus == 0 else coefficient % modulus],
+        dtype=dtype,
+    )
+    grid.setflags(write=False)
+    coeff.setflags(write=False)
+    return grid, coeff
+
+
+def _align_row_axes(
+    values: np.ndarray,
+    axes: tuple[int, ...],
+    target_axes: tuple[int, ...],
+) -> np.ndarray:
+    if axes == target_axes:
+        return values
+    axis_sizes = dict(zip(axes, values.shape[1:-1]))
+    return values.reshape(
+        values.shape[0],
+        *(axis_sizes.get(axis, 1) for axis in target_axes),
+        values.shape[-1],
+    )
+
+
+def _contract_expired_row_axes(
+    values: np.ndarray,
+    active_axes: tuple[int, ...],
+    next_height: int,
+    row_coeffs: tuple[np.ndarray, ...],
+    modulus: int,
+) -> tuple[np.ndarray, tuple[int, ...]]:
+    active = list(active_axes)
+    for position in range(len(active) - 1, -1, -1):
+        axis = active[position]
+        if axis < next_height:
+            continue
+        values = np.tensordot(values, row_coeffs[axis], axes=((position + 1,), (0,)))
+        values = cond_mod(values, modulus)
+        del active[position]
+    return values, tuple(active)
+
+
+def _sum_weighted_tensor_tree_grid(
+    theory: RepresentationTheory,
+    tensor_tree: TensorTree,
+    leaves: tuple[np.ndarray, ...],
+    leaf_heights: tuple[int, ...],
+    row_coeffs: tuple[np.ndarray, ...],
+    modulus: int,
+) -> np.ndarray:
+    result = leaves[0]
+    active_axes = tuple(range(leaf_heights[0]))
+    next_height = max(leaf_heights[1:], default=0)
+    result, active_axes = _contract_expired_row_axes(
+        result,
+        active_axes,
+        next_height,
+        row_coeffs,
+        modulus,
+    )
+
+    for i, core in enumerate(tensor_tree.interior_tensor_train):
+        leaf = leaves[i + 1]
+        leaf_axes = tuple(range(leaf_heights[i + 1]))
+        target_axes = tuple(sorted(set(active_axes).union(leaf_axes)))
+        result = evaluate_tensor_train(
+            theory,
+            (core,),
+            (
+                _align_row_axes(result, active_axes, target_axes),
+                _align_row_axes(leaf, leaf_axes, target_axes),
+            ),
+            modulus,
+            "batch",
+        )
+        active_axes = target_axes
+        next_height = max(leaf_heights[i + 2 :], default=0)
+        result, active_axes = _contract_expired_row_axes(
+            result,
+            active_axes,
+            next_height,
+            row_coeffs,
+            modulus,
+        )
+    return result
 
 
 def evaluate_young_symmetrized_tensor_tree(
@@ -382,27 +482,17 @@ def evaluate_young_symmetrized_tensor_tree(
     modulus: int,
 ) -> np.ndarray:
     if not ssyt.entries_by_row:
-        dtype = np.complex128 if modulus == 0 else np.uint64
-        return np.ones((probe_batches.shape[0], 1), dtype=dtype)
+        return np.ones((probe_batches.shape[0], 1), dtype=arithmetic_dtype(modulus))
 
-    grids = tuple(
-        monomial_waring_grid(copies, modulus) for copies in ssyt.copies_by_row
+    row_waring_data = tuple(
+        _young_row_waring_data(copies, modulus) for copies in ssyt.copies_by_row
     )
+    grids = tuple(grid for grid, _coefficients in row_waring_data)
     symmetrized_rows = tuple(
         cond_mod(np.matmul(grid[None, :, :], probe_batches[:, entries, :]), modulus)
         for entries, grid in zip(ssyt.entries_by_row, grids)
     )
-    row_coeffs = tuple(
-        monomial_waring_coefficients(copies, modulus)
-        for copies in ssyt.copies_by_row
-    )
-    coeff = reduce(
-        lambda left, right: cond_mod(
-            (left[:, None] * right[None, :]).reshape(-1),
-            modulus,
-        ),
-        row_coeffs,
-    )
+    row_coeffs = tuple(coefficients for _grid, coefficients in row_waring_data)
 
     antisymmetrized_leaves = []
     leaf_heights = []
@@ -422,33 +512,14 @@ def evaluate_young_symmetrized_tensor_tree(
         )
         leaf_heights.append(len(tensor_train) + 1)
 
-    grid_shape = tuple(grid.shape[0] for grid in grids)
-    if not grid_shape:
-        dtype = np.complex128 if modulus == 0 else np.uint64
-        return np.empty((probe_batches.shape[0], 0), dtype=dtype)
-
-    vectors = tuple(
-        leaf.reshape(
-            leaf.shape[0],
-            *leaf.shape[1:-1],
-            *((1,) * (len(grid_shape) - height)),
-            leaf.shape[-1],
-        )
-        for leaf, height in zip(antisymmetrized_leaves, leaf_heights)
-    )
-    values = evaluate_tensor_train(
+    return _sum_weighted_tensor_tree_grid(
         theory,
-        tensor_tree.interior_tensor_train,
-        vectors,
+        tensor_tree,
+        tuple(antisymmetrized_leaves),
+        tuple(leaf_heights),
+        row_coeffs,
         modulus,
-        "batch",
     )
-    summed = np.tensordot(
-        values,
-        coeff.reshape(grid_shape),
-        axes=(tuple(range(1, len(grid_shape) + 1)), tuple(range(len(grid_shape)))),
-    )
-    return cond_mod(summed, modulus)
 
 
 def _young_tree_cache_key(
@@ -496,8 +567,8 @@ def evaluate_basis(
     ):
         leaf_factor = None
         leaf_column_count = len(trees) * len(ssyts)
-        for tableau_index, tableau in enumerate(ssyts):
-            for tree_index, tensor_tree in enumerate(trees):
+        for tree_index, tensor_tree in enumerate(trees):
+            for tableau_index, tableau in enumerate(ssyts):
                 cache_key = _young_tree_cache_key(
                     modulus,
                     probes,
@@ -528,10 +599,9 @@ def evaluate_basis(
                     )
                 leaf_factor[:, tree_index * len(ssyts) + tableau_index, :] = value
         if leaf_factor is None:
-            dtype = np.complex128 if modulus == 0 else np.uint64
             leaf_factor = np.empty(
                 (probes.shape[0], leaf_column_count, 0),
-                dtype=dtype,
+                dtype=arithmetic_dtype(modulus),
             )
         per_input_irrep_blocks.append(leaf_factor)
 
@@ -565,8 +635,7 @@ def evaluate_basis(
         column_offset += column_count
 
     if out is None:
-        dtype = np.complex128 if modulus == 0 else np.uint64
-        return np.empty((0,), dtype=dtype)
+        return np.empty((0,), dtype=arithmetic_dtype(modulus))
     return out
 
 

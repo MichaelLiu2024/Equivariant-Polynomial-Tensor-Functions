@@ -16,7 +16,6 @@ def test_benchmark_checks_known_generator_counts() -> None:
         input_multiplicities=(1,),
         output_irrep=0,
         max_degree=3,
-        trivial_irrep=0,
         random_seed=0,
         modulus=13,
         hilbert_series_multigraded=hilbert_series_so3_multigraded,

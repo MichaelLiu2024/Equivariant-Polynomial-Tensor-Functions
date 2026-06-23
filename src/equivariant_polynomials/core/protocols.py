@@ -17,6 +17,9 @@ class RepresentationTheory(Protocol):
     for specific binary tensor-product couplings.
     """
 
+    trivial_irrep: Irrep
+    """Irrep label for the one-dimensional trivial representation."""
+
     def irrep_dimension(
         self,
         irrep: Irrep,

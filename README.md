@@ -17,10 +17,10 @@ The import package is `equivariant_polynomials`:
 from equivariant_polynomials import (
     SO2RepresentationTheory,
     SO3RepresentationTheory,
-    build_isotypic_data_tree,
-    build_isotypic_data_trees_by_degree,
+    extract_independent_generators,
     hilbert_series_so2,
     hilbert_series_so3,
+    stream_isotypic_data_tree,
 )
 ```
 

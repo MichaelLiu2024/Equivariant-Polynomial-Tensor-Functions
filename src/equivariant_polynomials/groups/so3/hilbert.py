@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections import Counter
 from math import comb
 
+from equivariant_polynomials.core.combinatorics import _validate_input_metadata
+
 
 def hilbert_series_so3(
     input_irreps: tuple[int, ...],
@@ -93,18 +95,14 @@ def hilbert_series_so3_multigraded(
     max_multidegree: tuple[int, ...],
 ) -> dict[tuple[int, ...], int]:
     """Multiplicity of ``V_output_irrep`` in each SO(3) multidegree."""
-    if not input_irreps:
-        raise ValueError("input_irreps must be nonempty")
-    if len(input_irreps) != len(input_multiplicities):
-        raise ValueError("input_irreps and input_multiplicities must have equal length")
-    if len(input_irreps) != len(max_multidegree):
-        raise ValueError("max_multidegree must have one entry per input irrep")
+    _validate_input_metadata(
+        input_irreps,
+        input_multiplicities,
+        degrees=max_multidegree,
+        degrees_name="max_multidegree",
+    )
     if output_irrep < 0 or any(ell < 0 for ell in input_irreps):
         raise ValueError("SO(3) irreps must be nonnegative integers")
-    if any(multiplicity <= 0 for multiplicity in input_multiplicities):
-        raise ValueError("input multiplicities must be positive")
-    if any(degree < 0 for degree in max_multidegree):
-        raise ValueError("max_multidegree entries must be nonnegative")
 
     zero = (0,) * len(input_irreps)
     by_multidegree: dict[tuple[int, ...], dict[int, int]] = {zero: {0: 1}}

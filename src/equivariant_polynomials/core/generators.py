@@ -12,6 +12,8 @@ from typing import Callable
 import numpy as np
 
 from .combinatorics import (
+    _validate_input_metadata,
+    arithmetic_dtype,
     pivot_columns,
     row_kronecker_product,
     validate_modulus,
@@ -22,7 +24,6 @@ from .bases import extract, schur_functor_basis
 from .isotypic import _IsotypicBlock, stream_isotypic_data_tree
 from .protocols import RepresentationTheory
 from .streaming import (
-    STREAM_BATCH_SIZE,
     independent_column_indices,
     stream_batches,
 )
@@ -105,7 +106,6 @@ def extract_independent_generators(
     theory: RepresentationTheory,
     input_irreps: tuple[Irrep, ...],
     input_multiplicities: tuple[int, ...],
-    trivial_irrep: Irrep,
     output_irrep: Irrep,
     max_degree: int,
     probe_target: ProbeTarget,
@@ -113,30 +113,28 @@ def extract_independent_generators(
     random_seed: int,
     *,
     modulus: int,
-    target_dimensions_by_degree: tuple[int, ...],
     first_generator_degree: int = 0,
     target_dimensions_by_multidegree: MultidegreeDimensions | None = None,
 ) -> tuple[tuple[IsotypicLeaf, ...], ...]:
     """Extract minimal homogeneous generators from evaluated basis syndromes.
 
-    The pivoting machinery is independent of the concrete group.  Concrete
-    backends provide Hilbert dimensions by degree.  Target leaves are split by
-    copy-content, with ``target_dimensions_by_multidegree`` used as an optional
-    multidegree filter.
+    The pivoting machinery is independent of the concrete group.  Target
+    leaves are split by copy-content, with ``target_dimensions_by_multidegree``
+    used as an optional multidegree support filter.
     """
-    _validate_generator_metadata(
-        theory,
+    _validate_input_metadata(
         input_irreps,
         input_multiplicities,
-        trivial_irrep,
-        max_degree,
+        max_degree=max_degree,
     )
     if first_generator_degree < 0:
         raise ValueError("first_generator_degree must be nonnegative")
+    if theory.irrep_dimension(theory.trivial_irrep) != 1:
+        raise ValueError("theory.trivial_irrep must be one-dimensional")
 
     validate_modulus(modulus, max_degree=max_degree)
+    trivial_irrep = theory.trivial_irrep
     output_dimension = theory.irrep_dimension(output_irrep)
-    invariant_output_dimension = theory.irrep_dimension(trivial_irrep)
 
     def content_groups_by_degree(
         current_output_irrep: Irrep,
@@ -160,13 +158,6 @@ def extract_independent_generators(
         output_irrep,
         target_dimensions_by_multidegree,
     )
-    if target_dimensions_by_degree != tuple(
-        sum(dimension for dimension, _leaves in content_groups.values())
-        for content_groups in covariant_content_groups
-    ):
-        raise ValueError(
-            "copy-content dimensions from isotypic leaves must match target dimensions"
-        )
 
     content_dimensions = {
         content: dimension
@@ -209,14 +200,14 @@ def extract_independent_generators(
     def invariant_syndromes(content: Content) -> np.ndarray:
         group = invariant_content_group_map.get(content)
         return (
-            _empty_syndromes(max_probes, invariant_output_dimension, modulus)
+            _empty_syndromes(max_probes, 1, modulus)
             if group is None
             else _stream_syndromes(
                 theory,
                 group[1],
                 probe_batches,
                 modulus,
-                invariant_output_dimension,
+                1,
                 young_tree_cache,
             )
         )
@@ -293,8 +284,7 @@ def _content_leaf_groups(
             input_irreps,
             input_multiplicities,
             output_irrep,
-            degree,
-            multidegree=multidegree,
+            multidegree,
             random_seed=random_seed,
         ):
             tableau_groups_by_input = tuple(
@@ -533,32 +523,11 @@ def _syndrome_batches(
 
 
 def _empty_flat_syndromes(row_count: int, modulus: int) -> np.ndarray:
-    dtype = np.complex128 if modulus == 0 else np.uint64
-    return np.empty((row_count, 0), dtype=dtype)
+    return np.empty((row_count, 0), dtype=arithmetic_dtype(modulus))
 
 
 def _empty_syndromes(probe_count: int, output_dimension: int, modulus: int) -> np.ndarray:
-    dtype = np.complex128 if modulus == 0 else np.uint64
-    return np.empty((probe_count, output_dimension, 0), dtype=dtype)
-
-
-def _validate_generator_metadata(
-    theory: RepresentationTheory,
-    input_irreps: tuple[Irrep, ...],
-    input_multiplicities: tuple[int, ...],
-    trivial_irrep: Irrep,
-    max_degree: int,
-) -> None:
-    if not input_irreps:
-        raise ValueError("input_irreps must be nonempty")
-    if len(input_irreps) != len(input_multiplicities):
-        raise ValueError("input_irreps and input_multiplicities must have equal length")
-    if any(multiplicity <= 0 for multiplicity in input_multiplicities):
-        raise ValueError("input multiplicities must be positive")
-    if max_degree < 0:
-        raise ValueError("max_degree must be nonnegative")
-    if theory.irrep_dimension(trivial_irrep) != 1:
-        raise ValueError("trivial_irrep must be one-dimensional")
+    return np.empty((probe_count, output_dimension, 0), dtype=arithmetic_dtype(modulus))
 
 
 __all__ = ("DegreeLimit", "ProbeTarget", "compute_syndromes", "extract_independent_generators")

@@ -5,42 +5,37 @@ The main package is `equivariant_polynomials`.
 ```python
 from equivariant_polynomials import (
     SO3RepresentationTheory,
-    build_isotypic_data_tree,
-    build_isotypic_data_trees_by_degree,
+    extract_independent_generators,
     hilbert_series_so3,
-    space_dimension,
-    space_dimensions,
+    stream_isotypic_data_tree,
 )
 
 random_seed = 12345
 theory = SO3RepresentationTheory()
 modulus = 2521
-tree = build_isotypic_data_tree(
+blocks = tuple(stream_isotypic_data_tree(
     theory,
     input_irreps=(1,),
     input_multiplicities=(1,),
     output_irrep=0,
-    degree=2,
+    multidegree=(2,),
     random_seed=random_seed,
-    modulus=modulus,
-)
-assert space_dimension(tree.isotypic_leaves) == 1
+))
+assert len(blocks) == 1
 
-trees_by_degree = build_isotypic_data_trees_by_degree(
+generators = extract_independent_generators(
     theory,
     input_irreps=(1,),
     input_multiplicities=(1,),
     output_irrep=0,
     max_degree=3,
+    probe_target=lambda dimensions, _output_dimension: dimensions,
+    degree_limit=lambda degree: degree // 2,
     random_seed=random_seed,
     modulus=modulus,
+    first_generator_degree=1,
 )
-assert space_dimensions(trees_by_degree) == hilbert_series_so3(
-    (1,),
-    (1,),
-    0,
-    3,
-)
+assert tuple(map(len, generators)) == hilbert_series_so3((1,), (1,), 0, 3)
 ```
 
 For profiling-style checks, use `benchmarks.benchmark` with the representation
@@ -63,7 +58,6 @@ summary = benchmark(
     input_multiplicities=(2, 1),
     output_irrep=0,
     max_degree=4,
-    trivial_irrep=0,
     random_seed=0,
     modulus=2521,
 )

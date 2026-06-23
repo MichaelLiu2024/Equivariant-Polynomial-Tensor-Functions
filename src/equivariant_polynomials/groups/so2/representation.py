@@ -6,7 +6,7 @@ from functools import cache
 
 import numpy as np
 
-from equivariant_polynomials.core.combinatorics import validate_modulus
+from equivariant_polynomials.core.combinatorics import arithmetic_dtype, validate_modulus
 from equivariant_polynomials.core.types import (
     Partition,
     TensorTrainCore,
@@ -15,6 +15,8 @@ from equivariant_polynomials.core.types import (
 
 class SO2RepresentationTheory:
     """Concrete SO(2) implementation with integer weight labels."""
+
+    trivial_irrep = 0
 
     @staticmethod
     def irrep_dimension(
@@ -50,8 +52,7 @@ class SO2RepresentationTheory:
         """Scalar Clebsch-Gordan tensor for one SO(2) tensor-product core."""
         validate_modulus(modulus)
         value = core.out == core.left + core.right and core.multiplicity == 1
-        dtype = np.complex128 if modulus == 0 else np.uint64
-        tensor = np.asarray([[[value]]], dtype=dtype)
+        tensor = np.asarray([[[value]]], dtype=arithmetic_dtype(modulus))
         tensor.setflags(write=False)
         return tensor
 

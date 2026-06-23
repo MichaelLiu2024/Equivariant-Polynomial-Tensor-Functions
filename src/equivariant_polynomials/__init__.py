@@ -1,81 +1,23 @@
 """Equivariant-polynomial representation-theory algorithms."""
 
-from .core import (
-    Irrep,
-    IsotypicLeaf,
-    Multiplicity,
-    Partition,
-    RepresentationTheory,
-    SSYT,
-    TensorTrain,
-    TensorTrainCore,
-    TensorTree,
-    stream_isotypic_data_tree,
-    cond_mod,
-    conjugate_partition,
-    evaluate_antisymmetrized_tensor_train,
-    evaluate_basis,
-    evaluate_tensor_train,
-    evaluate_young_symmetrized_tensor_tree,
-    extract,
-    extract_independent_generators,
-    integer_partitions,
-    space_dimension,
-    sample_isotypic_input_probes,
-    sample_tensor_power_probes,
-    schur_functor_basis,
-    semistandard_young_tableaux,
-    symmetrized_power_basis,
-    validate_modulus,
-    monomial_waring_grid,
-    monomial_waring_coefficients,
-    tensor_product_basis,
-    weak_compositions,
-)
-from .groups.so3 import (
-    SO3RepresentationTheory,
-    hilbert_series_so3,
-    hilbert_series_so3_multigraded,
-)
-from .groups.so2 import (
-    SO2RepresentationTheory,
-    hilbert_series_so2,
-)
+from . import core as _core
+from .groups import so2 as _so2
+from .groups import so3 as _so3
+from .core import *
+from .groups.so2 import *
+from .groups.so3 import *
+
+_CORE_PRIVATE_EXPORTS = {
+    "compute_syndromes",
+    "pivot_columns",
+    "ragged_multi_index",
+    "row_kronecker_product",
+}
+for _name in _CORE_PRIVATE_EXPORTS:
+    globals().pop(_name, None)
 
 __all__ = (
-    "SO2RepresentationTheory",
-    "SO3RepresentationTheory",
-    "TensorTree",
-    "TensorTrain",
-    "TensorTrainCore",
-    "Multiplicity",
-    "Partition",
-    "SSYT",
-    "Irrep",
-    "RepresentationTheory",
-    "IsotypicLeaf",
-    "integer_partitions",
-    "weak_compositions",
-    "conjugate_partition",
-    "cond_mod",
-    "semistandard_young_tableaux",
-    "stream_isotypic_data_tree",
-    "evaluate_tensor_train",
-    "evaluate_antisymmetrized_tensor_train",
-    "evaluate_basis",
-    "evaluate_young_symmetrized_tensor_tree",
-    "symmetrized_power_basis",
-    "schur_functor_basis",
-    "extract",
-    "space_dimension",
-    "sample_isotypic_input_probes",
-    "sample_tensor_power_probes",
-    "monomial_waring_grid",
-    "monomial_waring_coefficients",
-    "validate_modulus",
-    "tensor_product_basis",
-    "hilbert_series_so2",
-    "hilbert_series_so3",
-    "hilbert_series_so3_multigraded",
-    "extract_independent_generators",
+    *_so2.__all__,
+    *_so3.__all__,
+    *(name for name in _core.__all__ if name not in _CORE_PRIVATE_EXPORTS),
 )

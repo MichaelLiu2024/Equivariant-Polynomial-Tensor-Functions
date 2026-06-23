@@ -9,6 +9,7 @@ from math import comb, perm
 import numpy as np
 
 from equivariant_polynomials.core.combinatorics import (
+    arithmetic_dtype,
     semistandard_young_tableaux,
     validate_modulus,
 )
@@ -64,6 +65,8 @@ def _clebsch_gordan_entry_exact(
 
 class SO3RepresentationTheory:
     """Concrete SO(3) implementation."""
+
+    trivial_irrep = 0
 
     @staticmethod
     def irrep_dimension(
@@ -121,9 +124,8 @@ class SO3RepresentationTheory:
         left = core.left
         right = core.right
         out = core.out
-        dtype = np.complex128 if modulus == 0 else np.uint64
         shape = (2 * left + 1, 2 * right + 1, 2 * out + 1)
-        tensor = np.zeros(shape, dtype=dtype)
+        tensor = np.zeros(shape, dtype=arithmetic_dtype(modulus))
         r = left + right - out
 
         if modulus == 0:

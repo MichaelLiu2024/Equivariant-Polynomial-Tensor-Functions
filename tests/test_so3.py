@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from equivariant_polynomials.core.evaluators import (
     evaluate_antisymmetrized_tensor_train,
@@ -70,7 +71,15 @@ def test_clebsch_gordan_tensor_realizations_shape_and_cache_contract() -> None:
     )
 
 
-def test_evaluate_tensor_train_uses_requested_clebsch_gordan_realization() -> None:
+@pytest.mark.parametrize(
+    ("modulus", "dtype", "expected"),
+    [(0, np.complex128, 2.5), (7, np.uint64, 6)],
+)
+def test_evaluate_tensor_train_uses_requested_clebsch_gordan_realization(
+    modulus,
+    dtype,
+    expected,
+) -> None:
     class Theory:
         def clebsch_gordan_tensor(
             self,
@@ -84,31 +93,16 @@ def test_evaluate_tensor_train_uses_requested_clebsch_gordan_realization() -> No
     theory = Theory()
     core = TensorTrainCore(0, 0, 0, 1)
 
-    complex_value = evaluate_tensor_train(
+    value = evaluate_tensor_train(
         theory,
         (core,),
-        (
-            np.ones((1, 1), dtype=np.complex128),
-            np.ones((1, 1), dtype=np.complex128),
-        ),
-        0,
-        "batch",
-    )
-    modular_value = evaluate_tensor_train(
-        theory,
-        (core,),
-        (
-            np.ones((1, 1), dtype=np.uint64),
-            np.ones((1, 1), dtype=np.uint64),
-        ),
-        7,
+        (np.ones((1, 1), dtype=dtype), np.ones((1, 1), dtype=dtype)),
+        modulus,
         "batch",
     )
 
-    assert complex_value.dtype == np.complex128
-    assert np.array_equal(complex_value, np.asarray([[2.5]], dtype=np.complex128))
-    assert modular_value.dtype == np.uint64
-    assert np.array_equal(modular_value, np.asarray([[6]], dtype=np.uint64))
+    assert value.dtype == dtype
+    assert np.array_equal(value, np.asarray([[expected]], dtype=dtype))
 
 
 def test_batch_multi_appends_factor_axes_in_tensor_train_order() -> None:
@@ -265,6 +259,25 @@ def test_young_symmetrized_tensor_tree_shares_row_waring_choices() -> None:
     expected = np.asarray([[(2 * 2 * 3) % modulus]], dtype=np.uint64)
 
     assert value.shape == (1, 1)
+    assert np.array_equal(value, expected)
+
+
+def test_young_symmetrized_single_label_row_has_factorial_weight() -> None:
+    theory = SO3RepresentationTheory()
+    modulus = 17
+    probe_batches = np.asarray([[[3]], [[5]]], dtype=np.uint64)
+    ssyt = SSYT(((0,),), ((2,),))
+
+    value = evaluate_young_symmetrized_tensor_tree(
+        theory,
+        TensorTree((TensorTrainCore(0, 0, 0, 1),), ((), ())),
+        ssyt,
+        probe_batches,
+        modulus,
+    )
+    expected = (2 * probe_batches[:, 0, :] * probe_batches[:, 0, :]) % modulus
+
+    assert value.shape == (2, 1)
     assert np.array_equal(value, expected)
 
 

@@ -1,5 +1,5 @@
 """Benchmark helpers."""
 
-from .benchmark import BenchmarkSummary, benchmark
+from .benchmark import benchmark
 
-__all__ = ("BenchmarkSummary", "benchmark")
+__all__ = ("benchmark",)

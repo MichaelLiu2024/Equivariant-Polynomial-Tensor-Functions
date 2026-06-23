@@ -19,9 +19,8 @@ MultigradedHilbertSeries = Callable[
     [tuple[Irrep, ...], tuple[int, ...], Irrep, tuple[int, ...]],
     dict[tuple[int, ...], int],
 ]
-BenchmarkSummary = dict[str, object]
 
-__all__ = ("BenchmarkSummary", "benchmark")
+__all__ = ("benchmark",)
 
 MINIMAL_INTEGRITY_BASIS_SIZE_DATA = {
     ((1,), (1,), 0): (0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
@@ -62,13 +61,13 @@ def benchmark(
     input_multiplicities: tuple[int, ...],
     output_irrep: Irrep,
     max_degree: int,
-    trivial_irrep: Irrep,
     random_seed: int,
     modulus: int,
     hilbert_series_multigraded: MultigradedHilbertSeries | None = None,
 ):
     """Run a basis-construction benchmark and report generator counts by degree."""
     total_start = perf_counter()
+    trivial_irrep = theory.trivial_irrep
     max_multidegree = (max_degree,) * len(input_irreps)
 
     def run_generators(
@@ -102,7 +101,6 @@ def benchmark(
             theory,
             input_irreps,
             input_multiplicities,
-            trivial_irrep,
             target_irrep,
             max_degree,
             probe_target,
@@ -110,7 +108,6 @@ def benchmark(
             random_seed=random_seed,
             modulus=modulus,
             first_generator_degree=first_generator_degree,
-            target_dimensions_by_degree=dimensions,
             target_dimensions_by_multidegree=dimensions_by_multidegree,
         )
         seconds = perf_counter() - step_start
@@ -136,7 +133,6 @@ def benchmark(
             "input_irreps": input_irreps,
             "input_multiplicities": input_multiplicities,
             "output_irrep": output_irrep,
-            "trivial_irrep": trivial_irrep,
             "max_degree": max_degree,
             "random_seed": random_seed,
             "modulus": modulus,

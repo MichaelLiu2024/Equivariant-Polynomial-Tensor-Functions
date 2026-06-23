@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections import Counter
 
+from equivariant_polynomials.core.combinatorics import _validate_input_metadata
+
 
 def hilbert_series_so2(
     input_irreps: tuple[int, ...],
@@ -12,15 +14,15 @@ def hilbert_series_so2(
     max_degree: int,
 ) -> tuple[int, ...]:
     """Multiplicity of H_output_irrep in Sym^d(sum_i m_i H_lambda_i)."""
-    if len(input_irreps) != len(input_multiplicities):
-        raise ValueError("input_irreps and input_multiplicities must have equal length")
-    if max_degree < 0:
-        raise ValueError("max_degree must be nonnegative")
+    _validate_input_metadata(
+        input_irreps,
+        input_multiplicities,
+        max_degree=max_degree,
+        require_inputs=False,
+    )
 
     multiplicity_by_weight: Counter[int] = Counter()
     for weight, multiplicity in zip(input_irreps, input_multiplicities):
-        if multiplicity <= 0:
-            raise ValueError("input multiplicities must be positive")
         multiplicity_by_weight[weight] += multiplicity
 
     by_degree: list[dict[int, int]] = [{} for _ in range(max_degree + 1)]
