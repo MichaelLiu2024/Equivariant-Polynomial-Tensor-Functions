@@ -19,9 +19,7 @@ class SO2RepresentationTheory:
     trivial_irrep = 0
 
     @staticmethod
-    def irrep_dimension(
-        irrep: int,
-    ) -> int:
+    def irrep_dimension(irrep: int) -> int:
         return 1
 
     @staticmethod

@@ -24,9 +24,8 @@ from equivariant_polynomials import (
 )
 ```
 
-Finite-field examples use a prime `modulus=p`.  For computations through
-`max_degree`, choose `p > max_degree`; the current practical heuristic is
-`1000 < p < 10000`, for example `p = 2521`.
+Finite-field examples use a prime `modulus=p` with `p > max_degree`.  See
+[docs/usage.md](docs/usage.md) for modulus-selection guidance.
 
 ## Layout
 
@@ -39,4 +38,4 @@ Finite-field examples use a prime `modulus=p`.  For computations through
 - `tests/` contains lightweight regression and smoke tests.
 - `benchmarks/benchmark.py` contains the group-agnostic benchmark helper.
 - `docs/` contains installation, usage, and theory notes.
-- `notebooks/` contains profiling and example notebooks.
+- `notebooks/` contains a profiling and benchmarking notebook (`benchmarking.ipynb`).

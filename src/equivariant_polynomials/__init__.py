@@ -1,23 +1,48 @@
-"""Equivariant-polynomial representation-theory algorithms."""
+"""Equivariant-polynomial representation-theory algorithms.
 
-from . import core as _core
-from .groups import so2 as _so2
-from .groups import so3 as _so3
-from .core import *
-from .groups.so2 import *
-from .groups.so3 import *
+A group ``RepresentationTheory`` backend (``groups/``) drives the group-agnostic
+``core`` pipeline: stream an isotypic data tree (``isotypic``), build abstract
+tensor bases (``bases``), evaluate them with random probes (``evaluators``), and
+extract minimal homogeneous generators from the syndromes (``generators``). The
+main entry points are ``stream_isotypic_data_tree`` and
+``extract_independent_generators``.
+"""
 
-_CORE_PRIVATE_EXPORTS = {
-    "compute_syndromes",
-    "pivot_columns",
-    "ragged_multi_index",
-    "row_kronecker_product",
-}
-for _name in _CORE_PRIVATE_EXPORTS:
-    globals().pop(_name, None)
+from .core import (
+    Irrep,
+    IsotypicLeaf,
+    Partition,
+    RepresentationTheory,
+    SSYT,
+    TensorTrain,
+    TensorTrainCore,
+    TensorTree,
+    extract_independent_generators,
+    stream_isotypic_data_tree,
+    weak_compositions,
+)
+from .groups.so2 import SO2RepresentationTheory, hilbert_series_so2
+from .groups.so3 import (
+    SO3RepresentationTheory,
+    hilbert_series_so3,
+    hilbert_series_so3_multigraded,
+)
 
 __all__ = (
-    *_so2.__all__,
-    *_so3.__all__,
-    *(name for name in _core.__all__ if name not in _CORE_PRIVATE_EXPORTS),
+    "RepresentationTheory",
+    "SO2RepresentationTheory",
+    "SO3RepresentationTheory",
+    "extract_independent_generators",
+    "stream_isotypic_data_tree",
+    "hilbert_series_so2",
+    "hilbert_series_so3",
+    "hilbert_series_so3_multigraded",
+    "weak_compositions",
+    "Irrep",
+    "Partition",
+    "SSYT",
+    "TensorTrain",
+    "TensorTrainCore",
+    "TensorTree",
+    "IsotypicLeaf",
 )

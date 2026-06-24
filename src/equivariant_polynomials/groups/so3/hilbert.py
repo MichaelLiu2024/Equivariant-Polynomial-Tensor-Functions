@@ -2,58 +2,9 @@
 
 from __future__ import annotations
 
-from collections import Counter
 from math import comb
 
 from equivariant_polynomials.core.combinatorics import _validate_input_metadata
-
-
-def hilbert_series_so3(
-    input_irreps: tuple[int, ...],
-    input_multiplicities: tuple[int, ...],
-    output_irrep: int,
-    max_degree: int,
-) -> tuple[int, ...]:
-    """Multiplicity of V_output_irrep in Sym^d(sum_i m_i V_l_i), d <= max_degree."""
-    W = max_degree * max(input_irreps)
-
-    if output_irrep > W:
-        return (0,) * (max_degree + 1)
-
-    offset = W + 1
-    width = 2 * W + 3
-
-    polys = [[0] * width for _ in range(max_degree + 1)]
-    polys[0][offset] = 1
-
-    weights: Counter[int] = Counter()
-    for ell, mult in zip(input_irreps, input_multiplicities):
-        for w in range(-ell, ell + 1):
-            weights[w] += mult
-
-    binoms = {
-        mult: [comb(c + mult - 1, mult - 1) for c in range(max_degree + 1)]
-        for mult in set(weights.values())
-    }
-
-    for w, mult in weights.items():
-        next_polys = [[0] * width for _ in range(max_degree + 1)]
-        b = binoms[mult]
-
-        for d0, row in enumerate(polys):
-            terms = [(i, a) for i, a in enumerate(row) if a]
-            for c in range(max_degree - d0 + 1):
-                target = next_polys[d0 + c]
-                shift = c * w
-                coeff = b[c]
-
-                for i, a in terms:
-                    target[i + shift] += a * coeff
-
-        polys = next_polys
-
-    i = offset + output_irrep
-    return tuple(row[i] - row[i + 1] for row in polys)
 
 
 def _block_weight_polys_so3(
@@ -61,18 +12,18 @@ def _block_weight_polys_so3(
     multiplicity: int,
     max_degree: int,
 ) -> tuple[dict[int, int], ...]:
+    """Weight distribution of Sym^c of ``multiplicity`` copies of V_ell, c in 0..max_degree."""
     by_degree: list[dict[int, int]] = [{} for _ in range(max_degree + 1)]
     by_degree[0][0] = 1
 
+    # dim Sym^c of a ``multiplicity``-dimensional weight space (stars and bars).
     coeffs = tuple(
         comb(count + multiplicity - 1, multiplicity - 1)
         for count in range(max_degree + 1)
     )
 
     for weight in range(-ell, ell + 1):
-        next_by_degree: list[dict[int, int]] = [
-            {} for _ in range(max_degree + 1)
-        ]
+        next_by_degree: list[dict[int, int]] = [{} for _ in range(max_degree + 1)]
         for degree0, weights0 in enumerate(by_degree):
             if not weights0:
                 continue
@@ -126,6 +77,30 @@ def hilbert_series_so3_multigraded(
         alpha: weights.get(output_irrep, 0) - weights.get(output_irrep + 1, 0)
         for alpha, weights in by_multidegree.items()
     }
+
+
+def hilbert_series_so3(
+    input_irreps: tuple[int, ...],
+    input_multiplicities: tuple[int, ...],
+    output_irrep: int,
+    max_degree: int,
+) -> tuple[int, ...]:
+    """Multiplicity of V_output_irrep in Sym^d(sum_i m_i V_l_i) for each d <= max_degree.
+
+    The multigraded series summed over all multidegrees of equal total degree.
+    """
+    multigraded = hilbert_series_so3_multigraded(
+        input_irreps,
+        input_multiplicities,
+        output_irrep,
+        (max_degree,) * len(input_irreps),
+    )
+    totals = [0] * (max_degree + 1)
+    for multidegree, value in multigraded.items():
+        degree = sum(multidegree)
+        if degree <= max_degree:
+            totals[degree] += value
+    return tuple(totals)
 
 
 __all__ = ("hilbert_series_so3", "hilbert_series_so3_multigraded")

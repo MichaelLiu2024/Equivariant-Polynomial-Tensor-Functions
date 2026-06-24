@@ -7,8 +7,7 @@ from equivariant_polynomials.core.evaluators import (
     evaluate_antisymmetrized_tensor_train,
     evaluate_tensor_train,
     evaluate_young_symmetrized_tensor_tree,
-    monomial_waring_coefficients,
-    monomial_waring_grid,
+    monomial_waring_data,
     sample_isotypic_input_probes,
 )
 from equivariant_polynomials.core.types import SSYT, TensorTrainCore, TensorTree
@@ -207,21 +206,19 @@ def test_young_symmetrized_tensor_tree_preserves_probe_first_layout() -> None:
         probe_batches,
         modulus,
     )
-    grid = monomial_waring_grid((1, 1), modulus)
+    grid, coeff = monomial_waring_data((1, 1), modulus)
     sym = np.einsum("rk,pkv->prv", grid, probe_batches[:, (0, 2), :]) % modulus
-    coeff = monomial_waring_coefficients((1, 1), modulus)
     expected = np.tensordot(sym, coeff, axes=([1], [0])) % modulus
 
     assert value.shape == (2, 4)
     assert np.array_equal(value, expected)
 
 
-def test_monomial_waring_grid_uses_finite_difference_rows() -> None:
+def test_monomial_waring_data_uses_finite_difference_rows() -> None:
     modulus = 7
     powers = (2, 1)
     x = np.asarray([3, 5], dtype=np.uint64)
-    grid = monomial_waring_grid(powers, modulus)
-    coeff = monomial_waring_coefficients(powers, modulus)
+    grid, coeff = monomial_waring_data(powers, modulus)
     value = np.sum(coeff * ((grid @ x) % modulus) ** sum(powers)) % modulus
     expected = (6 * (3**2) * 5) % modulus
 
@@ -230,11 +227,10 @@ def test_monomial_waring_grid_uses_finite_difference_rows() -> None:
     assert value == expected
 
 
-def test_complex_monomial_waring_grid_uses_finite_differences() -> None:
+def test_complex_monomial_waring_data_uses_finite_differences() -> None:
     powers = (2, 1)
     x = np.asarray([3, 5], dtype=np.complex128)
-    grid = monomial_waring_grid(powers, 0)
-    coeff = monomial_waring_coefficients(powers, 0)
+    grid, coeff = monomial_waring_data(powers, 0)
     value = np.sum(coeff * ((grid @ x) ** sum(powers)))
     expected = 6 * (3**2) * 5
 

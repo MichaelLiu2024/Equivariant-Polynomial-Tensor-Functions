@@ -60,24 +60,24 @@ def independent_column_indices(
 
 
 def stream_independent_candidates(
-    candidates: Sequence[_T],
+    candidate_batches: Iterable[tuple[_T, ...]],
     evaluate_batch: Callable[[tuple[_T, ...]], np.ndarray],
     dimension: int,
     row_count: int,
     modulus: int,
-    random_seed: int,
-    batch_size: int = STREAM_BATCH_SIZE,
 ) -> tuple[tuple[_T, ...], int]:
+    """Select ``dimension`` independent candidates from a stream of batches.
+
+    Batches are consumed lazily in the order supplied, so a randomized
+    generator lets selection stop long before the full candidate space is
+    materialized.
+    """
     basis = np.empty((row_count, 0), dtype=arithmetic_dtype(modulus))
     selected: list[_T] = []
     last_rank = 0
 
-    for candidate_batch in shuffled_stream_batches(
-        candidates,
-        random_seed,
-        batch_size,
-    ):
-        columns = evaluate_batch(candidate_batch)
+    for batch in candidate_batches:
+        columns = evaluate_batch(batch)
         selection = independent_column_indices(
             basis,
             columns,
@@ -88,7 +88,7 @@ def stream_independent_candidates(
         if not selection.indices:
             continue
 
-        selected.extend(candidate_batch[index] for index in selection.indices)
+        selected.extend(batch[index] for index in selection.indices)
         if len(selected) < dimension:
             basis = np.concatenate(
                 (basis, columns[:, selection.indices]),

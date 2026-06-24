@@ -71,7 +71,7 @@ class _LazyContentLeaves:
             )
 
 
-def compute_syndromes(
+def _compute_syndromes(
     theory: RepresentationTheory,
     polynomials: tuple[IsotypicLeaf, ...],
     probe_batches: tuple[np.ndarray, ...],
@@ -85,7 +85,7 @@ def compute_syndromes(
     zero basis columns.
     """
     if not polynomials:
-        return _empty_syndromes(probe_batches[0].shape[0], output_dimension, modulus)
+        return _empty_syndromes((probe_batches[0].shape[0], output_dimension, 0), modulus)
 
     if young_tree_cache is None:
         young_tree_cache = {}
@@ -200,7 +200,7 @@ def extract_independent_generators(
     def invariant_syndromes(content: Content) -> np.ndarray:
         group = invariant_content_group_map.get(content)
         return (
-            _empty_syndromes(max_probes, 1, modulus)
+            _empty_syndromes((max_probes, 1, 0), modulus)
             if group is None
             else _stream_syndromes(
                 theory,
@@ -295,13 +295,9 @@ def _content_leaf_groups(
                 )
             )
             for content_parts in product(*tableau_groups_by_input):
+                content_counts, content_tableaux = zip(*content_parts)
                 content = tuple(
-                    count
-                    for content_part, _tableaux in content_parts
-                    for count in content_part
-                )
-                content_tableaux = tuple(
-                    tableaux for _content_part, tableaux in content_parts
+                    count for counts in content_counts for count in counts
                 )
                 dimension = len(source.interior_tensor_trains) * math.prod(
                     tree_count * len(tableaux)
@@ -393,11 +389,11 @@ def _previous_content_product_basis(
             )
 
     if not previous_blocks or row_count == 0:
-        return _empty_flat_syndromes(row_count, modulus)
+        return _empty_syndromes((row_count, 0), modulus)
 
     previous = np.concatenate(previous_blocks, axis=-1).reshape(row_count, -1)
     pivots = pivot_columns(previous, modulus)
-    return previous[:, pivots] if pivots else _empty_flat_syndromes(row_count, modulus)
+    return previous[:, pivots] if pivots else _empty_syndromes((row_count, 0), modulus)
 
 
 def _stream_content_generators(
@@ -425,10 +421,9 @@ def _stream_content_generators(
         output_dimension,
         young_tree_cache,
     ):
-        batch_columns = batch_syndromes.shape[-1]
         linear_indices = independent_column_indices(
             current_basis,
-            batch_syndromes.reshape((-1, batch_columns)),
+            batch_syndromes.reshape((-1, batch_syndromes.shape[-1])),
             needed - len(selected_generators),
             modulus,
         ).indices
@@ -451,7 +446,7 @@ def _stream_content_generators(
             )
 
         if max_probes != num_probes:
-            extra = compute_syndromes(
+            extra = _compute_syndromes(
                 theory,
                 new_generators,
                 tuple(batch[num_probes:, :, :] for batch in probe_batches),
@@ -497,7 +492,7 @@ def _stream_syndromes(
     return (
         np.concatenate(blocks, axis=-1)
         if blocks
-        else _empty_syndromes(probe_batches[0].shape[0], output_dimension, modulus)
+        else _empty_syndromes((probe_batches[0].shape[0], output_dimension, 0), modulus)
     )
 
 
@@ -510,7 +505,7 @@ def _syndrome_batches(
     young_tree_cache: dict[Hashable, np.ndarray],
 ) -> Iterator[tuple[tuple[IsotypicLeaf, ...], np.ndarray]]:
     for leaf_batch in stream_batches(leaves):
-        syndromes = compute_syndromes(
+        syndromes = _compute_syndromes(
             theory,
             leaf_batch,
             probe_batches,
@@ -522,12 +517,9 @@ def _syndrome_batches(
             yield leaf_batch, syndromes
 
 
-def _empty_flat_syndromes(row_count: int, modulus: int) -> np.ndarray:
-    return np.empty((row_count, 0), dtype=arithmetic_dtype(modulus))
+def _empty_syndromes(shape: tuple[int, ...], modulus: int) -> np.ndarray:
+    """Zero-column syndrome array; ``shape`` ends in ``0`` (flat or probe x output)."""
+    return np.empty(shape, dtype=arithmetic_dtype(modulus))
 
 
-def _empty_syndromes(probe_count: int, output_dimension: int, modulus: int) -> np.ndarray:
-    return np.empty((probe_count, output_dimension, 0), dtype=arithmetic_dtype(modulus))
-
-
-__all__ = ("DegreeLimit", "ProbeTarget", "compute_syndromes", "extract_independent_generators")
+__all__ = ("DegreeLimit", "ProbeTarget", "extract_independent_generators")

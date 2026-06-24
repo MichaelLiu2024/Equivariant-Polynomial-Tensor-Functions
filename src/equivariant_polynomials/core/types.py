@@ -12,9 +12,6 @@ Partition: TypeAlias = tuple[int, ...]
 Irrep: TypeAlias = Any
 """Concrete irreducible-representation label supplied by a group backend."""
 
-Multiplicity: TypeAlias = Any
-"""Multiplicity label selecting one copy of an irrep inside a decomposition."""
-
 
 @dataclass(frozen=True, slots=True)
 class SSYT:
@@ -36,7 +33,7 @@ class TensorTrainCore:
     left: Irrep
     right: Irrep
     out: Irrep
-    multiplicity: Multiplicity
+    multiplicity: int
 
 
 TensorTrain: TypeAlias = tuple[TensorTrainCore, ...]
@@ -70,9 +67,8 @@ class IsotypicLeaf:
 
 __all__ = (
     "Partition",
-    "SSYT",
     "Irrep",
-    "Multiplicity",
+    "SSYT",
     "TensorTrainCore",
     "TensorTrain",
     "TensorTree",

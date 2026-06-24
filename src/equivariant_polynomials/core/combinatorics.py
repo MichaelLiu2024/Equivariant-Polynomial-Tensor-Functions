@@ -9,7 +9,7 @@ from itertools import accumulate
 import numpy as np
 import sympy as sp
 from sympy.utilities.iterables import partitions
-from flint import nmod_mat
+from flint import fmpz_mat, nmod_mat
 
 from .types import Partition, SSYT
 
@@ -135,7 +135,13 @@ def pivot_columns(
 ) -> tuple[int, ...]:
     if modulus == 0:
         return sp.Matrix(A).rref()[1]
-    M = nmod_mat(*A.shape, A.ravel().tolist(), modulus)
+    # Build the flint matrix from a 2-D list (marginally faster construction
+    # than a flat list plus explicit shape); keep the explicit-shape path for
+    # degenerate empty matrices, which a 2-D ``tolist`` cannot describe.
+    if A.shape[0] and A.shape[1]:
+        M = nmod_mat(fmpz_mat(A.tolist()), modulus)
+    else:
+        M = nmod_mat(fmpz_mat(*A.shape, A.ravel().tolist()), modulus)
     R, rank = M.rref(inplace=True)
 
     num_cols = A.shape[1]
@@ -245,8 +251,6 @@ def semistandard_young_tableaux(
 
 
 __all__ = (
-    "Partition",
-    "SSYT",
     "integer_partitions",
     "weak_compositions",
     "conjugate_partition",

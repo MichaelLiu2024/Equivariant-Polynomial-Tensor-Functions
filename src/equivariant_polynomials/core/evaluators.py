@@ -175,18 +175,6 @@ def evaluate_antisymmetrized_tensor_train(
     return evaluate(theory, cores, vectors, permutations, modulus)
 
 
-def _signed_weights(
-    permutations: tuple[tuple[int, tuple[int, ...]], ...],
-    modulus: int,
-    dtype: np.dtype,
-) -> np.ndarray:
-    weights = (
-        sign if sign > 0 else modulus - 1
-        for sign, _ in permutations
-    )
-    return np.fromiter(weights, dtype=dtype, count=len(permutations))
-
-
 def _transpose_permuted_factors(
     value: np.ndarray,
     permutation: tuple[int, ...],
@@ -227,7 +215,11 @@ def _evaluate_antisymmetrized_tensor_train_batch(
         for i in range(len(vectors))
     )
     values = evaluate_tensor_train(theory, cores, stacked, modulus, "batch")
-    weights = _signed_weights(permutations, modulus, values.dtype)
+    weights = np.fromiter(
+        (sign if sign > 0 else modulus - 1 for sign, _ in permutations),
+        dtype=values.dtype,
+        count=len(permutations),
+    )
     return cond_mod(np.tensordot(values, weights, axes=((1,), (0,))), modulus)
 
 
@@ -269,10 +261,7 @@ def _evaluate_antisymmetrized_tensor_train_batch_multi(
                 permutation,
                 factor_ndims,
             )
-            if sign < 0:
-                np.add(result, modulus - value, out=result)
-            else:
-                np.add(result, value, out=result)
+            np.add(result, value if sign > 0 else modulus - value, out=result)
         result = cond_mod(result, modulus)
     if result is None:
         raise ValueError("antisymmetrizer has no permutations")
@@ -341,23 +330,12 @@ def _signed_permutations(
 
 
 @cache
-def monomial_waring_grid(
+def monomial_waring_data(
     powers: tuple[int, ...],
     modulus: int,
-) -> np.ndarray:
-    """Finite-difference CP grid for the Waring expansion of one monomial."""
-    columns = tuple(range(degree + 1) for degree in powers)
-    out = np.asarray(tuple(product(*columns)), dtype=arithmetic_dtype(modulus))
-    out.setflags(write=False)
-    return out
-
-
-@cache
-def monomial_waring_coefficients(
-    powers: tuple[int, ...],
-    modulus: int,
-) -> np.ndarray:
-    """Finite-difference coefficients matching ``monomial_waring_grid``."""
+) -> tuple[np.ndarray, np.ndarray]:
+    """Finite-difference CP grid and coefficients for one monomial."""
+    dtype = arithmetic_dtype(modulus)
     rows = tuple(product(*(range(degree + 1) for degree in powers)))
     coefficients = []
     for row in rows:
@@ -368,9 +346,11 @@ def monomial_waring_coefficients(
                 coefficient = -coefficient
         coefficients.append(coefficient if modulus == 0 else coefficient % modulus)
 
-    out = np.asarray(coefficients, dtype=arithmetic_dtype(modulus))
-    out.setflags(write=False)
-    return out
+    grid = np.asarray(rows, dtype=dtype)
+    coeff = np.asarray(coefficients, dtype=dtype)
+    grid.setflags(write=False)
+    coeff.setflags(write=False)
+    return grid, coeff
 
 
 @cache
@@ -379,10 +359,7 @@ def _young_row_waring_data(
     modulus: int,
 ) -> tuple[np.ndarray, np.ndarray]:
     if len(powers) != 1:
-        return monomial_waring_grid(powers, modulus), monomial_waring_coefficients(
-            powers,
-            modulus,
-        )
+        return monomial_waring_data(powers, modulus)
 
     dtype = arithmetic_dtype(modulus)
     grid = np.ones((1, 1), dtype=dtype)
@@ -646,6 +623,5 @@ __all__ = (
     "evaluate_antisymmetrized_tensor_train",
     "evaluate_young_symmetrized_tensor_tree",
     "evaluate_basis",
-    "monomial_waring_grid",
-    "monomial_waring_coefficients",
+    "monomial_waring_data",
 )

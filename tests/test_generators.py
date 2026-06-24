@@ -95,8 +95,7 @@ def test_probe_counts_are_copy_content_local(monkeypatch) -> None:
     ):
         streamed_probe_counts.append((num_probes, max_probes))
         return (), generator_core._empty_syndromes(
-            max_probes,
-            output_dimension,
+            (max_probes, output_dimension, 0),
             modulus,
         )
 
@@ -170,7 +169,7 @@ def test_stream_content_generators_evaluates_fixed_leaf_batches(
 
     monkeypatch.setattr(
         generator_core,
-        "compute_syndromes",
+        "_compute_syndromes",
         fake_compute_syndromes,
     )
 

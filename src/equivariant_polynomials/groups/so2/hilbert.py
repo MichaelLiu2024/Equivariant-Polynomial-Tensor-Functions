@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from math import comb
 
 from equivariant_polynomials.core.combinatorics import _validate_input_metadata
 
@@ -29,11 +30,10 @@ def hilbert_series_so2(
     by_degree[0][0] = 1
 
     for weight, multiplicity in multiplicity_by_weight.items():
-        coeffs = [1] * (max_degree + 1)
-        for count in range(1, max_degree + 1):
-            coeffs[count] = coeffs[count - 1] * (count + multiplicity - 1) // count
-
-        shifts = [count * weight for count in range(max_degree + 1)]
+        coeffs = [
+            comb(count + multiplicity - 1, multiplicity - 1)
+            for count in range(max_degree + 1)
+        ]
         next_by_degree: list[dict[int, int]] = [{} for _ in range(max_degree + 1)]
 
         for degree, weights in enumerate(by_degree):
@@ -41,7 +41,7 @@ def hilbert_series_so2(
                 continue
             for total_weight, value in weights.items():
                 for count in range(max_degree - degree + 1):
-                    shifted_weight = total_weight + shifts[count]
+                    shifted_weight = total_weight + count * weight
                     target = next_by_degree[degree + count]
                     target[shifted_weight] = (
                         target.get(shifted_weight, 0) + value * coeffs[count]

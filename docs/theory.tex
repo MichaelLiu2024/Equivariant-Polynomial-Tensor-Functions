@@ -232,7 +232,7 @@
   To compute minimal integrity bases, we first enumerate vector space bases for the invariant algebra and covariant module as candidate generators.
   Then, we apply the graded Nakayama lemma to extract independent generators degree by degree.
   We implement our algorithms in full generality: given explicit isotypic decompositions for the input and output representations, as well as explicit Clebsch--Gordan decompositions for the tensor product of irreducible representations, our algorithms work for any linearly reductive group.
-  In particular, we provide end-to-end implementations for the groups $\SO(2)$, $\SO(3)$, and $S_d$, and we sketch representative applications.
+  In particular, we provide end-to-end implementations for the groups $\SO(2)$, $\SO(3)$, $O(2)$, and $O(3)$. We also discuss how to enforce translation and permutation equivariance within our framework.
   Our code is available on GitHub at \href{https://github.com/MichaelLiu2024/Equivariant-Polynomial-Tensor-Functions}{\texttt{github.com/MichaelLiu2024/Equivariant-Polynomial-Tensor-Functions}}.
 
 \end{abstract}
@@ -333,6 +333,7 @@ Section~\ref{sec:examples} works through representative examples in more detail.
 Section~\ref{sec:conclusion} summarizes our work and suggests directions for future work.
 Appendix~\ref{sec:appendix-proofs} provides proofs of our results.
 Appendix~\ref{sec:appendix-implementation} describes implementation details, including shortcuts for the case $G = \SO(3)$.
+Appendix~\ref{sec:appendix-copy-permutation-equivariance} explains how to enforce copy permutation equivariance.
 
 \section{Theory and Algorithms}\label{sec:theory-and-algorithms}
 
@@ -2625,52 +2626,6 @@ For tensor-product constituents, the backend applies \eqref{eq:so3-Clebsch--Gord
 For tensor-train evaluation, it uses the Clebsch--Gordan tensors fixed in \eqref{eq:so3-wigner-3j}, evaluating an equivalent integer formula for the coefficients.
 The finite-field evaluator then reduces those integer tensor entries modulo the active prime.
 
-\begin{example}[$\SO(3)$ small-degree shortcuts]\label{ex:so3-small-degree-shortcuts}
-  For small exterior and symmetric powers, the $\SO(3)$ backend may bypass the general rank-selection procedure and use explicit formulas.
-  These shortcuts are not part of the general contract; they only improve efficiency in low degrees.
-
-  For $\lambda\in\set{0,\dots,3}$, one has
-  \[
-    \Lambda^0(H_\lambda)\cong H_0,
-    \quad
-    \Lambda^1(H_\lambda)\cong H_\lambda,
-    \quad
-    \Lambda^2(H_\lambda)\cong \bigoplus_{j=0}^{\lambda-1} H_{2\lambda-2j-1}.
-  \]
-  For the third exterior power,
-  \[
-    \Lambda^3(H_0)=0,
-    \quad
-    \Lambda^3(H_1)\cong H_0,
-    \quad
-    \Lambda^3(H_2)\cong H_3\oplus H_1,
-  \]
-  \[
-    \Lambda^3(H_3)\cong H_6\oplus H_4\oplus H_3\oplus H_2\oplus H_0.
-  \]
-  For symmetric powers,
-  \[
-    \scS^0(H_\lambda)\cong H_0,
-    \quad
-    \scS^1(H_\lambda)\cong H_\lambda,
-    \quad
-    \scS^2(H_\lambda)\cong \bigoplus_{j=0}^{\lambda} H_{2\lambda-2j},
-  \]
-  and
-  \[
-    \scS^3(H_0)\cong H_0,
-    \quad
-    \scS^3(H_1)\cong H_3\oplus H_1,
-    \quad
-    \scS^3(H_2)\cong H_6\oplus H_4\oplus H_3\oplus H_2\oplus H_0,
-  \]
-  \[
-    \scS^3(H_3)\cong H_9\oplus H_7\oplus H_6\oplus H_5\oplus H_4\oplus 2H_3\oplus H_1.
-  \]
-  These decompositions follow by applying \eqref{eq:so3-schur-multiplicity} to the partitions $(1,1)$, $(1,1,1)$, $(2)$, and $(3)$.
-  The only listed multiplicity greater than $1$ is the term $2H_3$ in $\scS^3(H_3)$.
-\end{example}
-
 \begin{example}[$\SO(3)$ Hilbert-series shortcut]\label{ex:so3-hilbert-shortcut}
   The specialized routine \texttt{hilbert\_series\_so3} computes
   \[
@@ -2686,6 +2641,70 @@ The finite-field evaluator then reduces those integer tensor entries modulo the 
   The coefficient of $t^Dq^m$ is the weight-$m$ multiplicity in $\scS^D(X)$, and the multiplicity of $H_\nu$ is the difference between the weight-$\nu$ and weight-$(\nu+1)$ multiplicities.
   This is an $\SO(3)$-specific fast path used to size random probe batches; the abstract algorithm can instead use the dimensions obtained directly from the constructed data trees.
 \end{example}
+
+\section{Copy permutation equivariance}\label{sec:appendix-copy-permutation-equivariance}
+
+Assume that, in the isotypic decomposition
+\[
+  X\cong\bigoplus_\lambda H_\lambda\otimes X_\lambda,
+\]
+each multiplicity space is the permutation representation of $\mathfrak S_{m_\lambda}$:
+\[
+  X_\lambda\cong \dsC^{m_\lambda}
+  \cong
+  \mathbf{1}_\lambda\oplus \operatorname{Std}_\lambda,
+\]
+where $\mathfrak S_{m_\lambda}$ permutes the standard basis of $\dsC^{m_\lambda}$.
+Set
+\[
+  K\coloneq \prod_\lambda \mathfrak S_{m_\lambda}.
+\]
+For $\sigma=(\sigma_\lambda)_\lambda\in K$, define
+\[
+  \sigma\cdot(h\otimes x_\lambda)
+  =
+  h\otimes (\sigma_\lambda x_\lambda),
+  \qquad
+  h\in H_\lambda,\quad x_\lambda\in X_\lambda.
+\]
+This action commutes with $G$, since $G$ acts only on the $H_\lambda$-factors.
+
+Equip $H_\nu$ with the trivial $K$-action.
+On the Hom side of the construction, imposing copy permutation equivariance means taking
+\[
+  \operatorname{Hom}_{G\times K}\!\left(H_\nu,\scS^D(X)\right)
+  =
+  \HomG{H_\nu}{\scS^D(X)}^K.
+\]
+In each summand of Eq.~\eqref{eq:isotypic-decomposition}, $K$ acts trivially on
+\[
+  \HomG{H_\nu}{\bigotimes_\lambda H_{\mu_\lambda}},
+  \qquad
+  \HomG{H_{\mu_\lambda}}{e_{\pi_\lambda}(H_\lambda^{\otimes d_\lambda})},
+\]
+so the only change is on the Schur-side multiplicity factor:
+\[
+  \bigotimes_\lambda e_{\pi_\lambda}^*(X_\lambda^{\otimes d_\lambda})
+  \quad\leadsto\quad
+  \bigotimes_\lambda
+  \left(e_{\pi_\lambda}^*(X_\lambda^{\otimes d_\lambda})\right)^{\mathfrak S_{m_\lambda}}.
+\]
+Equivalently, for each $\lambda$ project by
+\[
+  \frac{1}{m_\lambda!}
+  \sum_{\sigma\in\mathfrak S_{m_\lambda}}
+  \sigma^{\otimes d_\lambda}
+  :
+  e_{\pi_\lambda}^*(X_\lambda^{\otimes d_\lambda})
+  \longrightarrow
+  e_{\pi_\lambda}^*(X_\lambda^{\otimes d_\lambda}).
+\]
+Here $\sigma^{\otimes d_\lambda}$ preserves the Schur-side factor.
+It commutes with the place-permutation action used to define $e_{\pi_\lambda}^*$.
+Thus the ordinary isotypic data tree is unchanged; only the tableau-tensor basis for each $\lambda$ is replaced by a basis of
+\[
+  \left(e_{\pi_\lambda}^*(X_\lambda^{\otimes d_\lambda})\right)^{\mathfrak S_{m_\lambda}}.
+\]
 
 
 \end{document}

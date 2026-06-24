@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import math
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Iterable, Iterator
 from dataclasses import replace
 from functools import cache
 from itertools import product
@@ -22,7 +22,11 @@ from .evaluators import (
     sample_tensor_power_probes,
 )
 from .protocols import RepresentationTheory
-from .streaming import stream_independent_candidates
+from .streaming import (
+    shuffled_stream_batches,
+    stream_batches,
+    stream_independent_candidates,
+)
 from .types import (
     Irrep,
     IsotypicLeaf,
@@ -77,14 +81,43 @@ def tensor_product_basis(
     return suffixes(1, irreps[0])
 
 
+def _stream_tensor_product_basis(
+    theory: RepresentationTheory,
+    irreps: tuple[Irrep, ...],
+    output: Irrep,
+    rng: np.random.Generator,
+) -> Iterator[TensorTrain]:
+    """Yield the tensor-product basis lazily in randomized order.
+
+    Equivalent to ``tensor_product_basis`` as a set, but generates trains on
+    demand with constituents shuffled at each coupling, so rank selection can
+    stop after a handful of batches instead of materializing every path.
+    """
+    irrep_count = len(irreps)
+
+    def suffixes(i: int, left: Irrep) -> Iterator[TensorTrain]:
+        if i == irrep_count:
+            if left == output:
+                yield ()
+            return
+
+        right = irreps[i]
+        constituents = list(theory.tensor_product_constituent_irreps(left, right))
+        rng.shuffle(constituents)
+        for next_output, multiplicity_count in constituents:
+            for multiplicity in range(1, multiplicity_count + 1):
+                core = TensorTrainCore(left, right, next_output, multiplicity)
+                for suffix in suffixes(i + 1, next_output):
+                    yield (core,) + suffix
+
+    yield from suffixes(1, irreps[0])
+
+
 def _constituent_multiplicity(
     constituent_multiplicities: tuple[tuple[Irrep, int], ...],
     output: Irrep,
 ) -> int:
-    for constituent, multiplicity in constituent_multiplicities:
-        if constituent == output:
-            return multiplicity
-    return 0
+    return dict(constituent_multiplicities).get(output, 0)
 
 
 def _has_tensor_product_constituent(
@@ -109,7 +142,7 @@ def _has_tensor_product_constituent(
 
 
 def _rank_select_candidates(
-    candidates: Sequence[_T],
+    make_batches: Callable[[int], Iterable[tuple[_T, ...]]],
     dimension: int,
     output_dimension: int,
     random_seed: int,
@@ -123,12 +156,11 @@ def _rank_select_candidates(
     for attempt in range(MAX_RANK_ATTEMPTS):
         num_probes = base_num_probes + attempt
         selected, last_rank = stream_independent_candidates(
-            candidates,
+            make_batches(random_seed + attempt),
             attempt_evaluator(attempt, num_probes),
             dimension,
             num_probes * output_dimension,
             modulus,
-            random_seed + attempt,
         )
         if len(selected) == dimension:
             return selected
@@ -136,22 +168,29 @@ def _rank_select_candidates(
     raise RuntimeError(error_message(last_rank))
 
 
-def _rank_select_tensor_trains(
+@cache
+def symmetrized_power_basis(
     theory: RepresentationTheory,
     irrep: Irrep,
     degree: int,
     output: Irrep,
-    dimension: int,
+    partition: Partition,
     random_seed: int,
     antisymmetric: bool,
     modulus: int,
 ) -> tuple[TensorTrain, ...]:
+    """Select a tensor-train basis for a single-row or single-column Schur part."""
+    validate_modulus(modulus, max_degree=degree)
+    dimension = _constituent_multiplicity(
+        theory.schur_power_constituent_irreps(irrep, partition),
+        output,
+    )
     if dimension <= 0:
         return ()
     if degree == 0:
         return ((),) if dimension == 1 else ()
 
-    candidates = tensor_product_basis(theory, (irrep,) * degree, output)
+    irreps = (irrep,) * degree
     output_dimension = theory.irrep_dimension(output)
     evaluate = (
         evaluate_antisymmetrized_tensor_train
@@ -192,7 +231,11 @@ def _rank_select_tensor_trains(
 
     kind = "exterior" if antisymmetric else "symmetric"
     return _rank_select_candidates(
-        candidates,
+        lambda seed: stream_batches(
+            _stream_tensor_product_basis(
+                theory, irreps, output, np.random.default_rng(seed)
+            )
+        ),
         dimension,
         output_dimension,
         random_seed,
@@ -203,34 +246,6 @@ def _rank_select_tensor_trains(
             f"for irrep={irrep}, degree={degree}, output={output}; "
             f"expected {dimension}"
         ),
-    )
-
-
-@cache
-def symmetrized_power_basis(
-    theory: RepresentationTheory,
-    irrep: Irrep,
-    degree: int,
-    output: Irrep,
-    partition: Partition,
-    random_seed: int,
-    antisymmetric: bool,
-    modulus: int,
-) -> tuple[TensorTrain, ...]:
-    """Select a tensor-train basis for a single-row or single-column Schur part."""
-    validate_modulus(modulus, max_degree=degree)
-    return _rank_select_tensor_trains(
-        theory,
-        irrep,
-        degree,
-        output,
-        _constituent_multiplicity(
-            theory.schur_power_constituent_irreps(irrep, partition),
-            output,
-        ),
-        random_seed=random_seed,
-        antisymmetric=antisymmetric,
-        modulus=modulus,
     )
 
 
@@ -296,7 +311,7 @@ def _rank_select_schur_power_candidates(
         return evaluate_batch
 
     return _rank_select_candidates(
-        candidates,
+        lambda seed: shuffled_stream_batches(candidates, seed),
         dimension,
         output_dimension,
         random_seed,
@@ -328,6 +343,9 @@ def schur_functor_basis(
     """
     validate_modulus(modulus, max_degree=sum(partition))
     if not partition:
+        # The degree-0 Schur functor is the trivial 1-dim space: it contributes
+        # one (empty-train, single-empty-leaf) basis element iff ``output`` occurs
+        # in the trivial coupling, where the multiplicity is necessarily 0 or 1.
         return (
             (TensorTree((), ((),)),)
             if _constituent_multiplicity(
@@ -336,31 +354,23 @@ def schur_functor_basis(
             )
             else ()
         )
-    if len(partition) == 1:
-        return tuple(
-            TensorTree(tensor_train, tuple(() for _ in range(partition[0])))
-            for tensor_train in symmetrized_power_basis(
-                theory,
-                irrep,
-                partition[0],
-                output,
-                partition,
-                random_seed,
-                False,
-                modulus,
-            )
-        )
-    if partition[0] == 1:
+    if len(partition) == 1 or partition[0] == 1:
+        # Single-row (symmetric power) or single-column (exterior power). The
+        # ``(1,)`` overlap stays in the row branch via ``len(partition) != 1``.
+        is_column = len(partition) != 1
+        degree = len(partition) if is_column else partition[0]
         return tuple(
             TensorTree((), (tensor_train,))
+            if is_column
+            else TensorTree(tensor_train, ((),) * degree)
             for tensor_train in symmetrized_power_basis(
                 theory,
                 irrep,
-                len(partition),
+                degree,
                 output,
                 partition,
                 random_seed,
-                True,
+                is_column,
                 modulus,
             )
         )
@@ -439,10 +449,7 @@ def _leaf_basis_axes(leaf: IsotypicLeaf) -> tuple[int, ...]:
 def space_dimension(
     isotypic_leaves: tuple[IsotypicLeaf, ...],
 ) -> int:
-    return sum(
-        math.prod(_leaf_basis_axes(leaf))
-        for leaf in isotypic_leaves
-    )
+    return sum(math.prod(_leaf_basis_axes(leaf)) for leaf in isotypic_leaves)
 
 
 def extract(

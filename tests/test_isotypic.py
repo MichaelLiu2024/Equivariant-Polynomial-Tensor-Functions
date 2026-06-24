@@ -44,33 +44,24 @@ def test_stream_isotypic_data_tree_streams_fixed_multidegree(
     assert all(not hasattr(source, "degree") for source in sources)
 
 
-def test_stream_isotypic_data_tree_rejects_wrong_multidegree_length() -> None:
-    theory = SO3RepresentationTheory()
-
-    with pytest.raises(ValueError, match="one entry per input irrep"):
+@pytest.mark.parametrize(
+    ("multidegree", "match"),
+    [
+        ((1, 1), "one entry per input irrep"),
+        ((-1,), "entries must be nonnegative"),
+    ],
+)
+def test_stream_isotypic_data_tree_rejects_invalid_multidegree(
+    multidegree, match
+) -> None:
+    with pytest.raises(ValueError, match=match):
         tuple(
             stream_isotypic_data_tree(
-                theory,
+                SO3RepresentationTheory(),
                 input_irreps=(1,),
                 input_multiplicities=(1,),
                 output_irrep=0,
-                multidegree=(1, 1),
-                random_seed=0,
-            )
-        )
-
-
-def test_stream_isotypic_data_tree_rejects_invalid_metadata() -> None:
-    theory = SO3RepresentationTheory()
-
-    with pytest.raises(ValueError, match="entries must be nonnegative"):
-        tuple(
-            stream_isotypic_data_tree(
-                theory,
-                input_irreps=(1,),
-                input_multiplicities=(1,),
-                output_irrep=0,
-                multidegree=(-1,),
+                multidegree=multidegree,
                 random_seed=0,
             )
         )

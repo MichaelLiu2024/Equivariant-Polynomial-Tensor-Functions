@@ -19,7 +19,7 @@ from equivariant_polynomials.core.types import (
 )
 
 
-def _clebsch_gordan_entry_mod(
+def _clebsch_gordan_entry(
     left: int,
     right: int,
     m1: int,
@@ -35,32 +35,9 @@ def _clebsch_gordan_entry_mod(
             * perm(left - m1, s)
             * perm(right + m2, s)
             * perm(right - m2, r - s)
-        ) % modulus
-        if s % 2:
-            total = (total - term) % modulus
-        else:
-            total = (total + term) % modulus
-    return total
-
-
-def _clebsch_gordan_entry_exact(
-    left: int,
-    right: int,
-    m1: int,
-    m2: int,
-    r: int,
-) -> int:
-    total = 0
-    for s in range(r + 1):
-        term = (
-            comb(r, s)
-            * perm(left + m1, r - s)
-            * perm(left - m1, s)
-            * perm(right + m2, s)
-            * perm(right - m2, r - s)
         )
         total += -term if s % 2 else term
-    return total
+    return total if modulus == 0 else total % modulus
 
 
 class SO3RepresentationTheory:
@@ -128,27 +105,18 @@ class SO3RepresentationTheory:
         tensor = np.zeros(shape, dtype=arithmetic_dtype(modulus))
         r = left + right - out
 
-        if modulus == 0:
-            if r >= 0:
-                for m1 in range(-left, left + 1):
-                    lo = max(-right, -out - m1)
-                    hi = min(right, out - m1)
-                    for m2 in range(lo, hi + 1):
-                        index = (left + m1, right + m2, out + m1 + m2)
-                        tensor[index] = _clebsch_gordan_entry_exact(
-                            left,
-                            right,
-                            m1,
-                            m2,
-                            r,
-                        )
-        elif 0 <= r <= 2 * min(left, right):
+        valid_r = (
+            r >= 0
+            if modulus == 0
+            else 0 <= r <= 2 * min(left, right)
+        )
+        if valid_r:
             for m1 in range(-left, left + 1):
                 lo = max(-right, -out - m1)
                 hi = min(right, out - m1)
                 for m2 in range(lo, hi + 1):
                     index = (left + m1, right + m2, out + m1 + m2)
-                    tensor[index] = _clebsch_gordan_entry_mod(
+                    tensor[index] = _clebsch_gordan_entry(
                         left,
                         right,
                         m1,

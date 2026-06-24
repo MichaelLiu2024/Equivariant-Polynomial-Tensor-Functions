@@ -8,7 +8,7 @@ from itertools import product
 from random import Random
 from typing import TypeVar
 
-from .bases import _constituent_multiplicity, tensor_product_basis
+from .bases import tensor_product_basis
 from .combinatorics import (
     _validate_input_metadata,
     integer_partitions,
@@ -67,12 +67,11 @@ def stream_isotypic_data_tree(
             theory.schur_power_constituent_irreps(input_irrep, partition)
             for input_irrep, partition in zip(input_irreps, partitions)
         )
-        intermediate_options = tuple(
-            tuple(constituent for constituent, _multiplicity in constituents)
-            for constituents in constituent_options
-        )
 
-        for intermediate_irreps in _shuffled_product(intermediate_options, rng):
+        # Each ``constituents`` is one (irrep, multiplicity) pair per input axis;
+        # the chosen intermediate irrep and its Schur dimension ride together.
+        for constituents in _shuffled_product(constituent_options, rng):
+            intermediate_irreps = tuple(irrep for irrep, _multiplicity in constituents)
             interior_tensor_trains = tensor_product_basis(
                 theory,
                 intermediate_irreps,
@@ -87,11 +86,7 @@ def stream_isotypic_data_tree(
                 intermediate_irreps=intermediate_irreps,
                 interior_tensor_trains=interior_tensor_trains,
                 schur_dimensions=tuple(
-                    _constituent_multiplicity(constituents, intermediate_irrep)
-                    for constituents, intermediate_irrep in zip(
-                        constituent_options,
-                        intermediate_irreps,
-                    )
+                    multiplicity for _irrep, multiplicity in constituents
                 ),
                 semi_standard_young_tableaux=tuple(
                     semistandard_young_tableaux(
