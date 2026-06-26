@@ -4,11 +4,10 @@ import numpy as np
 import pytest
 
 from equivariant_polynomials.core.combinatorics import (
-    cond_mod,
     conjugate_partition,
     integer_partitions,
-    pivot_columns,
     ragged_multi_index,
+    reduce_modulo,
     row_kronecker_product,
     semistandard_young_tableaux,
     validate_modulus,
@@ -30,11 +29,11 @@ def test_validate_modulus_rejects_composite_modulus() -> None:
         validate_modulus(4)
 
 
-def test_cond_mod_reduces_nonzero_modulus() -> None:
-    x = np.asarray([5, 7], dtype=np.uint64)
+def test_reduce_modulo_reduces_nonzero_modulus() -> None:
+    values = np.asarray([5, 7], dtype=np.uint64)
 
-    assert cond_mod(x, 0) is x
-    assert np.array_equal(cond_mod(x, 5), np.asarray([0, 2], dtype=np.uint64))
+    assert reduce_modulo(values, 0) is values
+    assert np.array_equal(reduce_modulo(values, 5), np.asarray([0, 2], dtype=np.uint64))
 
 
 def test_validate_modulus_accepts_arbitrary_prime() -> None:
@@ -61,10 +60,12 @@ def test_row_kronecker_product_modulus_zero_does_not_reduce() -> None:
     )
 
 
-def test_pivot_columns_modulus_zero_uses_exact_rank() -> None:
-    matrix = np.asarray([[2, 4], [1, 2]], dtype=np.uint64)
-
-    assert pivot_columns(matrix, 0) == (0,)
+def test_validate_modulus_rejects_complex_for_selection() -> None:
+    # Complex arithmetic survives for evaluating selected generators
+    # (allow_complex defaults to True) but is rejected for selection.
+    validate_modulus(0)
+    with pytest.raises(ValueError, match="positive prime"):
+        validate_modulus(0, allow_complex=False)
 
 
 def test_semistandard_young_tableaux_are_row_weak_column_strict() -> None:

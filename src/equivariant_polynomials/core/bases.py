@@ -18,6 +18,7 @@ from .combinatorics import (
 )
 from .evaluators import (
     evaluate_antisymmetrized_tensor_train,
+    evaluate_power_basis_batch,
     evaluate_tensor_train,
     sample_tensor_power_probes,
 )
@@ -44,7 +45,7 @@ _T = TypeVar("_T")
 def tensor_product_basis(
     theory: RepresentationTheory,
     irreps: tuple[Irrep, ...],
-    output: Irrep,
+    output_irrep: Irrep,
 ) -> tuple[TensorTrain, ...]:
     """Enumerate left-associated tensor-product bases.
 
@@ -56,12 +57,12 @@ def tensor_product_basis(
         raise ValueError("irreps must be nonempty")
     irrep_count = len(irreps)
     if irrep_count == 1:
-        return ((),) if irreps[0] == output else ()
+        return ((),) if irreps[0] == output_irrep else ()
 
     @cache
     def suffixes(i: int, left: Irrep) -> tuple[TensorTrain, ...]:
         if i == irrep_count:
-            return ((),) if left == output else ()
+            return ((),) if left == output_irrep else ()
 
         right = irreps[i]
         tensor_trains: list[TensorTrain] = []
@@ -84,7 +85,7 @@ def tensor_product_basis(
 def _stream_tensor_product_basis(
     theory: RepresentationTheory,
     irreps: tuple[Irrep, ...],
-    output: Irrep,
+    output_irrep: Irrep,
     rng: np.random.Generator,
 ) -> Iterator[TensorTrain]:
     """Yield the tensor-product basis lazily in randomized order.
@@ -97,7 +98,7 @@ def _stream_tensor_product_basis(
 
     def suffixes(i: int, left: Irrep) -> Iterator[TensorTrain]:
         if i == irrep_count:
-            if left == output:
+            if left == output_irrep:
                 yield ()
             return
 
@@ -115,15 +116,15 @@ def _stream_tensor_product_basis(
 
 def _constituent_multiplicity(
     constituent_multiplicities: tuple[tuple[Irrep, int], ...],
-    output: Irrep,
+    output_irrep: Irrep,
 ) -> int:
-    return dict(constituent_multiplicities).get(output, 0)
+    return dict(constituent_multiplicities).get(output_irrep, 0)
 
 
 def _has_tensor_product_constituent(
     theory: RepresentationTheory,
     irreps: tuple[Irrep, ...],
-    output: Irrep,
+    output_irrep: Irrep,
 ) -> bool:
     if not irreps:
         raise ValueError("irreps must be nonempty")
@@ -138,7 +139,7 @@ def _has_tensor_product_constituent(
                 right,
             )
         }
-    return output in current
+    return output_irrep in current
 
 
 def _rank_select_candidates(
@@ -173,17 +174,17 @@ def symmetrized_power_basis(
     theory: RepresentationTheory,
     irrep: Irrep,
     degree: int,
-    output: Irrep,
+    output_irrep: Irrep,
     partition: Partition,
     random_seed: int,
     antisymmetric: bool,
     modulus: int,
 ) -> tuple[TensorTrain, ...]:
     """Select a tensor-train basis for a single-row or single-column Schur part."""
-    validate_modulus(modulus, max_degree=degree)
+    validate_modulus(modulus, max_degree=degree, allow_complex=False)
     dimension = _constituent_multiplicity(
         theory.schur_power_constituent_irreps(irrep, partition),
-        output,
+        output_irrep,
     )
     if dimension <= 0:
         return ()
@@ -191,12 +192,7 @@ def symmetrized_power_basis(
         return ((),) if dimension == 1 else ()
 
     irreps = (irrep,) * degree
-    output_dimension = theory.irrep_dimension(output)
-    evaluate = (
-        evaluate_antisymmetrized_tensor_train
-        if antisymmetric
-        else evaluate_tensor_train
-    )
+    output_dimension = theory.irrep_dimension(output_irrep)
 
     def attempt_evaluator(
         attempt: int,
@@ -213,18 +209,12 @@ def symmetrized_power_basis(
         )
 
         def evaluate_batch(batch: tuple[TensorTrain, ...]) -> np.ndarray:
-            return np.stack(
-                [
-                    evaluate(
-                        theory,
-                        tensor_train,
-                        probe_vectors,
-                        modulus,
-                        "batch",
-                    ).reshape(-1)
-                    for tensor_train in batch
-                ],
-                axis=1,
+            return evaluate_power_basis_batch(
+                theory,
+                batch,
+                probe_vectors,
+                modulus,
+                antisymmetric,
             )
 
         return evaluate_batch
@@ -233,7 +223,7 @@ def symmetrized_power_basis(
     return _rank_select_candidates(
         lambda seed: stream_batches(
             _stream_tensor_product_basis(
-                theory, irreps, output, np.random.default_rng(seed)
+                theory, irreps, output_irrep, np.random.default_rng(seed)
             )
         ),
         dimension,
@@ -243,7 +233,7 @@ def symmetrized_power_basis(
         attempt_evaluator,
         lambda rank: (
             f"rank probes found {rank} {kind}-power basis elements "
-            f"for irrep={irrep}, degree={degree}, output={output}; "
+            f"for irrep={irrep}, degree={degree}, output_irrep={output_irrep}; "
             f"expected {dimension}"
         ),
     )
@@ -253,7 +243,7 @@ def _rank_select_schur_power_candidates(
     theory: RepresentationTheory,
     irrep: Irrep,
     partition: Partition,
-    output: Irrep,
+    output_irrep: Irrep,
     candidates: tuple[TensorTree, ...],
     dimension: int,
     random_seed: int,
@@ -262,7 +252,7 @@ def _rank_select_schur_power_candidates(
     if dimension <= 0:
         return ()
 
-    output_dimension = theory.irrep_dimension(output)
+    output_dimension = theory.irrep_dimension(output_irrep)
 
     def attempt_evaluator(
         attempt: int,
@@ -319,7 +309,7 @@ def _rank_select_schur_power_candidates(
         attempt_evaluator,
         lambda rank: (
             f"rank probes found {rank} Schur-power basis elements "
-            f"for irrep={irrep}, partition={partition}, output={output}; "
+            f"for irrep={irrep}, partition={partition}, output_irrep={output_irrep}; "
             f"expected {dimension}"
         ),
     )
@@ -330,7 +320,7 @@ def schur_functor_basis(
     theory: RepresentationTheory,
     irrep: Irrep,
     partition: Partition,
-    output: Irrep,
+    output_irrep: Irrep,
     random_seed: int,
     modulus: int,
 ) -> tuple[TensorTree, ...]:
@@ -341,16 +331,17 @@ def schur_functor_basis(
     probes over the requested arithmetic mode and the concrete group's binary
     coupling tensors.
     """
-    validate_modulus(modulus, max_degree=sum(partition))
+    validate_modulus(modulus, max_degree=sum(partition), allow_complex=False)
     if not partition:
         # The degree-0 Schur functor is the trivial 1-dim space: it contributes
-        # one (empty-train, single-empty-leaf) basis element iff ``output`` occurs
-        # in the trivial coupling, where the multiplicity is necessarily 0 or 1.
+        # one (empty-train, single-empty-leaf) basis element iff ``output_irrep``
+        # occurs in the trivial coupling, where the multiplicity is necessarily
+        # 0 or 1.
         return (
             (TensorTree((), ((),)),)
             if _constituent_multiplicity(
                 theory.schur_power_constituent_irreps(irrep, ()),
-                output,
+                output_irrep,
             )
             else ()
         )
@@ -367,7 +358,7 @@ def schur_functor_basis(
                 theory,
                 irrep,
                 degree,
-                output,
+                output_irrep,
                 partition,
                 random_seed,
                 is_column,
@@ -377,7 +368,7 @@ def schur_functor_basis(
 
     dimension = _constituent_multiplicity(
         theory.schur_power_constituent_irreps(irrep, partition),
-        output,
+        output_irrep,
     )
     if dimension <= 0:
         return ()
@@ -395,12 +386,12 @@ def schur_functor_basis(
     )
     candidates: list[TensorTree] = []
     for intermediate_irreps in product(*component_options):
-        if not _has_tensor_product_constituent(theory, intermediate_irreps, output):
+        if not _has_tensor_product_constituent(theory, intermediate_irreps, output_irrep):
             continue
         interior_tensor_trains = tensor_product_basis(
             theory,
             intermediate_irreps,
-            output,
+            output_irrep,
         )
         leaf_tensor_train_options = tuple(
             symmetrized_power_basis(
@@ -426,7 +417,7 @@ def schur_functor_basis(
         theory,
         irrep,
         partition,
-        output,
+        output_irrep,
         tuple(candidates),
         dimension,
         random_seed=random_seed,
@@ -439,17 +430,11 @@ def _leaf_basis_axes(leaf: IsotypicLeaf) -> tuple[int, ...]:
         axis_length
         for tensor_trees, tableaux in zip(
             leaf.leaf_tensor_trees,
-            leaf.semi_standard_young_tableaux,
+            leaf.semistandard_young_tableaux,
         )
         for axis_length in (len(tensor_trees), len(tableaux))
     )
     return (len(leaf.interior_tensor_trains), *input_axes)
-
-
-def space_dimension(
-    isotypic_leaves: tuple[IsotypicLeaf, ...],
-) -> int:
-    return sum(math.prod(_leaf_basis_axes(leaf)) for leaf in isotypic_leaves)
 
 
 def extract(
@@ -481,10 +466,10 @@ def extract(
                         axis_indices[1::2],
                     )
                 ),
-                semi_standard_young_tableaux=tuple(
+                semistandard_young_tableaux=tuple(
                     (choices[index],)
                     for choices, index in zip(
-                        leaf.semi_standard_young_tableaux,
+                        leaf.semistandard_young_tableaux,
                         axis_indices[2::2],
                     )
                 ),
@@ -497,6 +482,5 @@ __all__ = (
     "tensor_product_basis",
     "symmetrized_power_basis",
     "schur_functor_basis",
-    "space_dimension",
     "extract",
 )

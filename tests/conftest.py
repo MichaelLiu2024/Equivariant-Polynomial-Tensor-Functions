@@ -19,10 +19,10 @@ def _source_space_dimension(sources) -> int:
     return sum(
         len(source.interior_tensor_trains)
         * math.prod(
-            schur_dimension * len(tableaux)
-            for schur_dimension, tableaux in zip(
-                source.schur_dimensions,
-                source.semi_standard_young_tableaux,
+            leaf_tree_count * len(tableaux)
+            for leaf_tree_count, tableaux in zip(
+                source.leaf_tree_counts,
+                source.semistandard_young_tableaux,
             )
         )
         for source in sources

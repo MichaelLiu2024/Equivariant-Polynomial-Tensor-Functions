@@ -32,7 +32,7 @@ class TensorTrainCore:
 
     left: Irrep
     right: Irrep
-    out: Irrep
+    output: Irrep
     multiplicity: int
 
 
@@ -50,19 +50,19 @@ class TensorTree:
 
 @dataclass(frozen=True, slots=True)
 class IsotypicLeaf:
-    """One factorized basis block in an isotypic data tree.
+    """One materialized isotypic basis block, ready to evaluate.
 
-    Each leaf fixes the input multidegree, Schur partitions, intermediate
-    irreps, tensor-tree choices, and tableau choices needed to evaluate one
-    product block of basis columns.
+    Produced from an unmaterialized plan (``_IsotypicBlock``) once its Schur
+    functors are realized as concrete tensor trees. It keeps only what
+    evaluation reads: the interior tensor-train couplings, the per-input-axis
+    materialized tensor trees, and the tableau choices for one product block of
+    basis columns. The plan's bookkeeping fields (multidegree, partitions, and
+    intermediate irreps) are consumed during materialization and not retained.
     """
 
-    multidegree: tuple[int, ...]
-    partitions: tuple[Partition, ...]
-    intermediate_irreps: tuple[Irrep, ...]
     interior_tensor_trains: tuple[TensorTrain, ...]
     leaf_tensor_trees: tuple[tuple[TensorTree, ...], ...]
-    semi_standard_young_tableaux: tuple[tuple[SSYT, ...], ...]
+    semistandard_young_tableaux: tuple[tuple[SSYT, ...], ...]
 
 
 __all__ = (

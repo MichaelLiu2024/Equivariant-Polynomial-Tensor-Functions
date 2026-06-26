@@ -92,6 +92,7 @@ def test_probe_counts_are_copy_content_local(monkeypatch) -> None:
         modulus,
         output_dimension,
         _young_tree_cache,
+        _probe_window_keys,
     ):
         streamed_probe_counts.append((num_probes, max_probes))
         return (), generator_core._empty_syndromes(
@@ -162,6 +163,7 @@ def test_stream_content_generators_evaluates_fixed_leaf_batches(
         _modulus,
         _output_dimension,
         _young_tree_cache,
+        _probe_window_keys,
     ):
         calls.append(polynomials)
         assert len(polynomials) <= STREAM_BATCH_SIZE
@@ -184,6 +186,7 @@ def test_stream_content_generators_evaluates_fixed_leaf_batches(
         modulus=13,
         output_dimension=1,
         young_tree_cache={},
+        probe_window_keys=((0, 0),),
     )
 
     assert calls == [leaves]
@@ -199,11 +202,13 @@ def _unit_leaf_for_multidegree(
     multidegree: tuple[int, ...],
     label: int,
 ) -> IsotypicLeaf:
+    # ``label`` only varies the tableau contents so the unit leaves stay
+    # distinct; the dropped plan fields (multidegree, partitions, intermediate
+    # irreps) no longer carry it.
     return IsotypicLeaf(
-        multidegree=multidegree,
-        partitions=tuple(() for _ in multidegree),
-        intermediate_irreps=(label,),
         interior_tensor_trains=((),),
         leaf_tensor_trees=tuple((TensorTree((), ()),) for _ in multidegree),
-        semi_standard_young_tableaux=tuple((SSYT((), ()),) for _ in multidegree),
+        semistandard_young_tableaux=tuple(
+            (SSYT(((label,),), ((1,),)),) for _ in multidegree
+        ),
     )

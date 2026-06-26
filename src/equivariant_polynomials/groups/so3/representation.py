@@ -100,10 +100,10 @@ class SO3RepresentationTheory:
         validate_modulus(modulus)
         left = core.left
         right = core.right
-        out = core.out
-        shape = (2 * left + 1, 2 * right + 1, 2 * out + 1)
+        output = core.output
+        shape = (2 * left + 1, 2 * right + 1, 2 * output + 1)
         tensor = np.zeros(shape, dtype=arithmetic_dtype(modulus))
-        r = left + right - out
+        r = left + right - output
 
         valid_r = (
             r >= 0
@@ -112,10 +112,10 @@ class SO3RepresentationTheory:
         )
         if valid_r:
             for m1 in range(-left, left + 1):
-                lo = max(-right, -out - m1)
-                hi = min(right, out - m1)
+                lo = max(-right, -output - m1)
+                hi = min(right, output - m1)
                 for m2 in range(lo, hi + 1):
-                    index = (left + m1, right + m2, out + m1 + m2)
+                    index = (left + m1, right + m2, output + m1 + m2)
                     tensor[index] = _clebsch_gordan_entry(
                         left,
                         right,

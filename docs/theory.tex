@@ -92,6 +92,7 @@
 \newcommand{\id}{\operatorname{id}}
 \newcommand{\GL}{\operatorname{GL}}
 \newcommand{\SO}{\operatorname{SO}}
+\newcommand{\Orth}{\operatorname{O}}
 \newcommand{\diag}{\operatorname{diag}}
 \newcommand{\tr}{\operatorname{tr}}
 \newcommand{\wt}{\operatorname{wt}}
@@ -216,7 +217,7 @@
 \newtheorem{example}[theorem]{Example}
 \newtheorem{remark}[theorem]{Remark}
 
-\title{Equivariant Learning via Minimal Integrity Bases for Invariant and Equivariant Polynomials}
+\title{Equivariant Learning via Minimal Integrity Bases for Equivariant Polynomials}
 \author{Michael Liaofan Liu}
 \date{}
 
@@ -226,13 +227,13 @@
 \begin{abstract}
 
   We present a general framework for equivariant learning when the underlying group is linearly reductive.
-  Our approach enforces equivariance by a one-time computation of minimal integrity bases for the invariant algebra and covariant module of invariant and equivariant polynomials.
+  Our approach enforces equivariance by a one-time computation of minimal integrity bases for the covariant module and invariant algebra of equivariant and invariant polynomials.
   In particular, the trainable parameters in our model lie entirely in an unconstrained neural network whose architecture can be chosen arbitrarily.
   Moreover, if untruncated integrity bases are used, our hypothesis class is dense in the space of continuous equivariant functions with the sup norm.
-  To compute minimal integrity bases, we first enumerate vector space bases for the invariant algebra and covariant module as candidate generators.
+  To compute minimal integrity bases, we first enumerate vector space bases for the covariant module and invariant algebra as candidate generators.
   Then, we apply the graded Nakayama lemma to extract independent generators degree by degree.
   We implement our algorithms in full generality: given explicit isotypic decompositions for the input and output representations, as well as explicit Clebsch--Gordan decompositions for the tensor product of irreducible representations, our algorithms work for any linearly reductive group.
-  In particular, we provide end-to-end implementations for the groups $\SO(2)$, $\SO(3)$, $O(2)$, and $O(3)$. We also discuss how to enforce translation and permutation equivariance within our framework.
+  In particular, we provide end-to-end implementations for the groups $\SO(2)$, $\SO(3)$, $\Orth(2)$, and $\Orth(3)$. We also discuss how to enforce translation and permutation equivariance within our framework.
   Our code is available on GitHub at \href{https://github.com/MichaelLiu2024/Equivariant-Polynomial-Tensor-Functions}{\texttt{github.com/MichaelLiu2024/Equivariant-Polynomial-Tensor-Functions}}.
 
 \end{abstract}
@@ -247,36 +248,42 @@
 %In particular, tensor-product nonlinearities can create large quadratic expansions before compression.
 
 Let $X$ and $Y$ be finite-dimensional complex representations of a linearly reductive group $G$.
-Let
+Let $F\colon X\to Y$ be an unknown $G$-equivariant function which we wish to learn.
+To begin, suppose that $F$ is a polynomial.
+Then $F$ lies in the \emph{covariant module}
 \[
   \scM_G(X,Y)\coloneq\left(\scS(X^*)\otimes Y\right)^G
 \]
-be the \emph{covariant module} of $G$-equivariant polynomials from $X$ to $Y$, and let
+of $G$-equivariant polynomials from $X$ to $Y$.
+This is a module over the \emph{invariant algebra}
 \[
   \scR_G(X)\coloneq\scS(X^*)^G
 \]
-be the \emph{invariant algebra} of $G$-invariant polynomials on $X$.
-
-Suppose that we wish to learn an unknown $G$-equivariant polynomial $q\colon X\to Y$.
-Let $\set{m_1,\dots,m_M}\subseteq \scM_G(X,Y)$ be minimal $\scR_G(X)$-module generators, and let $\set{r_1,\dots,r_R}\subseteq \scR_G(X)$ be minimal $\dsC$-algebra generators.
-Then $q$ admits a decomposition
+of $G$-invariant polynomials on $X$.
+Now, suppose that we can compute minimal $\scR_G(X)$-module generators $\set{m_1,\dots,m_M}\subseteq \scM_G(X,Y)$ and minimal $\dsC$-algebra generators $\set{r_1,\dots,r_R}\subseteq \scR_G(X)$.
+Then $F$ admits a decomposition
 \begin{equation}\label{eq:polynomial-ansatz}
-  q(x)=\sum_{i=1}^M p_i(r_1(x),\dots,r_R(x))m_i(x),
+  F(x)=\sum_{i=1}^M p_{\theta,i}(r_1(x),\dots,r_R(x))m_i(x),
 \end{equation}
-where $p\colon \dsC^R\to\dsC^M$ is some polynomial.
-Thus, learning the unknown polynomial $q$ reduces to learning $p$.
+where $p_\theta\colon \dsC^R\to\dsC^M$ is some polynomial with coefficients $\theta$.
+Thus, learning $F$ reduces to learning $\theta$.
 
-Now, suppose that we wish to learn an unknown $G$-equivariant function $F\colon X\to Y$.
-Replacing the polynomial $p$ with a neural network $\scN_\theta\colon \dsC^R\to\dsC^M$, we obtain a large class of $G$-equivariant functions
+Now, suppose that $F$ is merely continuous.
+Replacing the polynomial $p_\theta$ above with a neural network $\scN_\theta\colon \dsC^R\to\dsC^M$, we obtain a large class of $G$-equivariant functions
 \begin{equation}\label{eq:neural-ansatz}
   F_\theta(x)=\sum_{i=1}^M
-  \scN_{\theta,i}(r_1(x),\dots,r_R(x))m_i(x)
+  \scN_{\theta,i}(r_1(x),\dots,r_R(x))m_i(x),
 \end{equation}
-from $X$ to $Y$, and it remains only to learn $\theta$ so that $F_\theta \approx F$. Special cases of the ansatz in Eq.~\eqref{eq:neural-ansatz} have appeared in the literature before \cite{BlumSmithVillar2023}.
+and it remains only to learn $\theta$ so that $F_\theta \approx F$. We note that special cases of the ansatz in Eq.~\eqref{eq:neural-ansatz} have appeared before in the literature \cite{BlumSmithVillar2023}.
 
-Note that equivariance is built into Eq.~\eqref{eq:neural-ansatz}: the coefficients $\scN_{\theta,i}(r_1(x),\dots,r_R(x))$ depend only on invariant quantities, and the polynomials $m_i$ are equivariant by construction.
-Thus, the equivariance constraint is frontloaded into the one-time computation of generators, and the learning procedure need not worry about further equivariance constraints.
-In particular, the neural network $\scN_\theta$ may have any standard architecture, such as a feed-forward network, residual network, attention-based scalar network, or other differentiable model, and one may use standard pointwise nonlinearities and scalar-network design choices without imposing equivariance constraints on the hidden layers of $\scN_\theta$. Moreover, the hypothesis class in Eq.~\eqref{eq:neural-ansatz} is a universal approximator for the continuous $G$-equivariant functions.
+Some remarks on the properties of our ansatz in Eq.~\eqref{eq:neural-ansatz}:
+\begin{itemize}
+  \item equivariance follows automatically since the $m_i$ are equivariant and the $r_j$ are invariant;
+  \item as a result, the neural network $\scN_\theta$ may have any standard architecture and any standard nonlinearities with no additional equivariance constraints;
+  \item assuming that the neural network class $\set{\scN_\theta}_{\theta}$ is sufficiently expressive, our ansatz can approximate any continuous $G$-equivariant function $F$ arbitrarily well in the sup norm (see Theorem \ref{thm:universal-approximation});
+  \item for fixed $(G,X,Y)$, the one-time computation of the generators $\set{m_1,\dots,m_M}$ and $\set{r_1,\dots,r_R}$ can be reused to learn multiple $G$-equivariant functions $F_1, F_2, \ldots$ from $X$ to $Y$ by training different neural networks $\scN_{\theta_1}, \scN_{\theta_2}, \ldots$.
+\end{itemize}
+
 
 \begin{figure}[H]
 \centering
@@ -300,12 +307,12 @@ $\,$-- output representation $Y$.};
 \node[prebox] (pre) at (-6.2,0.6) {\textbf{One-time computation}\\[0.35em]
 Input: $(G,X,Y)$ and $D_{\max}$\\[0.35em]
 Output: generators up to degree $D_{\max}$\\[0.25em]
-$\{r_1,\ldots,r_R\}\subseteq \scR_G(X)$\\[0.2em]
-$\{m_1,\ldots,m_M\}\subseteq \scM_G(X,Y)$};
+$\{m_1,\ldots,m_M\}\subseteq \scM_G(X,Y)$\\[0.2em]
+$\{r_1,\ldots,r_R\}\subseteq \scR_G(X)$};
 
 \node[learnbox] (learn) at (6.2,0.6) {\textbf{Learning}\\[0.35em]
-Freeze $\{r_j\}$ and $\{m_i\}$, then learn a vector-valued coefficient function:\\[0.35em]
-$\displaystyle F_\theta(x)=\sum_{i=1}^M \scN_{\theta,i}(r_1(x),\dots,r_R(x))m_i(x)$\\[0.35em]
+Freeze $\{m_i\}$ and $\{r_j\}$, then use the ansatz\\[0.35em]
+$\displaystyle F_\theta(x)=\sum_{i=1}^M \scN_{\theta,i}(r_1(x),\dots,r_R(x))m_i(x)$.\\[0.35em]
 Optimize $\theta$ for the target $F$.};
 
 \draw[flow] (app.south west) -- node[midway, edgelabel] {choose $D_{\max}$} (pre.north);
@@ -314,35 +321,25 @@ Optimize $\theta$ for the target $F$.};
 
 \end{tikzpicture}%
 }
-\caption{Workflow for learning $G$-equivariant functions $F\!:\!X\to Y$.
+\caption{Proposed workflow for learning $G$-equivariant functions $F\!:\!X\to Y$.
 Starting from an application domain, one identifies the symmetry group $G$, the input representation $X$, and the output representation $Y$.
-For the resulting triple $(G,X,Y)$, one chooses a degree bound $D_{\max}$ and performs a one-time computation of invariant generators $\{r_1,\ldots,r_R\}\subseteq \scR_G(X)$ and covariant generators $\{m_1,\ldots,m_M\}\subseteq \scM_G(X,Y)$ up to degree $D_{\max}$.
-For any $G$-equivariant target function $F\!:\!X\to Y$, one trains the neural-network coefficient function $\scN_\theta\colon \dsR^R\to\dsR^M$ in the ansatz of Eq.~\eqref{eq:neural-ansatz}.
+For the resulting triple $(G,X,Y)$, one chooses a degree bound $D_{\max}$ and performs a one-time computation of covariant generators $\{m_1,\ldots,m_M\}\subseteq \scM_G(X,Y)$ and invariant generators $\{r_1,\ldots,r_R\}\subseteq \scR_G(X)$ up to degree $D_{\max}$.
+For any $G$-equivariant target function $F\!:\!X\to Y$, one trains the neural network $\scN_\theta\colon \dsR^R\to\dsR^M$ in Eq.~\eqref{eq:neural-ansatz}.
 In particular, for fixed $(G,X,Y)$, the same one-time computation can be reused to learn multiple $G$-equivariant functions from $X$ to $Y$ by training different neural networks.}
 \label{fig:equivariant-workflow}
 \end{figure}
 
-
-
-
-\subsection{Roadmap}
-
 This paper is organized as follows.
-Section~\ref{sec:theory-and-algorithms} contains the theory and algorithms.
-Section~\ref{sec:examples} works through representative examples in more detail.
-Section~\ref{sec:conclusion} summarizes our work and suggests directions for future work.
+Section~\ref{sec:theory-and-algorithms} describes how we compute minimal generators for the covariant module and invariant algebra.
+Section~\ref{sec:examples} works through representative examples in detail.
+Section~\ref{sec:conclusion} concludes with suggested directions for future work.
 Appendix~\ref{sec:appendix-proofs} provides proofs of our results.
-Appendix~\ref{sec:appendix-implementation} describes implementation details, including shortcuts for the case $G = \SO(3)$.
-Appendix~\ref{sec:appendix-copy-permutation-equivariance} explains how to enforce copy permutation equivariance.
 
-\section{Theory and Algorithms}\label{sec:theory-and-algorithms}
-
-\subsection{Overview}
+\section{Minimal Integrity Bases for the Covariant Module and Invariant Algebra}\label{sec:theory-and-algorithms}
 
 
-We derive an algorithm to compute, up to a prescribed degree, minimal algebra generators $r_1,\dots,r_R$ for the invariant polynomials on $X$ and minimal module generators $m_1,\dots,m_M$ for the equivariant polynomials from $X$ to $Y$.
-
-In this paper, we describe a general framework for computing vector space bases for the homogeneous degree-$D$ pieces
+In this section, we derive an algorithm to compute minimal generators $m_1,\dots,m_M$ for the covariant module and $r_1,\dots,r_R$ for the invariant algebra up to a given degree.
+The first step in our approach is to enumerate vector space bases for the homogeneous degree-$D$ pieces
 \[
   \scM_G^D(X,Y)\coloneq\left(\scS^D(X^*)\otimes Y\right)^G
 \]
@@ -351,8 +348,7 @@ and
   \scR_G^D(X)\coloneq\scS^D(X^*)^G
 \]
 of the covariant module and invariant algebra.
-The main technical result underlying our framework is an explicit isotypic decomposition of the symmetric power $\scS^D(X)$ of the input representation $X$.
-To see why, suppose that we are given explicit isotypic decompositions
+Towards this, suppose that we are given explicit isotypic decompositions
 \[
   \begin{aligned}\label{eq:input-output-isotypic}
     X &\cong \bigoplus_{\lambda} H_\lambda\otimes X_\lambda,
@@ -363,7 +359,7 @@ To see why, suppose that we are given explicit isotypic decompositions
     Y_\nu &\coloneq \HomG{H_\nu}{Y},
   \end{aligned}
 \]
-for the input and output representations $X$ and $Y$, where $\lambda, \nu$ index the (isomorphism classes of) irreducible representations of $G$, and $H_\lambda, H_\nu$ are fixed irreducible representations with labels $\lambda, \nu$.
+for the input and output representations $X$ and $Y$, where $\lambda$ indexes the (isomorphism classes of) irreducible representations of $G$, and $H_\lambda$ is a fixed irreducible representation with label $\lambda$.
 The first key observation is that as vector spaces,
 \begin{equation}\label{eq:output-reduction}
   \scM_G^D(X,Y)
@@ -379,21 +375,19 @@ The second key observation is that
   \HomG{H_\nu}{\scS^D(X)}^*,
 \end{equation}
 which is precisely the dual of the multiplicity space of $H_\nu$ in the isotypic decomposition of $\scS^D(X)$.
-Thus, an explicit isotypic decomposition of $\scS^D(X)$ ultimately yields a vector space basis for $\scM_G^D(X,Y)$.
+Thus, our main technical result, Theorem \ref{thm:isotypic-decomposition}, is an explicit isotypic decomposition of $\scS^D(X)$, which ultimately yields a vector space basis for $\scM_G^D(X,Y)$.
 
-Now, suppose that $\scM_G(X,Y)$ is a finitely generated $\scR_G(X)$-module and $\scR_G(X)$ is a finitely generated $\dsC$-algebra.
-Then the vector space bases produced by our framework can be used as candidate generators in a standard procedure based on the graded Nakayama lemma to extract minimal homogeneous generators for $\scM_G(X,Y)$ as an $\scR_G(X)$-module and $\scR_G(X)$ as a $\dsC$-algebra up to a given degree.
-In particular, we show that when computing minimal module generators for $\scM_G(X,Y)$, it is more efficient to first use the graded Nakayama lemma to obtain minimal module generators for $\scM_G(X,H_\nu)$ and then use Eq.~\eqref{eq:output-reduction} to lift these generators to $\scM_G(X,Y)$.
+To pass from vector space bases to minimal module or algebra generators, we use a standard procedure based on the graded Nakayama lemma, which applies here since $G$ is linearly reductive, so $\scM_G(X,Y)$ is a finitely generated $\scR_G(X)$-module and $\scR_G(X)$ is a finitely generated $\dsC$-algebra. The basic idea is to proceed degree by degree, using the vector space bases computed above as candidate generators and discarding those that are linearly dependent with products of generators of lower degrees.
 
-In principle, the theory in this work applies to any linearly reductive group.
-However, in order to implement concrete algorithms, one must provide a model for the irreps of $G$ along with the following.
+In principle, the theory in this work applies whenever $G$ is linearly reductive.
+However, in order to implement concrete algorithms, one must provide a model for the irreps of $G$, as well as the following.
 
 \begin{assumption}[Explicit isotypic decompositions of the input and output representations]\label{ass:explicit-isotypic}
   One can provide lists of the active irreducible representations in $X$ and $Y$, bases for the multiplicity spaces $X_\lambda = \HomG{H_\lambda}{X}$ and $Y_\nu = \HomG{H_\nu}{Y}$, and black--box routines for evaluating those basis maps and their adjoints.
 \end{assumption}
 
 \begin{assumption}[Explicit Clebsch--Gordan decompositions]\label{ass:explicit-cg}
-  One can provide, for each pair of irrep labels $(\lambda_1,\lambda_2)$, a list of the active irreducible representations in $H_{\lambda_1} \otimes H_{\lambda_2}$, a basis for the multiplicity space $\HomG{H_\gamma}{H_{\lambda_1} \otimes H_{\lambda_2}}$, and black--box routines for evaluating those basis maps and their adjoints.
+  One can provide, for each pair of irrep labels $(\lambda_1,\lambda_2)$, a list of the active irreducible representations $H_\gamma$ in $H_{\lambda_1} \otimes H_{\lambda_2}$, a basis for the multiplicity spaces $\HomG{H_\gamma}{H_{\lambda_1} \otimes H_{\lambda_2}}$, and black--box routines for evaluating those basis maps and their adjoints.
 \end{assumption}
 
 We adopt these assumptions henceforth.
@@ -427,134 +421,14 @@ Our results are summarized in the table below.
   We begin in the top--left corner.
   We use Eq.~\eqref{eq:output-reduction} to move right in the table.
   We use the graded Nakayama lemma to move down in the table.
-  To move from the top--left corner to the bottom--right corner, it is algorithmically more efficient to first move down and then move right.}
+  To move from the top--left corner to the bottom--right corner, it is algorithmically more efficient to first move down and then move right; i.e., it is more efficient to first use the graded Nakayama lemma to obtain minimal module generators for $\scM_G(X,H_\nu)$ and then use Eq.~\eqref{eq:output-reduction} to lift these generators to $\scM_G(X,Y)$.}
   \label{tab:main-results-guide}
 \end{table}
 
 
-
-\begin{theorem}[Universal approximation by invariant-coordinate networks]\label{thm:invariant-coordinate-universal-approximation}
-  Let $G$ be a compact Lie group, and let $X$ and $Y$ be finite-dimensional real $G$-representations.
-  Define
-  \[
-    C_G(X,Y)
-    \coloneq
-    \set{F\in C(X,Y) : F(gx)=gF(x)\text{ for all }g\in G\text{ and }x\in X}.
-  \]
-  Let
-  \[
-    \scR_{G,\dsR}(X)\coloneq \dsR[X]^G,
-    \qquad
-    \scM_{G,\dsR}(X,Y)
-    \coloneq
-    \set{p\colon X\to Y : p\text{ is polynomial and }G\text{-equivariant}}.
-  \]
-  Suppose that $r_1,\dots,r_R\in \scR_{G,\dsR}(X)$ generate $\scR_{G,\dsR}(X)$ as a $\dsR$-algebra, and that $m_1,\dots,m_M\in \scM_{G,\dsR}(X,Y)$ generate $\scM_{G,\dsR}(X,Y)$ as an $\scR_{G,\dsR}(X)$-module.
-  Let $\scN\subseteq C(\dsR^R,\dsR^M)$ be a neural-network class with the following density property: for every compact subset $L\subseteq \dsR^R$, the restrictions $\set{N|_L:N\in\scN}$ are dense in $C(L,\dsR^M)$ with respect to the uniform norm.
-
-  Then the class $\scA$ of functions $F_\theta$ given by the ansatz in Eq.~\eqref{eq:neural-ansatz}, with $\scN_\theta\in\scN$, is dense in $C_G(X,Y)$ in the compact-open topology.
-  Equivalently, for every compact $K\subseteq X$, every $F\in C_G(X,Y)$, and every $\varepsilon>0$, there exists $F_\theta\in\scA$ such that
-  \[
-    \sup_{x\in K}\left|F(x)-F_\theta(x)\right|<\varepsilon.
-  \]
-  The density hypothesis on $\scN$ holds, for example, when $\scN$ contains all vector-valued one-hidden-layer feed-forward networks with biases and a continuous non-polynomial activation function; this follows coordinatewise from \cite[Theorem~3.1, p.~153]{Pinkus1999}.
-  More generally, for locally bounded piecewise continuous activations, the corresponding non-polynomial a.e. criterion is given in \cite[Theorem~1, p.~863]{LeshnoLinPinkusSchocken1993}.
-\end{theorem}
-
-\begin{proof}
-  It is enough to prove uniform approximation on an arbitrary compact subset $K\subseteq X$.
-  Fix $F\in C_G(X,Y)$ and $\varepsilon>0$.
-  Choose a $G$-invariant norm on $Y$ by averaging an inner product over normalized Haar measure on $G$.
-  Since $G$ is compact, the saturation
-  \[
-    K_G\coloneq GK
-  \]
-  is compact.
-
-  By the real Stone--Weierstrass theorem, applied coordinatewise after choosing a basis of $Y$, polynomial maps $X\to Y$ are uniformly dense in $C(K_G,Y)$.
-  Hence there is a polynomial map $q\colon X\to Y$ such that
-  \[
-    \sup_{x\in K_G}\left|q(x)-F(x)\right|<\frac{\varepsilon}{2}.
-  \]
-  Let $\mu$ be normalized Haar measure on $G$, and define
-  \[
-    \overline q(x)
-    \coloneq
-    \int_G g^{-1}q(gx)\,d\mu(g).
-  \]
-  Since the action is linear and $q$ is polynomial, $\overline q$ is again a polynomial map.
-  It is also $G$-equivariant: for $h\in G$, the substitution $k=gh$ gives
-  \[
-    \overline q(hx)
-    =
-    \int_G g^{-1}q(ghx)\,d\mu(g)
-    =
-    \int_G h k^{-1}q(kx)\,d\mu(k)
-    =
-    h\overline q(x).
-  \]
-  Moreover, for $x\in K$,
-  \[
-    \begin{aligned}
-      \left|\overline q(x)-F(x)\right|
-      &=
-      \left|
-      \int_G g^{-1}\bigl(q(gx)-F(gx)\bigr)\,d\mu(g)
-      \right| \\
-      &\le
-      \int_G \left|q(gx)-F(gx)\right|\,d\mu(g)
-      <
-      \frac{\varepsilon}{2},
-    \end{aligned}
-  \]
-  where we used $F(gx)=gF(x)$ and the $G$-invariance of the norm.
-
-  By the polynomial ansatz in Eq.~\eqref{eq:polynomial-ansatz}, applied over $\dsR$, there is a polynomial coefficient map $P=(P_1,\dots,P_M)\colon\dsR^R\to\dsR^M$ representing $\overline q$.
-  Write $r=(r_1,\dots,r_R)$ and $P=(P_1,\dots,P_M)$.
-  The set $r(K)\subseteq\dsR^R$ is compact, so by the density assumption on $\scN$, there exists $\scN_\theta\in\scN$ such that
-  \[
-    \sup_{z\in r(K)}\left|\scN_\theta(z)-P(z)\right|_2<\delta,
-  \]
-  where $\delta>0$ will be chosen below.
-  Define $F_\theta$ by the ansatz in Eq.~\eqref{eq:neural-ansatz} using this $\scN_\theta$.
-  Since $K$ is compact and the $m_i$ are continuous, the constant
-  \[
-    C_K
-    \coloneq
-    \sup_{x\in K}
-    \left(\sum_{i=1}^M \left|m_i(x)\right|^2\right)^{1/2}
-  \]
-  is finite.
-  Therefore, using Eqs.~\eqref{eq:polynomial-ansatz} and~\eqref{eq:neural-ansatz}, for $x\in K$,
-  \[
-    \begin{aligned}
-      \left|F_\theta(x)-\overline q(x)\right|
-      &\le
-      \left(\sum_{i=1}^M
-      \left|\scN_{\theta,i}(r(x))-P_i(r(x))\right|^2
-      \right)^{1/2}
-      \left(\sum_{i=1}^M \left|m_i(x)\right|^2\right)^{1/2} \\
-      &\le
-      C_K\delta.
-    \end{aligned}
-  \]
-  Taking $\delta<\varepsilon/(2C_K)$ if $C_K>0$, and taking any $\delta>0$ if $C_K=0$, gives
-  \[
-    \sup_{x\in K}\left|F_\theta(x)-\overline q(x)\right|<\frac{\varepsilon}{2}.
-  \]
-  Combining this estimate with the approximation of $F$ by $\overline q$ gives
-  \[
-    \sup_{x\in K}\left|F_\theta(x)-F(x)\right|<\varepsilon.
-  \]
-  Since $K$ was arbitrary, $\scA$ is dense in $C_G(X,Y)$ in the compact-open topology.
-\end{proof}
-
-
-
 \subsection{Vector Space Bases, Irreducible Outputs}\label{sec:irreducible-bases}
 
-In this section, we describe how to obtain a vector space basis for $\scM_G^D(X,H_\nu)$.
-Our core theoretical result is an explicit isotypic decomposition of $\scS^D(X)$.
+Here, we describe how to obtain a vector space basis for $\scM_G^D(X,H_\nu)$. As motivated above, we begin by bookkeeping an explicit isotypic decomposition of $\scS^D(X)$.
 
 \begin{theorem}[Isotypic decomposition of $\scS^D(X)$]\label{thm:isotypic-decomposition}
   Let
@@ -564,19 +438,7 @@ Our core theoretical result is an explicit isotypic decomposition of $\scS^D(X)$
   be the isotypic decomposition of $X$, let $\nu\in\dsN_0$, and let $D \in \dsN_0$.
   There is an isomorphism of vector spaces
   \begin{equation}\label{eq:isotypic-decomposition}
-    \begin{aligned}
-      \HomG{H_\nu}{\scS^D(X)}
-      &\cong
-      \bigoplus_{(d_\lambda)_\lambda}
-      \bigoplus_{(\pi_\lambda)_\lambda}
-      \bigoplus_{(\mu_\lambda)_\lambda}
-      \HomG{H_\nu}{\bigotimes_\lambda H_{\mu_\lambda}} \\
-      &\quad {}\otimes
-      \bigotimes_\lambda
-      \HomG{H_{\mu_\lambda}}{e_{\pi_\lambda}(H_\lambda^{\otimes d_\lambda})}
-      \otimes
-      \bigotimes_\lambda e_{\pi_\lambda}^*(X_\lambda^{\otimes d_\lambda}).
-    \end{aligned}
+    \HomG{H_\nu}{\scS^D(X)} \cong \bigoplus_{(d_\lambda)_\lambda} \bigoplus_{(\pi_\lambda)_\lambda} \bigoplus_{(\mu_\lambda)_\lambda} \HomG{H_\nu}{\bigotimes_\lambda H_{\mu_\lambda}} \otimes \bigotimes_\lambda \HomG{H_{\mu_\lambda}}{e_{\pi_\lambda}(H_\lambda^{\otimes d_\lambda})} \otimes \bigotimes_\lambda e_{\pi_\lambda}^*(X_\lambda^{\otimes d_\lambda}).
   \end{equation}
   where
   \begin{itemize}[leftmargin=2.5em]
@@ -736,13 +598,9 @@ Step~\ref{alg:build-isotypic-data-tree:step-schur-tensor-tree-basis} is more com
 Step~\ref{alg:build-isotypic-data-tree:step-ssyt-basis} is a standard result which we record in Lemma \ref{lem:ssyt-basis} below.
 
 \begin{lemma}[Semistandard Young tableaux basis for Schur functors]\label{lem:ssyt-basis}
-  Let $V$ be a vector space with basis $(v_1,\dots,v_n)$, let $d \in \dsN_0$, and let $\pi\vdash d$ be a partition with at most $n$ parts.
+  Let $V$ be a vector space with basis $(v_1,\dots,v_n)$, and let $\pi\vdash d$ be a partition with at most $n$ parts.
   For each semistandard Young tableau $T$ of shape $\pi$ with entries filled from $\set{1,\dots,n}$, let $v_T\in e_\pi(V^{\otimes d})$ be the image under $e_\pi$ of the simple tensor obtained by reading the entries of $T$ in row major order and replacing each entry $i$ by $v_i$.
-  Then
-  \[
-    \left\{v_T \mid T\in \SSYT(\pi,\set{1,\dots,n})\right\}
-  \]
-  is a basis for $e_\pi(V^{\otimes d})$.
+  Then the set of all such $v_T$ is a basis for $e_\pi(V^{\otimes d})$.
 \end{lemma}
 \begin{proof}
   See Weyman~\cite[Proposition~2.1.15(b)]{Weyman2003}.
@@ -1489,9 +1347,9 @@ Specializing Theorem~\ref{thm:isotypic-decomposition} to this setting gives the 
   Taking $\nu=0$ in Corollary~\ref{cor:so2-isotypic-decomposition} gives the usual monomial basis for the invariant ring: after choosing coordinates in each multiplicity space, the invariant monomials are precisely those whose exponent vector has total weight zero \cite[\S 1.4, Lemma~1.4.2]{Sturmfels2008}.
 \end{remark}
 
-\subsection{\texorpdfstring{$\operatorname{O}(2)$}{O(2)}}\label{sec:examples-o2}
+\subsection{\texorpdfstring{$\Orth(2)$}{O(2)}}\label{sec:examples-o2}
 
-Let $G=\operatorname{O}(2)$.
+Let $G=\Orth(2)$.
 Its irreducible representations are labeled by
 \[
   +,\quad -,\quad 1,2,3,\dots.
@@ -1603,12 +1461,12 @@ When $s\ge1$, the product $\epsilon$ can only interchange these two one-dimensio
 The nonzero Schur-power constituents in \eqref{eq:o2-schur-one-dimensional} and \eqref{eq:o2-schur-two-dimensional} are multiplicity-free, so the corresponding Schur leaf spaces in Theorem~\ref{thm:isotypic-decomposition} are one-dimensional for the allowed choices and zero otherwise.
 Combining the above results with Theorem~\ref{thm:isotypic-decomposition}, we obtain the following.
 
-\begin{corollary}[Theorem~\ref{thm:isotypic-decomposition} for $\operatorname{O}(2)$]\label{cor:o2-isotypic-decomposition}
+\begin{corollary}[Theorem~\ref{thm:isotypic-decomposition} for $\Orth(2)$]\label{cor:o2-isotypic-decomposition}
   Let
   \[
     X\cong \bigoplus_{\lambda\in\{+,-\}\sqcup\dsN_{>0}}H_\lambda\otimes X_\lambda
   \]
-  be the $\operatorname{O}(2)$-isotypic decomposition of a finite-dimensional representation.
+  be the $\Orth(2)$-isotypic decomposition of a finite-dimensional representation.
   Then, for every irreducible label $\nu$ and every $D\in\dsN_0$,
   \begin{equation}\label{eq:o2-isotypic-decomposition}
     \HomG{H_\nu}{\scS^D(X)}
@@ -1815,206 +1673,204 @@ Each tensor-data node records $(C,L_2,T_2,L_3,T_3)$; $\dsI$ denotes the identity
   \end{figure}
 \end{landscape}
 
-\subsection{\texorpdfstring{$\operatorname{O}(3)$}{O(3)}}\label{sec:examples-o3}
+\begin{example}[$\SO(3)$ Hilbert-series]\label{ex:so3-hilbert-shortcut}
+  The specialized routine \texttt{hilbert\_series\_so3} computes
+  \[
+    \dim \scM_G^D(X,H_\nu)
+    =
+    \dim \HomG{H_\nu}{\scS^D(X)}
+  \]
+  from weight generating functions.
+  If $X=\bigoplus_i H_{\lambda_i}^{\oplus m_i}$, then the weight generating function of $\scS(X)$ is
+  \[
+    \prod_i\prod_{w=-\lambda_i}^{\lambda_i}(1-tq^w)^{-m_i}.
+  \]
+  The coefficient of $t^Dq^m$ is the weight-$m$ multiplicity in $\scS^D(X)$, and the multiplicity of $H_\nu$ is the difference between the weight-$\nu$ and weight-$(\nu+1)$ multiplicities.
+  This is an $\SO(3)$-specific fast path used to size random probe batches; the abstract algorithm can instead use the dimensions obtained directly from the constructed data trees.
+\end{example}
 
-Let $G = \operatorname{O}(3)$.
-Since
-\[
-  G\cong \SO(3)\times \{\pm 1\},
-\]
-the irrep label set is
-\[
-  \Lambda_G=\dsN_0\times\{\pm 1\}.
-\]
-For $\lambda=(\ell,\sigma)\in\Lambda_G$, with $\ell\in\dsN_0$ and $\sigma\in\{\pm 1\}$, write $H_\lambda$ for the corresponding irreducible representation.
-Here $\ell$ is the usual $\SO(3)$ spin and $\sigma$ is the scalar by which $-I$ acts.
-Its dimension is
-\[
-  \dim H_\lambda=2\ell+1.
-\]
+\subsection{\texorpdfstring{$\Orth(3)$ from $\SO(3)$ parity}{O(3) from SO(3) parity}}\label{sec:examples-o3}
 
-For labels $\lambda=(\ell,\sigma)$ and $\mu=(m,\tau)$, the Clebsch--Gordan decomposition is
+Let $z=-I$.
+Since $\Orth(3)=\SO(3)\times \langle z\rangle$, every irreducible complex $\Orth(3)$-representation is a spin together with the scalar by which $z$ acts.
+We write it as
 \[
-  H_\lambda\otimes H_\mu
-  \cong
-  \bigoplus_{n=|\ell-m|}^{\ell+m}
-  H_{(n,\sigma\tau)}.
-\]
-
-Let $\pi\vdash d$ and $\lambda=(\ell,\sigma)$.
-Then
-\[
-  e_\pi(H_\lambda^{\otimes d})
-  \cong
-  \bigoplus_{\rho\ge 0}
-  H_{(\rho,\sigma^d)}^{\oplus m_{\pi,\lambda}^{(\rho,\sigma^d)}},
-\]
-where
-\[
-  m_{\pi,\lambda}^{(\rho,\sigma^d)}
-  =
-  [q^\rho]s_\pi(q^{-\ell},q^{-\ell+1},\dots,q^\ell)
-  -
-  [q^{\rho+1}]s_\pi(q^{-\ell},q^{-\ell+1},\dots,q^\ell).
-\]
-All labels $\nu\in\Lambda_G$ whose sign component is not $\sigma^d$ occur with multiplicity zero.
-
-\subsection{\texorpdfstring{$\SO^+(3,1)$ and $\operatorname{Spin}^+(3,1)$}{SO+(3,1) and Spin+(3,1)}}\label{sec:examples-so31}
-
-Let $\widetilde G = \operatorname{Spin}^+(3,1)$ and let $G = \SO^+(3,1)$.
-Use the double cover
-\[
-  \widetilde G\cong \operatorname{SL}_2(\dsC),
+  H_\ell^\sigma,
   \qquad
-  \mathfrak{so}(3,1)_{\dsC}\cong \mathfrak{sl}_2\oplus \mathfrak{sl}_2.
+  \ell\in\dsN_0,\quad \sigma\in\{\pm1\},
 \]
-The irrep label set for $\widetilde G$ is $\Lambda_{\widetilde G}=\dsN_0^2$.
-For $\lambda=(a,b)\in\Lambda_{\widetilde G}$, let
+where $H_\ell^\sigma|_{\SO(3)}=H_\ell$ and $z$ acts on $H_\ell^\sigma$ by $\sigma$.
+Thus an $\Orth(3)$-representation has the parity-refined decomposition
 \[
-  H_\lambda\cong \Sym^a(\dsC^2)\otimes
-  \Sym^b(\overline{\dsC^2}),
+  X\cong
+  \bigoplus_{\ell\ge 0}\bigoplus_{\sigma=\pm1}
+  H_\ell^\sigma\otimes X_\ell^\sigma .
 \]
-with
+If $X$ is first supplied only as an $\SO(3)$-module
 \[
-  \dim H_\lambda=(a+1)(b+1).
+  X\cong \bigoplus_{\ell\ge 0} H_\ell\otimes X_\ell,
 \]
-The representation descends from $\operatorname{Spin}^+(3,1)$ to $\SO^+(3,1)$ if and only if
+then $X_\ell^\sigma$ is the $\sigma$-eigenspace for the action of $z$ on the multiplicity space $X_\ell$.
+For example, if $z$ swaps two spin-$\ell$ copies $e_1,e_2\in X_\ell$, then replacing them by
 \[
-  a+b\equiv 0 \pmod 2.
-\]
-Thus the irrep labels for $G$ are the labels $\lambda=(a,b)$ with $a+b$ even.
-
-For labels $\lambda=(a,b)$ and $\mu=(c,d)$, the Clebsch--Gordan decomposition is
-\[
-  H_\lambda\otimes H_\mu
-  \cong
-  \bigoplus_{\substack{e=|a-c|\\ e\equiv a+c \!\!\!\pmod 2}}^{a+c}
-  \;
-  \bigoplus_{\substack{f=|b-d|\\ f\equiv b+d \!\!\!\pmod 2}}^{b+d}
-  H_{(e,f)}.
-\]
-
-Let $\pi\vdash r$ and $\lambda=(a,b)$.
-The weights of $H_\lambda$ are
-\[
-  (a-2i,\ b-2j),
+  e_+ = e_1+e_2,
   \qquad
-  0\le i\le a,\quad 0\le j\le b.
+  e_- = e_1-e_2
 \]
-Define
+gives the $+$ and $-$ parity copies.
+Thus copy permutation by $-I$ is just the diagonalization step which produces the spaces $X_\ell^+$ and $X_\ell^-$.
+
+\subsubsection{Parity-refined \texorpdfstring{$\SO(3)$}{SO(3)} data}
+
+The $\Orth(3)$ Clebsch--Gordan rule is the $\SO(3)$ rule with parities multiplied:
 \[
-  W_{\pi,\lambda}(p,q)
-  =
-  [x^p y^q]\,
-  s_\pi\!\left(
-  \{x^{a-2i}y^{b-2j}\}_{0\le i\le a,\ 0\le j\le b}
-  \right).
-\]
-Then
-\[
-  e_\pi(H_\lambda^{\otimes d})
+  H_{\ell_1}^{\sigma_1}\otimes H_{\ell_2}^{\sigma_2}
   \cong
-  \bigoplus_{\nu=(e,f)\in\Lambda_{\widetilde G}} H_\nu^{\oplus m_{\pi,\lambda}^{\nu}},
+  \bigoplus_{\nu=|\ell_1-\ell_2|}^{\ell_1+\ell_2}
+  H_\nu^{\sigma_1\sigma_2}.
 \]
-where
+The Schur-power multiplicities are also the same as in Eq.~\eqref{eq:so3-schur-multiplicity}; only the parity label changes:
 \[
-  m_{\pi,\lambda}^{(e,f)}
-  =
-  W_{\pi,\lambda}(e,f)
-  -
-  W_{\pi,\lambda}(e+2,f)
-  -
-  W_{\pi,\lambda}(e,f+2)
-  +
-  W_{\pi,\lambda}(e+2,f+2).
-\]
-
-For the full disconnected group $\SO(3,1)$, the nonidentity component interchanges
-\[
-  H_\lambda\longleftrightarrow H_{\lambda^\vee},
-  \qquad
-  \lambda^\vee=(b,a).
-\]
-Thus irreducibles are obtained from Clifford theory: if $\lambda\neq\lambda^\vee$, one induces the orbit
-\[
-  H_\lambda\oplus H_{\lambda^\vee};
-\]
-if $\lambda=\lambda^\vee$, there are two extensions to the full group, distinguished by the component character.
-
-\subsection{\texorpdfstring{$S_n$}{S\_n}}\label{sec:examples-sn}
-
-Let $G = S_n$.
-The irrep label set is
-\[
-  \Lambda_G=\{\lambda:\lambda\vdash n\}.
-\]
-For $\lambda\in\Lambda_G$, let $H_\lambda$ be the corresponding Specht module.
-Their dimensions are given by the hook-length formula
-\[
-  \dim H_\lambda
-  =
-  \frac{n!}{\prod_{u\in\lambda} h(u)}.
-\]
-
-The Clebsch--Gordan decomposition is
-\[
-  H_\lambda\otimes H_\mu
+  \operatorname{Hom}_{\Orth(3)}\!\left(
+    H_\mu^{\sigma^d},
+    e_\pi\!\left((H_\ell^\sigma)^{\otimes d}\right)
+  \right)
   \cong
-  \bigoplus_{\nu\in\Lambda_G}
-  H_\nu^{\oplus g_{\lambda\mu}^{\nu}},
+  \operatorname{Hom}_{\SO(3)}\!\left(
+    H_\mu,
+    e_\pi(H_\ell^{\otimes d})
+  \right),
 \]
-where the Kronecker coefficient is
-\[
-  g_{\lambda\mu}^{\nu}
-  =
-  \langle \chi_\lambda\chi_\mu,\chi_\nu\rangle_G
-  =
-  \frac{1}{n!}
-  \sum_{g\in G}
-  \chi_\lambda(g)\chi_\mu(g)\chi_\nu(g),
-\]
-and $\chi_\lambda$ denotes the character of $H_\lambda$.
+and no other output parity occurs.
 
-Let $\pi\vdash d$.
-Then
+Consequently, Theorem~\ref{thm:isotypic-decomposition} applies to $\Orth(3)$ by using the labels $(\ell,\sigma)$ instead of the labels $\ell$.
+A branch choosing $d_{\ell,\sigma}$ inputs from $H_\ell^\sigma\otimes X_\ell^\sigma$ has central parity
 \[
-  e_\pi(H_\lambda^{\otimes d})
+  \prod_{\ell,\sigma}\sigma^{d_{\ell,\sigma}}.
+\]
+It can contribute to an output $H_\nu^\tau$ only when this product equals $\tau$.
+This parity selection rule is the only change from the $\SO(3)$ data tree.
+
+\subsubsection{\texorpdfstring{$\Orth(3)$-equivariant covariants}{O(3)-equivariant covariants}}
+
+For an output representation
+\[
+  Y\cong
+  \bigoplus_{\nu\ge 0}\bigoplus_{\tau=\pm1}
+  H_\nu^\tau\otimes Y_\nu^\tau,
+\]
+the usual output reduction becomes
+\[
+  \scM_{\Orth(3)}^D(X,Y)
   \cong
-  \bigoplus_{\nu\in\Lambda_G}
-  H_\nu^{\oplus m_{\pi,\lambda}^{\nu}},
+  \bigoplus_{\nu,\tau}
+  \operatorname{Hom}_{\Orth(3)}\!\left(H_\nu^\tau,\scS^D(X)\right)^*
+  \otimes Y_\nu^\tau .
 \]
-where
+Equivalently, compute the $\SO(3)$ branches as before, attach to each branch its input parity, and keep only the branches whose input parity is $\tau$ for the output copy $Y_\nu^\tau$.
+In particular,
 \[
-  m_{\pi,\lambda}^{\nu}
-  =
-  \left\langle
-  \chi_{e_\pi(H_\lambda^{\otimes d})},
-  \chi_\nu
-  \right\rangle_G.
+  \scM_{\Orth(3)}^D(X,H_\nu^\tau)
+  \cong
+  \operatorname{Hom}_{\Orth(3)}\!\left(H_\nu^\tau,\scS^D(X)\right)^*,
 \]
-The character of this Young-symmetrized tensor power is
+where the right-hand side is obtained from the spin-$\nu$ $\SO(3)$ multiplicity space by the same parity filter.
+
+\subsubsection{Even, odd, and pseudoscalar generators}
+
+The central element acts on $\SO(3)$-covariants by
 \[
-  \chi_{e_\pi(H_\lambda^{\otimes d})}(g)
-  =
-  \sum_{\rho\vdash d}
-  \frac{\chi_{\pi}^{\mathfrak S_d}(\rho)}{z_\rho}
-  \prod_{i=1}^{\ell(\rho)}
-  \chi_\lambda(g^{\rho_i}),
+  (z\cdot f)(x)=z\,f(z^{-1}x),
 \]
-where $\chi_{\pi}^{\mathfrak S_d}$ is the symmetric-group character indexed by $\pi$, and $z_\rho$ is the centralizer order of a permutation of cycle type $\rho$.
+where $z$ acts on $X$ in the argument and on $Y$ in the value.
+A covariant is even or odd according as $z\cdot f=f$ or $z\cdot f=-f$.
+The $\Orth(3)$-equivariant covariants are exactly the even $\SO(3)$-covariants:
+\[
+  \scM_{\Orth(3)}^D(X,Y)
+  =
+  \left(\scM_{\SO(3)}^D(X,Y)\right)^z .
+\]
+
+For scalar invariants, $z$ acts trivially on the value, so a scalar $f$ has parity $\sigma$ precisely when
+\[
+  f(zx)=\sigma f(x).
+\]
 Hence
 \[
-  m_{\pi,\lambda}^{\nu}
+  \scR_{\Orth(3)}^D(X)
   =
-  \frac{1}{n!}
-  \sum_{g\in G}
-  \left(
-  \sum_{\rho\vdash d}
-  \frac{\chi_{\pi}^{\mathfrak S_d}(\rho)}{z_\rho}
-  \prod_{i=1}^{\ell(\rho)}
-  \chi_\lambda(g^{\rho_i})
-  \right)
-  \chi_\nu(g).
+  \left(\scR_{\SO(3)}^D(X)\right)^z
+  =
+  \scR_{\SO(3),+}^D(X).
+\]
+The odd scalar $\SO(3)$-invariants are pseudoscalars: they change sign under central inversion and therefore are not $\Orth(3)$-invariants.
+
+Thus the generator computation needs no separate $\Orth(3)$ machinery.
+Use the $\SO(3)$ candidate branches, record the product of the input parities, and keep even scalar generators for $\scR_{\Orth(3)}(X)$ or parity-$\tau$ covariant generators for an output copy $H_\nu^\tau$.
+
+\subsection{\texorpdfstring{$G\times K$}{G x K}}\label{sec:examples-g-times-k}
+
+A useful product-group example is obtained by adding copy permutation symmetry to the $G$-action.
+Assume that, in the isotypic decomposition
+\[
+  X\cong\bigoplus_\lambda H_\lambda\otimes X_\lambda,
+\]
+each multiplicity space is the permutation representation of $\mathfrak S_{m_\lambda}$:
+\[
+  X_\lambda\cong \dsC^{m_\lambda}
+  \cong
+  \mathbf{1}_\lambda\oplus \operatorname{Std}_\lambda,
+\]
+where $\mathfrak S_{m_\lambda}$ permutes the standard basis of $\dsC^{m_\lambda}$.
+Set
+\[
+  K\coloneq \prod_\lambda \mathfrak S_{m_\lambda}.
+\]
+For $\sigma=(\sigma_\lambda)_\lambda\in K$, define
+\[
+  \sigma\cdot(h\otimes x_\lambda)
+  =
+  h\otimes (\sigma_\lambda x_\lambda),
+  \qquad
+  h\in H_\lambda,\quad x_\lambda\in X_\lambda.
+\]
+This action commutes with $G$, since $G$ acts only on the $H_\lambda$-factors, and hence defines an action of $G\times K$ on $X$.
+
+Equip $H_\nu$ with the trivial $K$-action.
+On the Hom side of the construction, imposing copy permutation equivariance means taking
+\[
+  \operatorname{Hom}_{G\times K}\!\left(H_\nu,\scS^D(X)\right)
+  =
+  \HomG{H_\nu}{\scS^D(X)}^K.
+\]
+In each summand of Eq.~\eqref{eq:isotypic-decomposition}, $K$ acts trivially on
+\[
+  \HomG{H_\nu}{\bigotimes_\lambda H_{\mu_\lambda}},
+  \qquad
+  \HomG{H_{\mu_\lambda}}{e_{\pi_\lambda}(H_\lambda^{\otimes d_\lambda})},
+\]
+so the only change is on the Schur-side multiplicity factor:
+\[
+  \bigotimes_\lambda e_{\pi_\lambda}^*(X_\lambda^{\otimes d_\lambda})
+  \quad\leadsto\quad
+  \bigotimes_\lambda
+  \left(e_{\pi_\lambda}^*(X_\lambda^{\otimes d_\lambda})\right)^{\mathfrak S_{m_\lambda}}.
+\]
+Equivalently, for each $\lambda$ project by
+\[
+  \frac{1}{m_\lambda!}
+  \sum_{\sigma\in\mathfrak S_{m_\lambda}}
+  \sigma^{\otimes d_\lambda}
+  :
+  e_{\pi_\lambda}^*(X_\lambda^{\otimes d_\lambda})
+  \longrightarrow
+  e_{\pi_\lambda}^*(X_\lambda^{\otimes d_\lambda}).
+\]
+Here $\sigma^{\otimes d_\lambda}$ preserves the Schur-side factor.
+It commutes with the place-permutation action used to define $e_{\pi_\lambda}^*$.
+Thus the ordinary isotypic data tree is unchanged; only the tableau-tensor basis for each $\lambda$ is replaced by a basis of
+\[
+  \left(e_{\pi_\lambda}^*(X_\lambda^{\otimes d_\lambda})\right)^{\mathfrak S_{m_\lambda}}.
 \]
 
 \section{Conclusion}\label{sec:conclusion}
@@ -2097,7 +1953,7 @@ Several questions remain for future work:
 
   \bibitem{DCP2021}
   G.~Dhont, P.~Cassam-Chena\"i, and F.~Patras,
-  Molien generating functions and integrity bases for the action of the $\SO(3)$ and $\operatorname{O}(3)$ groups on a set of vectors,
+  Molien generating functions and integrity bases for the action of the $\SO(3)$ and $\Orth(3)$ groups on a set of vectors,
   \emph{arXiv preprint} arXiv:1511.01311v3, 2021.
 
   \bibitem{Schwartz1980}
@@ -2617,94 +2473,68 @@ If the degree-$D$ concatenated syndrome matrix has function-field rank $r_D$ and
 again conditional on good reduction of the relevant minors.
 These are conservative upper bounds; when $rD\ge p$ they become vacuous, although the observed success probability may still be high.
 
-\subsection[SO(3) backend shortcuts]{\texorpdfstring{$\SO(3)$}{SO(3)} backend shortcuts}
-
-The $\SO(3)$ backend uses the representation-theoretic conventions and formulas from Section~\ref{sec:examples-so3}.
-The remaining details here are implementation shortcuts rather than part of the abstract contract.
-
-For tensor-product constituents, the backend applies \eqref{eq:so3-Clebsch--Gordan}.
-For tensor-train evaluation, it uses the Clebsch--Gordan tensors fixed in \eqref{eq:so3-wigner-3j}, evaluating an equivalent integer formula for the coefficients.
-The finite-field evaluator then reduces those integer tensor entries modulo the active prime.
-
-\begin{example}[$\SO(3)$ Hilbert-series shortcut]\label{ex:so3-hilbert-shortcut}
-  The specialized routine \texttt{hilbert\_series\_so3} computes
+\begin{theorem}[Universal approximation by invariant-coordinate networks]\label{thm:universal-approximation}
+  Let $G$ be a compact Lie group, and let $X$ and $Y$ be finite-dimensional real $G$-representations.
+  Write
   \[
-    \dim \scM_G^D(X,H_\nu)
+    C_G(X,Y)
     =
-    \dim \HomG{H_\nu}{\scS^D(X)}
+    \set{F\in C(X,Y):F(gx)=gF(x)\text{ for all }g\in G,\ x\in X}.
   \]
-  from weight generating functions.
-  If $X=\bigoplus_i H_{\lambda_i}^{\oplus m_i}$, then the weight generating function of $\scS(X)$ is
+  Let $r_1,\dots,r_R$ generate the invariant algebra $\dsR[X]^G$, and let $m_1,\dots,m_M$ generate the $\dsR[X]^G$-module of polynomial $G$-equivariant maps $X\to Y$.
+  Suppose $\scN\subseteq C(\dsR^R,\dsR^M)$ is compact-uniformly dense, meaning that for every compact $L\subseteq\dsR^R$, the restrictions $\set{N|_L:N\in\scN}$ are dense in $C(L,\dsR^M)$.
+
+  Then the functions
   \[
-    \prod_i\prod_{w=-\lambda_i}^{\lambda_i}(1-tq^w)^{-m_i}.
+    x
+    \longmapsto
+    \sum_{i=1}^M N_i(r_1(x),\dots,r_R(x))\,m_i(x),
+    \qquad
+    N\in\scN,
   \]
-  The coefficient of $t^Dq^m$ is the weight-$m$ multiplicity in $\scS^D(X)$, and the multiplicity of $H_\nu$ is the difference between the weight-$\nu$ and weight-$(\nu+1)$ multiplicities.
-  This is an $\SO(3)$-specific fast path used to size random probe batches; the abstract algorithm can instead use the dimensions obtained directly from the constructed data trees.
-\end{example}
+  are dense in $C_G(X,Y)$ in the compact-open topology.
+  Equivalently, every continuous $G$-equivariant map $X\to Y$ can be approximated uniformly on compact subsets by functions of the neural ansatz \eqref{eq:neural-ansatz}.
+\end{theorem}
 
-\section{Copy permutation equivariance}\label{sec:appendix-copy-permutation-equivariance}
+\begin{remark}
+  The hypothesis on $\scN$ holds, for example, for vector-valued one-hidden-layer feed-forward networks with biases and a continuous non-polynomial activation function, by applying \cite[Theorem~3.1, p.~153]{Pinkus1999} coordinatewise.
+  For locally bounded piecewise continuous activations, the corresponding non-polynomial a.e. criterion is \cite[Theorem~1, p.~863]{LeshnoLinPinkusSchocken1993}.
+\end{remark}
 
-Assume that, in the isotypic decomposition
-\[
-  X\cong\bigoplus_\lambda H_\lambda\otimes X_\lambda,
-\]
-each multiplicity space is the permutation representation of $\mathfrak S_{m_\lambda}$:
-\[
-  X_\lambda\cong \dsC^{m_\lambda}
-  \cong
-  \mathbf{1}_\lambda\oplus \operatorname{Std}_\lambda,
-\]
-where $\mathfrak S_{m_\lambda}$ permutes the standard basis of $\dsC^{m_\lambda}$.
-Set
-\[
-  K\coloneq \prod_\lambda \mathfrak S_{m_\lambda}.
-\]
-For $\sigma=(\sigma_\lambda)_\lambda\in K$, define
-\[
-  \sigma\cdot(h\otimes x_\lambda)
-  =
-  h\otimes (\sigma_\lambda x_\lambda),
-  \qquad
-  h\in H_\lambda,\quad x_\lambda\in X_\lambda.
-\]
-This action commutes with $G$, since $G$ acts only on the $H_\lambda$-factors.
+\begin{proof}
+  Fix a compact set $K\subseteq X$, and choose a $G$-invariant norm on $Y$ by averaging an inner product over Haar measure.
+  The saturation $GK$ is compact.
 
-Equip $H_\nu$ with the trivial $K$-action.
-On the Hom side of the construction, imposing copy permutation equivariance means taking
-\[
-  \operatorname{Hom}_{G\times K}\!\left(H_\nu,\scS^D(X)\right)
-  =
-  \HomG{H_\nu}{\scS^D(X)}^K.
-\]
-In each summand of Eq.~\eqref{eq:isotypic-decomposition}, $K$ acts trivially on
-\[
-  \HomG{H_\nu}{\bigotimes_\lambda H_{\mu_\lambda}},
-  \qquad
-  \HomG{H_{\mu_\lambda}}{e_{\pi_\lambda}(H_\lambda^{\otimes d_\lambda})},
-\]
-so the only change is on the Schur-side multiplicity factor:
-\[
-  \bigotimes_\lambda e_{\pi_\lambda}^*(X_\lambda^{\otimes d_\lambda})
-  \quad\leadsto\quad
-  \bigotimes_\lambda
-  \left(e_{\pi_\lambda}^*(X_\lambda^{\otimes d_\lambda})\right)^{\mathfrak S_{m_\lambda}}.
-\]
-Equivalently, for each $\lambda$ project by
-\[
-  \frac{1}{m_\lambda!}
-  \sum_{\sigma\in\mathfrak S_{m_\lambda}}
-  \sigma^{\otimes d_\lambda}
-  :
-  e_{\pi_\lambda}^*(X_\lambda^{\otimes d_\lambda})
-  \longrightarrow
-  e_{\pi_\lambda}^*(X_\lambda^{\otimes d_\lambda}).
-\]
-Here $\sigma^{\otimes d_\lambda}$ preserves the Schur-side factor.
-It commutes with the place-permutation action used to define $e_{\pi_\lambda}^*$.
-Thus the ordinary isotypic data tree is unchanged; only the tableau-tensor basis for each $\lambda$ is replaced by a basis of
-\[
-  \left(e_{\pi_\lambda}^*(X_\lambda^{\otimes d_\lambda})\right)^{\mathfrak S_{m_\lambda}}.
-\]
+  First, equivariant polynomial maps are uniformly dense among continuous equivariant maps on $GK$.
+  Indeed, the real Stone--Weierstrass theorem gives uniform density of polynomial maps $X\to Y$ in $C(GK,Y)$, after choosing coordinates on $Y$.
+  Haar averaging
+  \[
+    q
+    \longmapsto
+    \left(x\mapsto \int_G g^{-1}q(gx)\,d\mu(g)\right)
+  \]
+  is a norm-nonincreasing projection from $C(GK,Y)$ onto the equivariant maps, and it sends polynomial maps to equivariant polynomial maps.
 
+  It remains to approximate an arbitrary equivariant polynomial map $q\colon X\to Y$ on $K$ by the displayed ansatz.
+  Since the $m_i$ generate the equivariant polynomial module over $\dsR[X]^G$, and the $r_j$ generate $\dsR[X]^G$, there are polynomials $P_1,\dots,P_M\in\dsR[z_1,\dots,z_R]$ such that
+  \[
+    q(x)
+    =
+    \sum_{i=1}^M P_i(r_1(x),\dots,r_R(x))\,m_i(x).
+  \]
+  Let $r=(r_1,\dots,r_R)$.
+  The linear map
+  \[
+    T\colon C(r(K),\dsR^M)\to C(K,Y),
+    \qquad
+    T(a)(x)=\sum_{i=1}^M a_i(r(x))\,m_i(x),
+  \]
+  is continuous for the uniform norms, because $K$ is compact and the $m_i$ are continuous.
+  Since $\scN|_{r(K)}$ is dense in $C(r(K),\dsR^M)$, continuity of $T$ implies that the functions $T(N|_{r(K)})$, $N\in\scN$, are dense in $T(C(r(K),\dsR^M))$.
+  In particular, they approximate $T(P|_{r(K)})=q|_K$ uniformly on $K$.
+
+  Thus the neural ansatz approximates every equivariant polynomial map on every compact $K$, and equivariant polynomial maps are already dense in $C_G(X,Y)$ on compact sets.
+  This is precisely density in the compact-open topology.
+\end{proof}
 
 \end{document}

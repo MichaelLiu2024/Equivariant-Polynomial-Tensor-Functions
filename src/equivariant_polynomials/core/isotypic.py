@@ -22,12 +22,22 @@ _T = TypeVar("_T")
 
 @dataclass(frozen=True, slots=True)
 class _IsotypicBlock:
+    """Unmaterialized plan for one isotypic basis block.
+
+    Records what is needed to *size and group* a block cheaply, before any
+    tensor trees are built. ``leaf_tree_counts`` holds, per input axis, how many
+    tensor trees that axis' Schur functor will yield -- taken directly from
+    constituent multiplicities, so dimensions are known without calling the
+    expensive ``schur_functor_basis``. ``_LazyContentLeaves`` later realizes a
+    plan into an ``IsotypicLeaf`` by building those trees on demand.
+    """
+
     multidegree: tuple[int, ...]
     partitions: tuple[Partition, ...]
     intermediate_irreps: tuple[Irrep, ...]
     interior_tensor_trains: tuple[TensorTrain, ...]
-    schur_dimensions: tuple[int, ...]
-    semi_standard_young_tableaux: tuple[tuple[SSYT, ...], ...]
+    leaf_tree_counts: tuple[int, ...]
+    semistandard_young_tableaux: tuple[tuple[SSYT, ...], ...]
 
 
 def stream_isotypic_data_tree(
@@ -85,10 +95,10 @@ def stream_isotypic_data_tree(
                 partitions=partitions,
                 intermediate_irreps=intermediate_irreps,
                 interior_tensor_trains=interior_tensor_trains,
-                schur_dimensions=tuple(
+                leaf_tree_counts=tuple(
                     multiplicity for _irrep, multiplicity in constituents
                 ),
-                semi_standard_young_tableaux=tuple(
+                semistandard_young_tableaux=tuple(
                     semistandard_young_tableaux(
                         partition,
                         input_multiplicity,

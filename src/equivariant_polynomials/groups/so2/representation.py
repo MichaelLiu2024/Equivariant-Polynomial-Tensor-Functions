@@ -49,7 +49,7 @@ class SO2RepresentationTheory:
     ) -> np.ndarray:
         """Scalar Clebsch-Gordan tensor for one SO(2) tensor-product core."""
         validate_modulus(modulus)
-        value = core.out == core.left + core.right and core.multiplicity == 1
+        value = core.output == core.left + core.right and core.multiplicity == 1
         tensor = np.asarray([[[value]]], dtype=arithmetic_dtype(modulus))
         tensor.setflags(write=False)
         return tensor

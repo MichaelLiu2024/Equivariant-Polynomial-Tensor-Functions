@@ -15,11 +15,11 @@ from .types import Partition, SSYT
 
 @cache
 def integer_partitions(
-    d: int,
+    degree: int,
     max_part: int | None = None,
     max_length: int | None = None,
 ) -> tuple[Partition, ...]:
-    """Integer partitions of ``d`` as weakly decreasing tuples of parts."""
+    """Integer partitions of ``degree`` as weakly decreasing tuples of parts."""
 
     return tuple(
         tuple(
@@ -27,7 +27,7 @@ def integer_partitions(
             for part, multiplicity in sorted(partition.items(), reverse=True)
             for _ in range(multiplicity)
         )
-        for partition in partitions(d, m=max_length, k=max_part)
+        for partition in partitions(degree, m=max_length, k=max_part)
     )
 
 @cache
@@ -61,16 +61,28 @@ def weak_compositions(
 def validate_modulus(
     modulus: int,
     max_degree: int | None = None,
+    *,
+    allow_complex: bool = True,
 ) -> None:
-    """Validate the finite-field modulus, with ``0`` selecting complex arithmetic."""
+    """Validate the modulus.
+
+    ``0`` selects complex arithmetic, which is permitted only when
+    ``allow_complex`` is set.  Generator selection passes ``allow_complex=False``
+    because that procedure is finite-field only; the complex mode survives for
+    evaluating already-selected generators on complex inputs.
+    """
     if max_degree is not None and max_degree < 0:
         raise ValueError("max_degree must be nonnegative")
     if modulus == 0:
-        return
-    if modulus <= 0:
-        raise ValueError("modulus must be zero or a positive prime")
-    if not sp.isprime(modulus):
-        raise ValueError("modulus must be prime")
+        if allow_complex:
+            return
+        raise ValueError("modulus must be a positive prime")
+    if modulus < 0 or not sp.isprime(modulus):
+        raise ValueError(
+            "modulus must be zero or a positive prime"
+            if allow_complex
+            else "modulus must be a positive prime"
+        )
     if max_degree is not None and modulus <= max_degree:
         raise ValueError("modulus must be greater than max_degree")
 
@@ -102,15 +114,15 @@ def arithmetic_dtype(modulus: int) -> type[np.generic]:
     return np.complex128 if modulus == 0 else np.uint64
 
 
-def cond_mod(
-    x: np.ndarray,
+def reduce_modulo(
+    values: np.ndarray,
     modulus: int,
 ) -> np.ndarray:
     if modulus == 0:
-        return x
-    if x.dtype == np.uint64 and x.flags.writeable:
-        return np.remainder(x, modulus, out=x)
-    return np.remainder(x, modulus).astype(np.uint64, copy=False)
+        return values
+    if values.dtype == np.uint64 and values.flags.writeable:
+        return np.remainder(values, modulus, out=values)
+    return np.remainder(values, modulus).astype(np.uint64, copy=False)
 
 def ragged_multi_index(
     linear_indices: tuple[int, ...],
@@ -130,21 +142,24 @@ def ragged_multi_index(
     return tuple(out)
 
 def pivot_columns(
-    A: np.ndarray,
+    matrix: np.ndarray,
     modulus: int
 ) -> tuple[int, ...]:
-    if modulus == 0:
-        return sp.Matrix(A).rref()[1]
+    """Pivot-column profile of ``matrix`` over the finite field of order ``modulus``.
+
+    Used only by the finite-field generator-selection procedure; complex
+    arithmetic is intentionally unsupported here.
+    """
     # Build the flint matrix from a 2-D list (marginally faster construction
     # than a flat list plus explicit shape); keep the explicit-shape path for
     # degenerate empty matrices, which a 2-D ``tolist`` cannot describe.
-    if A.shape[0] and A.shape[1]:
-        M = nmod_mat(fmpz_mat(A.tolist()), modulus)
+    if matrix.shape[0] and matrix.shape[1]:
+        M = nmod_mat(fmpz_mat(matrix.tolist()), modulus)
     else:
-        M = nmod_mat(fmpz_mat(*A.shape, A.ravel().tolist()), modulus)
+        M = nmod_mat(fmpz_mat(*matrix.shape, matrix.ravel().tolist()), modulus)
     R, rank = M.rref(inplace=True)
 
-    num_cols = A.shape[1]
+    num_cols = matrix.shape[1]
     pivots = []
     column = 0
     for row in range(rank):
@@ -157,8 +172,8 @@ def pivot_columns(
     return tuple(pivots)
 
 def row_kronecker_product(
-    A: np.ndarray,
-    B: np.ndarray,
+    left: np.ndarray,
+    right: np.ndarray,
     modulus: int,
 ):
     """Row-wise Kronecker product with vector and basis axes preserved.
@@ -166,13 +181,13 @@ def row_kronecker_product(
     For syndrome arrays representing pointwise products in
     the invariant algebra tensor the covariant module, inputs shaped
     ``(probe, vector, columns)`` produce
-    ``(probe, vector_A*vector_B, columns_A*columns_B)``.
+    ``(probe, vector_left*vector_right, columns_left*columns_right)``.
     """
-    value = A[:, :, None, :, None] * B[:, None, :, None, :]
-    return cond_mod(value, modulus).reshape(
-        A.shape[0],
-        A.shape[1] * B.shape[1],
-        A.shape[2] * B.shape[2],
+    value = left[:, :, None, :, None] * right[:, None, :, None, :]
+    return reduce_modulo(value, modulus).reshape(
+        left.shape[0],
+        left.shape[1] * right.shape[1],
+        left.shape[2] * right.shape[2],
     )
 
 @cache
@@ -254,7 +269,7 @@ __all__ = (
     "integer_partitions",
     "weak_compositions",
     "conjugate_partition",
-    "cond_mod",
+    "reduce_modulo",
     "validate_modulus",
     "ragged_multi_index",
     "pivot_columns",

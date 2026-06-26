@@ -48,9 +48,6 @@ class _LazyContentLeaves:
     def __iter__(self) -> Iterator[IsotypicLeaf]:
         for source in self.sources:
             yield IsotypicLeaf(
-                source.multidegree,
-                source.partitions,
-                source.intermediate_irreps,
                 source.interior_tensor_trains,
                 tuple(
                     schur_functor_basis(
@@ -67,7 +64,7 @@ class _LazyContentLeaves:
                         source.intermediate_irreps,
                     )
                 ),
-                source.semi_standard_young_tableaux,
+                source.semistandard_young_tableaux,
             )
 
 
@@ -78,6 +75,7 @@ def _compute_syndromes(
     modulus: int,
     output_dimension: int,
     young_tree_cache: dict[Hashable, np.ndarray] | None = None,
+    probe_window_keys: tuple[Hashable, ...] | None = None,
 ) -> np.ndarray:
     """Evaluate isotypic leaves as ``probe x output x column`` blocks.
 
@@ -96,6 +94,7 @@ def _compute_syndromes(
             probe_batches,
             modulus,
             young_tree_cache,
+            probe_window_keys,
         )
         for leaf in polynomials
     ]
@@ -132,7 +131,7 @@ def extract_independent_generators(
     if theory.irrep_dimension(theory.trivial_irrep) != 1:
         raise ValueError("theory.trivial_irrep must be one-dimensional")
 
-    validate_modulus(modulus, max_degree=max_degree)
+    validate_modulus(modulus, max_degree=max_degree, allow_complex=False)
     trivial_irrep = theory.trivial_irrep
     output_dimension = theory.irrep_dimension(output_irrep)
 
@@ -183,6 +182,10 @@ def extract_independent_generators(
         random_seed,
     )
     young_tree_cache: dict[Hashable, np.ndarray] = {}
+    # Every probe window is a row-slice of ``probe_batches``; identify each input
+    # axis by its index with the leading row 0 so cached Young-tree evaluations
+    # are reused across leaves, contents, and the covariant/invariant passes.
+    probe_window_keys = tuple((axis, 0) for axis, _batch in enumerate(probe_batches))
 
     covariant_generators: list[tuple[IsotypicLeaf, ...]] = []
     invariant_content_groups = (
@@ -199,17 +202,24 @@ def extract_independent_generators(
     @cache
     def invariant_syndromes(content: Content) -> np.ndarray:
         group = invariant_content_group_map.get(content)
-        return (
-            _empty_syndromes((max_probes, 1, 0), modulus)
-            if group is None
-            else _stream_syndromes(
+        if group is None:
+            return _empty_syndromes((max_probes, 1, 0), modulus)
+        blocks = [
+            syndromes
+            for _leaf_batch, syndromes in _syndrome_batches(
                 theory,
                 group[1],
                 probe_batches,
                 modulus,
                 1,
                 young_tree_cache,
+                probe_window_keys,
             )
+        ]
+        return (
+            np.concatenate(blocks, axis=-1)
+            if blocks
+            else _empty_syndromes((probe_batches[0].shape[0], 1, 0), modulus)
         )
 
     covariant_syndromes_by_content: dict[Content, np.ndarray] = {}
@@ -253,6 +263,7 @@ def extract_independent_generators(
                 modulus,
                 output_dimension,
                 young_tree_cache,
+                probe_window_keys,
             )
             degree_generators.extend(content_generators)
 
@@ -290,7 +301,7 @@ def _content_leaf_groups(
             tableau_groups_by_input = tuple(
                 _tableaux_by_content(tableaux, multiplicity)
                 for tableaux, multiplicity in zip(
-                    source.semi_standard_young_tableaux,
+                    source.semistandard_young_tableaux,
                     input_multiplicities,
                 )
             )
@@ -302,7 +313,7 @@ def _content_leaf_groups(
                 dimension = len(source.interior_tensor_trains) * math.prod(
                     tree_count * len(tableaux)
                     for tree_count, tableaux in zip(
-                        source.schur_dimensions,
+                        source.leaf_tree_counts,
                         content_tableaux,
                     )
                 )
@@ -312,7 +323,7 @@ def _content_leaf_groups(
                 sources.append(
                     replace(
                         source,
-                        semi_standard_young_tableaux=content_tableaux,
+                        semistandard_young_tableaux=content_tableaux,
                     )
                 )
                 grouped[content] = (group_dimension + dimension, sources)
@@ -407,11 +418,14 @@ def _stream_content_generators(
     modulus: int,
     output_dimension: int,
     young_tree_cache: dict[Hashable, np.ndarray],
+    probe_window_keys: tuple[Hashable, ...],
 ) -> tuple[tuple[IsotypicLeaf, ...], np.ndarray]:
     selected_generators: list[IsotypicLeaf] = []
     selected_syndrome_blocks: list[np.ndarray] = []
     current_basis = previous_basis
     probe_prefix = tuple(batch[:num_probes, :, :] for batch in probe_batches)
+    # The trailing probe rows form a distinct window starting at ``num_probes``.
+    suffix_window_keys = tuple((axis, num_probes) for axis, _key in enumerate(probe_batches))
 
     for leaf_batch, batch_syndromes in _syndrome_batches(
         theory,
@@ -420,6 +434,7 @@ def _stream_content_generators(
         modulus,
         output_dimension,
         young_tree_cache,
+        probe_window_keys,
     ):
         linear_indices = independent_column_indices(
             current_basis,
@@ -453,6 +468,7 @@ def _stream_content_generators(
                 modulus,
                 output_dimension,
                 young_tree_cache,
+                suffix_window_keys,
             )
             selected_syndromes = np.concatenate((selected_syndromes, extra), axis=0)
         selected_syndrome_blocks.append(selected_syndromes)
@@ -470,32 +486,6 @@ def _stream_content_generators(
     )
 
 
-def _stream_syndromes(
-    theory: RepresentationTheory,
-    leaves: Iterable[IsotypicLeaf],
-    probe_batches: tuple[np.ndarray, ...],
-    modulus: int,
-    output_dimension: int,
-    young_tree_cache: dict[Hashable, np.ndarray],
-) -> np.ndarray:
-    blocks = [
-        syndromes
-        for _leaf_batch, syndromes in _syndrome_batches(
-            theory,
-            leaves,
-            probe_batches,
-            modulus,
-            output_dimension,
-            young_tree_cache,
-        )
-    ]
-    return (
-        np.concatenate(blocks, axis=-1)
-        if blocks
-        else _empty_syndromes((probe_batches[0].shape[0], output_dimension, 0), modulus)
-    )
-
-
 def _syndrome_batches(
     theory: RepresentationTheory,
     leaves: Iterable[IsotypicLeaf],
@@ -503,6 +493,7 @@ def _syndrome_batches(
     modulus: int,
     output_dimension: int,
     young_tree_cache: dict[Hashable, np.ndarray],
+    probe_window_keys: tuple[Hashable, ...],
 ) -> Iterator[tuple[tuple[IsotypicLeaf, ...], np.ndarray]]:
     for leaf_batch in stream_batches(leaves):
         syndromes = _compute_syndromes(
@@ -512,6 +503,7 @@ def _syndrome_batches(
             modulus,
             output_dimension,
             young_tree_cache,
+            probe_window_keys,
         )
         if syndromes.shape[-1] > 0:
             yield leaf_batch, syndromes
